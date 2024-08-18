@@ -4,7 +4,8 @@ import { Player } from '../models/Player';
 import { useEffect, useState } from "react";
 import PlayerService from '../services/PlayerService';
 
-const ListTable = () => {
+const PlayerListTable = () => {
+    
     const [players, setPlayers] = useState<Player[]>([]);
     useEffect(() => {
         const fetchData = async () => {
@@ -25,31 +26,6 @@ const ListTable = () => {
         </table>
     );
 }
-
-
-let playerRows = (inData: Player[]) => {
-    return inData.map((player) => {
-        return (
-            <tr key={player.id}>
-                <td>{player.id}</td>
-                <td>{player.nickName}</td>
-                <td>{player.team.name}</td>
-            </tr>
-        );
-    });
-}
-
-
-
-// function ListTable() {
-//     return (
-//         <table>
-//             <ListHeaderRow></ListHeaderRow>
-//             {playerRows([])}
-//             {/* <ListRow></ListRow> */}
-//         </table>
-//     );
-// }
 
 function ListHeaderRow() {
     return (
@@ -73,4 +49,4 @@ function ListRow(player: Player) {
 
 
 
-export default ListTable;
+export default PlayerListTable;
