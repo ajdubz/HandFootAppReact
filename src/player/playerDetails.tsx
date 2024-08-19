@@ -10,14 +10,15 @@ interface RouteParams {
 
 
 function PlayerDetails() {
-    const { id } = useParams<RouteParams>();
+    const { id = "" } = useParams<RouteParams>();
     const [player, setPlayer] = useState<Player>();
 
     useEffect(() => {
         const fetchData = async () => {
-            const data = await PlayerService.getPlayerById(Number(id));
+            const data = await PlayerService.getPlayerById(id);
             setPlayer(data);
         };
+        
         fetchData();
     }, [id]);
 

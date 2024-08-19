@@ -11,14 +11,14 @@ class PlayerService {
         }
     } 
 
-    public static async getPlayerById(id: number) {
+    public static async getPlayerById(id: string) {
         try {
             const url = await fetch(`https://localhost:7133/Player/${id}`);
             const data = await url.json();
+            console.log(data);
             return data;
         } catch (error) {
             console.error('Error in getPlayerById:', error);
-            throw error;
         }
     }
 

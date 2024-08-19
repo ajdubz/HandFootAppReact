@@ -15,19 +15,18 @@ function NewHeader() {
 
 function NewRoutes() {
 
-
-
     return (
-      <Router>
-        <Routes>
-          <Route path="/players" element={<PlayerListTable />} />
-          <Route path="/player/:id" element={<PlayerDetails />} />
-          {/* <Route path="/player/:id/edit" element={<PlayerEditor playerId={selectedId  } />} /> */}
-          <Route path="/teams" element={<TeamListTable />} />
-          <Route path="/team/:id" element={<TeamListTable />} />
-        </Routes>
-      </Router>
+        <Router>
+            <Routes>
+                <Route path="/players" element={<PlayerListTable />} />
+                <Route path="/player/:id" element={<PlayerDetails />} />
+                <Route path="/player" element={<PlayerEditor />} />
+                <Route path="/teams" element={<TeamListTable />} />
+                <Route path="/team/:id" element={<TeamListTable />} />
+            </Routes>
+        </Router>
     );
+    
 }
 
 function App() {
