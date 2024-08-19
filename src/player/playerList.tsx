@@ -1,11 +1,11 @@
-import React from 'react';
-import logo from './logo.svg';
-import { Player } from '../models/Player';
+import React from "react";
+import logo from "./logo.svg";
+import { Player } from "../models/Player";
 import { useEffect, useState } from "react";
-import PlayerService from '../services/PlayerService';
+import PlayerService from "../services/PlayerService";
+import { Link } from "react-router-dom";
 
 const PlayerListTable = () => {
-    
     const [players, setPlayers] = useState<Player[]>([]);
     useEffect(() => {
         const fetchData = async () => {
@@ -17,36 +17,36 @@ const PlayerListTable = () => {
 
     return (
         <table>
-            <ListHeaderRow></ListHeaderRow>
-            {players.map((player) => {
-                return (
-                    <ListRow key={player.id} {...player}></ListRow>
-                );
-            })}
+            <thead>
+                <ListHeaderRow></ListHeaderRow>
+            </thead>
+            <tbody>
+                {players.map((player) => {
+                    return <ListRowWithLink key={player.id} {...player}></ListRowWithLink>;
+                })}
+            </tbody>
         </table>
     );
-}
+};
 
 function ListHeaderRow() {
     return (
         <tr>
             <th>Id</th>
             <th>Name</th>
-            <th>Team Name</th>
         </tr>
     );
 }
 
-function ListRow(player: Player) {
+function ListRowWithLink(player: Player) {
     return (
         <tr>
             <td>{player.id}</td>
-            <td>{player.nickName}</td>
-            <td>{player.team.name}</td>
+            <td>
+                <Link to={`/player/${player.id}`}>{player.nickName}</Link>
+            </td>
         </tr>
     );
 }
-
-
 
 export default PlayerListTable;
