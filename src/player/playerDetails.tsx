@@ -62,16 +62,12 @@ function PlayerDetails() {
             teamId: Number(selectedTeam),
         };
 
-        console.log('Submitting:', playerData);
+        // console.log('Submitting:', playerData);
 
         PlayerService.updatePlayer(playerData);
     };
 
-    const onCancelFunc = () => {
-        console.log('Cancel');
-        window.history.back();
-    };
-
+    
     return (
         <div>
             <h2>Player Details</h2>
@@ -114,6 +110,11 @@ function PlayerDetails() {
     );
 }
 
+const onCancelFunc = () => {
+    // console.log('Cancel');
+    window.history.back();
+};
+
 function ListFriends(friends: PlayerGetBasicDTO[]) {
     return (
         <span>
@@ -125,106 +126,3 @@ function ListFriends(friends: PlayerGetBasicDTO[]) {
 }
 
 export default PlayerDetails;
-
-
-
-
-
-
-
-
-// function PlayerDetails() {
-//     const { id = 0 } = useParams<RouteParams>();
-//     const [player, setPlayer] = useState<PlayerGetWithFriendsDTO>();
-//     const [teams, setTeams] = useState<TeamGetBasicDTO[]>([]);
-
-//     let selectedTeam = 0;
-
-
-//     useEffect(() => {
-//         const fetchData = async () => {
-//             const players = await PlayerService.getPlayerById(Number(id));
-//             const teams = await TeamService.getTeams();
-//             setPlayer(players);
-//             setTeams(teams);
-//         };
-        
-//         fetchData();
-//     }, [id]);
-
-//     selectedTeam = player?.team?.id || 0;
-
-
-//     return (
-//         <div>
-//             <h1>Player Details</h1>
-
-//             <form>
-//                 <label>
-//                     Nickname:
-//                     <input type="text" name="nickname" defaultValue={player?.nickName} />
-//                 </label>
-//                 <br />
-//                 <label>
-//                     Team:
-//                     {player?.team && teams && TeamSelect(teams, selectedTeam)}
-//                 </label>
-//                 <br />
-//                 <br />
-//                 <label>
-//                     Friends: 
-//                     {player?.friends && ListFriends(player.friends)}
-//                 </label>
-//                 <br />
-//                 <DetailSave></DetailSave>
-//                 <DetailCancel></DetailCancel>
-//             </form>
-//         </div>
-//     );
-// }
-
-// function ListFriends(friends: PlayerGetBasicDTO[]) {
-//     return (
-//         <span>
-//             {friends.map((friend) => {
-//                 return <span key={friend.id}> {friend.nickName}</span>;
-//             })}
-//         </span>
-//     );
-// }
-
-// function TeamSelect(teams: TeamGetBasicDTO[], defaultId: number) {
-//     return (
-//         <select defaultValue={defaultId} name="teamSelect" onChange={(e) => console.log('made select')}>
-//             <option value="0">Select a team</option>
-//             {teams.map((team) => {
-//                 return <option key={team.id} value={team.id}>{team.name}</option>;
-//             })}
-//         </select>
-//     );
-// }
-
-// function DetailSave() {
-//     return (
-//         <button type="button" onClick={onSubmitFunc}>Save</button>
-//     );
-// }
-
-// const onSubmitFunc = (e: any) => {
-
-//     console.log(e.target.value);
-//     e.preventDefault();
-// };
-
-// function DetailCancel() {
-//     return (
-//         <button type="button" onClick={onCancelFunc}>Cancel</button>
-//     );
-// }
-
-// function onCancelFunc() {
-//     console.log('Cancel');
-//     window.history.back();
-// }
-
-// export default PlayerDetails;

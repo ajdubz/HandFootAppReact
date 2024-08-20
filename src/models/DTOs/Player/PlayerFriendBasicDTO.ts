@@ -1,13 +1,9 @@
 
 class PlayerFriendBasicDTO {
 
-    public playerId: number;
-    public friendId: number;
+    public playerId?: number = 0;
+    public friendId?: number = 0;
 
-    constructor(PlayerId: number, FriendId: number) {
-        this.playerId = PlayerId;
-        this.friendId = FriendId;
-    }
 }
 
 export default PlayerFriendBasicDTO;

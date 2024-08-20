@@ -6,7 +6,7 @@ class TeamService {
     
     public static async getTeams(): Promise<TeamGetBasicDTO[]> {
         try {
-            const url = await fetch('https://localhost:7133/Team');
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Team`);
             const data = await url.json();
             return data;
         } catch (error) {
@@ -17,7 +17,7 @@ class TeamService {
 
     public static async getTeamById(id: number): Promise<TeamGetWithPlayersDTO> {
         try {
-            const url = await fetch(`https://localhost:7133/Team/${id}`);
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Team/${id}`);
             const data = await url.json();
             return data;
         } catch (error) {
@@ -28,7 +28,7 @@ class TeamService {
 
     public static async createTeam(Team: TeamCreateDTO): Promise<any> {
         try {
-            const url = await fetch('https://localhost:7133/Team', {
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Team`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

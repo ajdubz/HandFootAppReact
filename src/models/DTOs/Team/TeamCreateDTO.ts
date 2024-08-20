@@ -1,14 +1,10 @@
 
 class TeamCreateDTO {
-    public id: number;
-    public name: string;
-    public players: number[];
 
-    constructor(Id: number, Name: string, Players: number[]) {
-        this.id = Id;
-        this.name = Name;
-        this.players = Players;
-    }
+    public id?: number = 0;
+    public name?: string = '';
+    public players?: number[] = [];
+
 }
 
 export default TeamCreateDTO;

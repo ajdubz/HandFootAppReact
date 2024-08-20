@@ -7,7 +7,7 @@ class PlayerService {
     
     public static async getPlayers(): Promise<PlayerGetBasicDTO[]> {
         try {
-            const url = await fetch('https://localhost:7133/Player');
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player`);
             const data = await url.json();
             return data;
         } catch (error) {
@@ -18,7 +18,7 @@ class PlayerService {
 
     public static async getPlayerById(id: number): Promise<PlayerGetWithFriendsDTO> {
         try {
-            const url = await fetch(`https://localhost:7133/Player/${id}`);
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}`);
             const data = await url.json();
             return data;
         } catch (error) {
@@ -29,7 +29,7 @@ class PlayerService {
 
     public static async createPlayer(player: PlayerCreateDTO): Promise<any> {
         try {
-            const url = await fetch('https://localhost:7133/Player', {
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -46,7 +46,7 @@ class PlayerService {
 
     public static async updatePlayer(player: PlayerUpdateDTO): Promise<any> {
         try {
-            const url = await fetch('https://localhost:7133/Player', {
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
