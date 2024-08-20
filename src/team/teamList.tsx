@@ -4,11 +4,13 @@ import { Player } from '../models/Player';
 import { Team } from '../models/Team';
 import { useEffect, useState } from "react";
 import TeamService from '../services/TeamService';
+import TeamGetWithPlayersDTO from '../models/DTOs/Team/TeamGetWithPlayersDTO';
+import TeamGetBasicDTO from '../models/DTOs/Team/TeamGetBasicDTO';
 
 
 const TeamListTable = () => {
         
-        const [teams, setTeams] = useState<Team[]>([]);
+        const [teams, setTeams] = useState<TeamGetBasicDTO[]>([]);
         useEffect(() => {
             const fetchData = async () => {
                 const data = await TeamService.getTeams();
@@ -38,7 +40,7 @@ function ListHeaderRow() {
     );
 }
 
-function ListRow(team: Team) {
+function ListRow(team: TeamGetBasicDTO) {
     return (
         <tr>
             <td>{team.id}</td>

@@ -2,14 +2,14 @@ import TeamGetBasicDTO from "../Team/TeamGetBasicDTO";
 
 
 class PlayerGetBasicDTO {
-    Id: number;
-    NickName?: string;
-    Team?: TeamGetBasicDTO;
+    id: number;
+    nickName?: string;
+    team?: TeamGetBasicDTO;
 
     constructor(id: number, nickName: string, team: TeamGetBasicDTO) {
-        this.Id = id;
-        this.NickName = nickName;
-        this.Team = team;
+        this.id = id;
+        this.nickName = nickName;
+        this.team = team;
     }
 
 }

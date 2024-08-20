@@ -5,7 +5,7 @@ export class Player {
   nickName: string;
   email: string;
   password: string;
-  team: Team;
+  team?: Team;
   friends?: Player[];
 
   constructor(

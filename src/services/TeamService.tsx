@@ -1,6 +1,10 @@
+import TeamCreateDTO from "../models/DTOs/Team/TeamCreateDTO";
+import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
+import TeamGetWithPlayersDTO from "../models/DTOs/Team/TeamGetWithPlayersDTO";
+
 class TeamService {
     
-    public static async getTeams() {
+    public static async getTeams(): Promise<TeamGetBasicDTO[]> {
         try {
             const url = await fetch('https://localhost:7133/Team');
             const data = await url.json();
@@ -11,7 +15,7 @@ class TeamService {
         }
     } 
 
-    public static async getTeamById(id: number) {
+    public static async getTeamById(id: number): Promise<TeamGetWithPlayersDTO> {
         try {
             const url = await fetch(`https://localhost:7133/Team/${id}`);
             const data = await url.json();
@@ -22,7 +26,7 @@ class TeamService {
         }
     }
 
-    public static async createTeam(Team: any) {
+    public static async createTeam(Team: TeamCreateDTO): Promise<any> {
         try {
             const url = await fetch('https://localhost:7133/Team', {
                 method: 'POST',

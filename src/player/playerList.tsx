@@ -1,11 +1,10 @@
-import { Player } from "../models/Player";
 import { useEffect, useState } from "react";
 import PlayerService from "../services/PlayerService";
 import { Link } from "react-router-dom";
+import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicsDTO";
 
 const PlayerListTable = () => {
-
-    const [players, setPlayers] = useState<Player[]>([]);
+    const [players, setPlayers] = useState<PlayerGetBasicDTO[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -16,23 +15,24 @@ const PlayerListTable = () => {
         fetchData();
     }, []);
 
-
     return (
         <div>
             <table>
                 <ListHeaderRow></ListHeaderRow>
                 <tbody>
                     {players.map((player) => {
-                        return <ListRowWithLink key={player.id} {...player}></ListRowWithLink>;
+                        return <ListRow key={player.id} {...player}></ListRow>;
                     })}
                 </tbody>
             </table>
             <br />
-            
+
             <AddPlayerRow />
         </div>
     );
 };
+
+
 
 function ListHeaderRow() {
     return (
@@ -45,12 +45,12 @@ function ListHeaderRow() {
     );
 }
 
-function ListRowWithLink(player: Player) {
+function ListRow(player: PlayerGetBasicDTO) {
     return (
         <tr>
             <td>{player.id}</td>
             <td>
-                <Link to={`/player/${player.id}`}>{player.nickName}</Link>
+                <Link to={`/player/${player.id}`} key={player.id}>{player.nickName}</Link>
             </td>
         </tr>
     );
