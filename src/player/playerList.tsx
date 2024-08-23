@@ -60,7 +60,7 @@ function AddPlayerRow() {
     return (
         <div>
             <span>
-                <Link to="/player/0/account">Add Player</Link>
+                <Link to="/player/account">Add Player</Link>
             </span>
         </div>
     );

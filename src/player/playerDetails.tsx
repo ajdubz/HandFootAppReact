@@ -51,7 +51,7 @@ function PlayerDetails() {
 
             };
 
-            PlayerService.updatePlayer(Number(id), playerData);
+            PlayerService.updatePlayerAccount(Number(id), playerData);
         }
 
         navigate("/players");

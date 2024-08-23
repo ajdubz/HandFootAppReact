@@ -20,6 +20,7 @@ function NewRoutes() {
             <Routes>
                 <Route path="/playersList" element={<PlayerListTable />} />
                 <Route path="/player/:id" element={<PlayerDetails />} />
+                <Route path="/player/account" element={<PlayerAccount />} />
                 <Route path="/player/:id/account" element={<PlayerAccount />} />
                 <Route path="/teams" element={<TeamListTable />} />
                 <Route path="/team/:id" element={<TeamListTable />} />

@@ -37,24 +37,33 @@ class PlayerService {
         }
     }
 
-    public static async createPlayer(player: PlayerAccountDTO): Promise<any> {
+    public static async createPlayer(player: PlayerAccountDTO) {
         try {
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player`, {
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/account`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(player)
             });
-            const data = await url.json();
+            // Log the response status and headers
+        console.log('Response status:', url.status);
+        console.log('Response headers:', url.headers);
+
+        // Check if the response body is empty
+        const text = await url.text();
+
+        // Parse the response body
+        const data = JSON.parse(text);
             return data;
         } catch (error) {
+            console.log(player);
             console.error('Error in createPlayer:', error);
             throw error;
         }
     }
 
-    public static async updatePlayer(playerId: number, player: PlayerAccountDTO): Promise<any> {
+    public static async updatePlayerAccount(playerId: number, player: PlayerAccountDTO) {
         try {
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${playerId}/account`, {
                 method: 'PUT',
