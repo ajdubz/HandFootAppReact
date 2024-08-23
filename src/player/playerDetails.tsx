@@ -1,70 +1,64 @@
 import { useEffect, useState } from "react";
 import PlayerService from "../services/PlayerService";
-import { useParams } from "react-router-dom";
-import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicsDTO";
-import PlayerGetWithFriendsDTO from "../models/DTOs/Player/PlayerGetWithFriendsDTO";
+import { useParams, useNavigate } from "react-router-dom";
+import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import TeamService from "../services/TeamService";
 import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
-import PlayerUpdateDTO from "../models/DTOs/Player/PlayerUpdateDTO";
+import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 
 interface RouteParams {
     [id: string]: string | undefined;
 }
 
+
 function PlayerDetails() {
     const { id = "" } = useParams<RouteParams>();
-    const [player, setPlayer] = useState<PlayerGetWithFriendsDTO>();
-    const [teams, setTeams] = useState<TeamGetBasicDTO[]>([]);
+    const [player, setPlayer] = useState<PlayerFullDetailsDTO>();
     const [nickname, setNickname] = useState<string>(player?.nickName || '');
-    const [email, setEmail] = useState<string>(player?.email || '');
-    const [selectedTeam, setSelectedTeam] = useState<number>(player?.team?.id || 0);
+    const [teams, setTeams] = useState<TeamGetBasicDTO[]>([]);
+    const navigate = useNavigate();
 
     useEffect(() => {
+
         const fetchData = async () => {
-            const players = await PlayerService.getPlayerById(Number(id));
+            
+            const players = !id ? new PlayerFullDetailsDTO : await PlayerService.getPlayerAccountById(Number(id));
             const teams = await TeamService.getTeams();
             setPlayer(players);
             setTeams(teams);
-
-            setEmail(players?.email || '');
+    
             setNickname(players?.nickName || '');
-            setSelectedTeam(players?.team?.id || 0);
         };
         
         fetchData();
         
-    }, [id]);
+    }, [id, PlayerService, navigate]);
+
 
     const onSubmitFunc = (e: React.FormEvent) => {
         e.preventDefault();
 
         // Validate form values
         if (!nickname?.trim()) {
-            alert('Nickname is required');
+            alert("Nickname is required");
             return;
         }
 
-        if (selectedTeam === 0) {
-            alert('Please select a team');
-            return;
+        if (id) {
+            // Push to backend
+            const playerData: PlayerFullDetailsDTO = {
+                nickName: nickname,
+
+            };
+
+            PlayerService.updatePlayer(Number(id), playerData);
         }
 
-        if (!email?.trim()) {
-            alert('Email is required');
-            return;
-        }
+        navigate("/players");
+    };
 
-        // Push to backend
-        const playerData: PlayerUpdateDTO = {
-            id: Number(id),
-            nickName: nickname,
-            email: email,
-            teamId: Number(selectedTeam),
-        };
-
-        // console.log('Submitting:', playerData);
-
-        PlayerService.updatePlayer(playerData);
+    const onCancelFunc = () => {
+        navigate("/players");
     };
 
     
@@ -77,43 +71,29 @@ function PlayerDetails() {
                     <input type="text" name="nickname" defaultValue={nickname} onChange={(e) => setNickname(e.target.value)} />
                 </label>
                 <br />
-                <label>
-                    Email:
-                    <input type="email" name="email" defaultValue={email} onChange={(e) => setEmail(e.target.value)} />
-                </label>
-                <label>
-                    Team:
-                    {player?.team && teams && (
-                        <select defaultValue={player?.team?.id} name="teamSelect" onChange={(e) => setSelectedTeam(Number(e.target.value))}>
-                            <option value="0">Select a team</option>
-                            {teams.map((team: TeamGetBasicDTO) => (
-                                <option key={team.id} value={team.id}>
-                                    {team.name}
-                                </option>
-                            ))}
-                        </select>
-                    )}
-                </label>
-                <br />
                 <br />
                 <label>
                     Friends:
                     {player?.friends && ListFriends(player.friends)}
                 </label>
                 <br />
-                <button type="submit">Save</button>
-                <button type="button" onClick={onCancelFunc}>
-                    Cancel
-                </button>
+                <div>
+                    <button>Add Friend</button>
+                </div>
+                <br />
+                <br />
+                <div>
+                    <button type="submit">Save</button>
+                    <button type="button" onClick={onCancelFunc}>
+                        Cancel
+                    </button>
+                </div>
+                
             </form>
         </div>
     );
 }
 
-const onCancelFunc = () => {
-    // console.log('Cancel');
-    window.history.back();
-};
 
 function ListFriends(friends: PlayerGetBasicDTO[]) {
     return (

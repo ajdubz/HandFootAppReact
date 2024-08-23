@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import PlayerService from "../services/PlayerService";
 import { Link } from "react-router-dom";
-import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicsDTO";
+import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 
 const PlayerListTable = () => {
     const [players, setPlayers] = useState<PlayerGetBasicDTO[]>([]);
@@ -13,7 +13,7 @@ const PlayerListTable = () => {
         };
 
         fetchData();
-    }, []);
+    });
 
     return (
         <div>
@@ -50,7 +50,7 @@ function ListRow(player: PlayerGetBasicDTO) {
         <tr>
             <td>{player.id}</td>
             <td>
-                <Link to={`/player/${player.id}`} key={player.id}>{player.nickName}</Link>
+                <Link to={`/player/${player.id}/account`} key={player.id}>{player.nickName}</Link>
             </td>
         </tr>
     );
@@ -60,7 +60,7 @@ function AddPlayerRow() {
     return (
         <div>
             <span>
-                <Link to="/player">Add Player</Link>
+                <Link to="/player/0/account">Add Player</Link>
             </span>
         </div>
     );

@@ -1,11 +1,12 @@
-import { Team } from './Team';
+import exp from "constants";
 
 export class Player {
   id: number = 0;
   nickName?: string = '';
   email?: string = '';
   password?: string = '';
-  team?: Team = new Team();
-  friends?: Player[] = [];
 
 }
+
+
+export default Player;

@@ -1,8 +1,11 @@
+import { Player } from "./Player";
 
 export class Team {
 
     id?: number = 0;
     name?: string = '';
-    PlayerIds?: number[] = [];
+    Players?: Player[] = [];
     
 }
+
+export default Team;

@@ -1,7 +1,6 @@
-import PlayerCreateDTO from "../models/DTOs/Player/PlayerCreateDTO";
-import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicsDTO";
-import PlayerGetWithFriendsDTO from "../models/DTOs/Player/PlayerGetWithFriendsDTO";
-import PlayerUpdateDTO from "../models/DTOs/Player/PlayerUpdateDTO";
+import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
+import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
+import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 
 class PlayerService {
     
@@ -16,18 +15,29 @@ class PlayerService {
         }
     } 
 
-    public static async getPlayerById(id: number): Promise<PlayerGetWithFriendsDTO> {
+    public static async getPlayerAccountById(id: number): Promise<PlayerAccountDTO> {
+        try {
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/account`);
+            const data = await url.json();
+            return data;
+        } catch (error) {
+            console.error('Error in getPlayerAccountById:', error);
+            throw error;
+        }
+    }
+
+    public static async getPlayerFullDetailsById(id: number): Promise<PlayerFullDetailsDTO> {
         try {
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}`);
             const data = await url.json();
             return data;
         } catch (error) {
-            console.error('Error in getPlayerById:', error);
+            console.error('Error in getPlayerFullDetailsById:', error);
             throw error;
         }
     }
 
-    public static async createPlayer(player: PlayerCreateDTO): Promise<any> {
+    public static async createPlayer(player: PlayerAccountDTO): Promise<any> {
         try {
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player`, {
                 method: 'POST',
@@ -44,9 +54,9 @@ class PlayerService {
         }
     }
 
-    public static async updatePlayer(player: PlayerUpdateDTO): Promise<any> {
+    public static async updatePlayer(playerId: number, player: PlayerAccountDTO): Promise<any> {
         try {
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player`, {
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${playerId}/account`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
