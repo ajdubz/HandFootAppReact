@@ -8,7 +8,7 @@ interface RouteParams {
 }
 
 
-function PlayerAccount() {
+function PlayerAccount(): React.ReactElement {
     const { id = "" } = useParams<RouteParams>();
     const [player, setPlayer] = useState<PlayerAccountDTO>();
     const [nickname, setNickname] = useState<string>(player?.nickName || '');
