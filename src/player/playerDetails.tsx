@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import PlayerService from "../services/PlayerService";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import TeamService from "../services/TeamService";
 import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
+import PlayerAccount from "./playerAccount";
 
 interface RouteParams {
     [id: string]: string | undefined;
@@ -54,11 +55,11 @@ function PlayerDetails() {
             PlayerService.updatePlayerAccount(Number(id), playerData);
         }
 
-        navigate("/players");
+        navigate("/playersList");
     };
 
     const onCancelFunc = () => {
-        navigate("/players");
+        navigate("/playersList");
     };
 
     
@@ -72,10 +73,10 @@ function PlayerDetails() {
                 </label>
                 <br />
                 <br />
-                <label>
+                {/* <label>
                     Friends:
                     {player?.friends && ListFriends(player.friends)}
-                </label>
+                </label> */}
                 <br />
                 <div>
                     <button>Add Friend</button>
@@ -88,20 +89,11 @@ function PlayerDetails() {
                         Cancel
                     </button>
                 </div>
-                
             </form>
+            <br />
+            <br />
+                <Link to={`/player/${id}/account`}>Account</Link>
         </div>
-    );
-}
-
-
-function ListFriends(friends: PlayerGetBasicDTO[]) {
-    return (
-        <span>
-            {friends.map((friend) => (
-                <span key={friend.id}> {friend.nickName}</span>
-            ))}
-        </span>
     );
 }
 

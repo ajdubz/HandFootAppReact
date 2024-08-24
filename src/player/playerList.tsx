@@ -50,7 +50,7 @@ function ListRow(player: PlayerGetBasicDTO) {
         <tr>
             <td>{player.id}</td>
             <td>
-                <Link to={`/player/${player.id}/account`} key={player.id}>{player.nickName}</Link>
+                <Link to={`/player/${player.id}`} key={player.id}>{player.nickName}</Link>
             </td>
         </tr>
     );

@@ -17,7 +17,10 @@ class PlayerService {
     public static async getPlayers(): Promise<PlayerGetBasicDTO[]> {
         try {
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player`);
-            const data = await url.json();
+            const text = await url.text();
+
+            // Parse the response body
+            const data = JSON.parse(text);
             return data;
         } catch (error) {
             console.error("Error in getPlayers:", error);
@@ -28,7 +31,10 @@ class PlayerService {
     public static async getPlayerAccountById(id: number): Promise<PlayerAccountDTO> {
         try {
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/account`);
-            const data = await url.json();
+            const text = await url.text();
+
+            // Parse the response body
+            const data = JSON.parse(text);
             return data;
         } catch (error) {
             console.error("Error in getPlayerAccountById:", error);
@@ -39,7 +45,10 @@ class PlayerService {
     public static async getPlayerFullDetailsById(id: number): Promise<PlayerFullDetailsDTO> {
         try {
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}`);
-            const data = await url.json();
+            const text = await url.text();
+
+            // Parse the response body
+            const data = JSON.parse(text);
             return data;
         } catch (error) {
             console.error("Error in getPlayerFullDetailsById:", error);
