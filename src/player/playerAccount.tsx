@@ -71,6 +71,32 @@ function PlayerAccount() {
         navigate("/playersList");
     };
 
+    const DeletePlayer = () => {
+        const [showModal, setShowModal] = useState(false);
+
+        const deletePlayer = async () => {
+            await PlayerService.deletePlayer(Number(id));
+            navigate("/playersList");
+        };
+
+        return (
+            <>
+                <button type="button" onClick={() => setShowModal(true)}>
+                    Delete Player
+                </button>
+                {showModal && (
+                    <div className="modal">
+                        <div className="modal-content">
+                            <h2>Delete Player</h2>
+                            <p>Are you sure you want to delete this player?</p>
+                            <button onClick={deletePlayer}>Yes</button>
+                            <button onClick={() => setShowModal(false)}>No</button>
+                        </div>
+                    </div>
+                )}
+            </>
+        );
+    };
     
     return (
         <div>
@@ -101,10 +127,15 @@ function PlayerAccount() {
                 <button type="button" onClick={onCancelFunc}>
                     Cancel
                 </button>
+                <br />
+                <br />
             </form>
-        </div>
+            {id && <DeletePlayer />}
+            </div>
     );
 }
+
+
 
 
 export default PlayerAccount;
