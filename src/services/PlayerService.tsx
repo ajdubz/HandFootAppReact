@@ -2,6 +2,17 @@ import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 
+    //Why have I needed to add the url.text() and JSON.parse() to the response?
+    //      Copie's response
+    //The fetch API does not automatically parse the response body into a JSON object.
+    //The response body is a stream of data that needs to be converted into a JSON object.
+    //The response object has a text() method that returns a promise that resolves with the response body as a string.
+    //The JSON.parse() function is then used to convert the string into a JSON object.
+    //The text() method is asynchronous and returns a promise, so it needs to be awaited.
+    //The JSON.parse() function is synchronous and returns a JSON object, so it does not need to be awaited.
+    //The JSON.parse() function is used to convert the response body into a JSON object.
+
+
 class PlayerService {
     public static async getPlayers(): Promise<PlayerGetBasicDTO[]> {
         try {
@@ -68,7 +79,10 @@ class PlayerService {
                 },
                 body: JSON.stringify(player),
             });
-            const data = await url.json();
+            const text = await url.text();
+
+            // Parse the response body
+            const data = JSON.parse(text);
             return data;
         } catch (error) {
             console.error("Error in updatePlayer:", error);

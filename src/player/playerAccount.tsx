@@ -61,7 +61,11 @@ function PlayerAccount(): React.ReactElement {
             password: password,
         };
 
-        PlayerService.createPlayer(playerData);
+        if (id) {
+            PlayerService.updatePlayerAccount(Number(id), playerData);
+        } else {
+            PlayerService.createPlayer(playerData);
+        }
         
 
         navigate("/playersList");
