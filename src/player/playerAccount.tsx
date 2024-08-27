@@ -2,37 +2,39 @@ import { useEffect, useState } from "react";
 import PlayerService from "../services/PlayerService";
 import { useParams, useNavigate } from "react-router-dom";
 import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
+import ConfirmChanges from "../modals/confirmChanges";
+import Button from "react-bootstrap/Button";
 
 interface RouteParams {
     [id: string]: string | undefined;
 }
 
-
 function PlayerAccount(): React.ReactElement {
     const { id = "" } = useParams<RouteParams>();
     const [player, setPlayer] = useState<PlayerAccountDTO>();
-    const [nickname, setNickname] = useState<string>(player?.nickName || '');
-    const [email, setEmail] = useState<string>(player?.email || '');
-    const [password, setPassword] = useState<string>('');
-    const [confirmPassword, setConfirmPassword] = useState<string>('');
+    const [nickname, setNickname] = useState<string>(player?.nickName || "");
+    const [email, setEmail] = useState<string>(player?.email || "");
+    const [password, setPassword] = useState<string>("");
+    const [confirmPassword, setConfirmPassword] = useState<string>("");
     const navigate = useNavigate();
+    const [showModalDelete, setShowModalDelete] = useState(false);
+    const [showModalSave, setShowModalSave] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
-            
-            const players = !id ? new PlayerAccountDTO : await PlayerService.getPlayerAccountById(Number(id));
+            const players = !id ? new PlayerAccountDTO() : await PlayerService.getPlayerAccountById(Number(id));
             setPlayer(players);
-    
-            setEmail(players?.email || '');
-            setNickname(players?.nickName || '');
-        };
-        
-        fetchData();
-        
-    }, [id, PlayerService, navigate]);
 
-    const onSubmitFunc = (e: React.FormEvent) => {
-        e.preventDefault();
+            setEmail(players?.email || "");
+            setNickname(players?.nickName || "");
+        };
+
+        fetchData();
+    }, []);
+
+    const onSubmitFunc = () => {
+
+        setShowModalSave(false);
 
         // Validate form values
         if (!nickname?.trim()) {
@@ -62,50 +64,32 @@ function PlayerAccount(): React.ReactElement {
         };
 
         if (id) {
-            PlayerService.updatePlayerAccount(Number(id), playerData);
+            PlayerService.updatePlayerAccount(Number(id), playerData)
+                .then(() => { navigate(`/player/${id}`); })
+                .catch((error) => { console.log(error); });
         } else {
-            PlayerService.createPlayer(playerData);
+            PlayerService.createPlayer(playerData)
+                .then(() => { navigate(`/player/${id}`); })
+                .catch((error) => { console.log(error); });
         }
-        
-
-        navigate("/playersList");
     };
 
-    const onCancelFunc = () => {
-        navigate("/playersList");
+    const returnToDetails = () => {
+        if(id) navigate(`/player/${id}`);
+        else navigate(`/playersList`);
     };
 
-    const DeletePlayer = () => {
-        const [showModal, setShowModal] = useState(false);
+    function handleModalConfirm(): void {
+        setShowModalDelete(false);
+        PlayerService.deletePlayer(Number(id))
+            .then(() => { navigate("/playersList"); })
+            .catch((error) => { console.log(error); });
+    }
 
-        const deletePlayer = async () => {
-            await PlayerService.deletePlayer(Number(id));
-            navigate("/playersList");
-        };
-
-        return (
-            <>
-                <button type="button" onClick={() => setShowModal(true)}>
-                    Delete Player
-                </button>
-                {showModal && (
-                    <div className="modal">
-                        <div className="modal-content">
-                            <h2>Delete Player</h2>
-                            <p>Are you sure you want to delete this player?</p>
-                            <button onClick={deletePlayer}>Yes</button>
-                            <button onClick={() => setShowModal(false)}>No</button>
-                        </div>
-                    </div>
-                )}
-            </>
-        );
-    };
-    
     return (
         <div>
             <h2>Player Details</h2>
-            <form onSubmit={onSubmitFunc}>
+            <form onSubmit={(e) => e.preventDefault()}>
                 <label>
                     Nickname:
                     <input type="text" name="nickname" defaultValue={nickname} onChange={(e) => setNickname(e.target.value)} />
@@ -127,19 +111,22 @@ function PlayerAccount(): React.ReactElement {
                 </label>
                 <br />
                 <br />
-                <button type="submit">Save</button>
-                <button type="button" onClick={onCancelFunc}>
+                <Button variant="primary" onClick={() => setShowModalSave(true)}>
+                    Save
+                </Button>
+                <Button variant="secondary" onClick={returnToDetails}>
                     Cancel
-                </button>
+                </Button>
                 <br />
                 <br />
+                <Button variant="danger" onClick={() => setShowModalDelete(true)}>
+                    Delete
+                </Button>
+                
             </form>
-            {id && <DeletePlayer />}
-            </div>
+            <ConfirmChanges isOpen={showModalSave || showModalDelete} onConfirm={showModalDelete ? handleModalConfirm : onSubmitFunc} onCancel={() => showModalDelete ? setShowModalDelete(false) : setShowModalSave(false) } />
+        </div>
     );
 }
-
-
-
 
 export default PlayerAccount;

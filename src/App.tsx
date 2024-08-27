@@ -3,9 +3,10 @@ import PlayerListTable from "./player/playerList";
 import TeamListTable from "./team/teamList";
 import PlayerDetails from "./player/playerDetails";
 import PlayerAccount from "./player/playerAccount";
-import Login from "./login";
+import Login from "./pages/login";
 import React from "react";
 import { useState } from "react";
+import PlayerFriends from "./player/playerFriends";
 
 function NewHeader() {
     return (
@@ -21,6 +22,7 @@ const NewRoutes: React.FC = () => {
         <Routes>
             <Route path="/playersList" element={<PlayerListTable />} />
             <Route path="/player/:id" element={<PlayerDetails />} />
+            <Route path="/player/:id/friends" element={<PlayerFriends />} />
             <Route path="/player/account" element={<PlayerAccount />} />
             <Route path="/player/:id/account" element={<PlayerAccount />} />
             <Route path="/teams" element={<TeamListTable />} />

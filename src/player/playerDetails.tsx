@@ -5,7 +5,9 @@ import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import TeamService from "../services/TeamService";
 import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
-import PlayerAccount from "./playerAccount";
+import Button from "react-bootstrap/Button";
+import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
+import ConfirmChanges from "../modals/confirmChanges";
 
 interface RouteParams {
     [id: string]: string | undefined;
@@ -14,86 +16,112 @@ interface RouteParams {
 
 function PlayerDetails() {
     const { id = "" } = useParams<RouteParams>();
-    const [player, setPlayer] = useState<PlayerFullDetailsDTO>();
+    const [player, setPlayer] = useState<PlayerFullDetailsDTO | undefined>();
     const [nickname, setNickname] = useState<string>(player?.nickName || '');
-    const [teams, setTeams] = useState<TeamGetBasicDTO[]>([]);
+    const [teams, setTeams] = useState<TeamGetBasicDTO[] | undefined>([]);
     const navigate = useNavigate();
+    const [showModalSave, setShowModalSave] = useState(false);
+
+    
 
     useEffect(() => {
 
         const fetchData = async () => {
-            
-            const players = !id ? new PlayerFullDetailsDTO : await PlayerService.getPlayerAccountById(Number(id));
-            const teams = await TeamService.getTeams();
-            setPlayer(players);
-            setTeams(teams);
+
+
+            // const player = PlayerService.getPlayerFullDetailsById(Number(id)).then((data) => setPlayer(data)).catch((error) => {
+            //     console.error("Error in getPlayerFullDetailsById:", error);
+            //     return new PlayerFullDetailsDTO;
+            // });
     
-            setNickname(players?.nickName || '');
+            PlayerService.getPlayerFullDetailsById(Number(id))
+                .then((data) => {
+                    setPlayer(data);
+                    setNickname(data?.nickName || '');
+                })
+                .catch((error) => {
+                    console.error("Error in getPlayerFullDetailsById:", error);
+                    setPlayer(new PlayerFullDetailsDTO());
+                });
+    
+    
         };
-        
+
         fetchData();
         
-    }, [id, PlayerService, navigate]);
+    }, []);
 
 
-    const onSubmitFunc = (e: React.FormEvent) => {
-        e.preventDefault();
+    const onSubmitFunc = () => {
 
-        // Validate form values
-        if (!nickname?.trim()) {
+            // Validate form values
+        if (!nickname.trim()) {
             alert("Nickname is required");
             return;
         }
 
         if (id) {
             // Push to backend
-            const playerData: PlayerFullDetailsDTO = {
+            const playerData: PlayerAccountDTO = {
                 nickName: nickname,
-
             };
 
-            PlayerService.updatePlayerAccount(Number(id), playerData);
+            PlayerService.updatePlayerAccount(Number(id), playerData)
+                .then(() => { navigate("/playersList"); })
+                .catch((error) => { console.error("Error in updatePlayerAccount:", error); });
         }
 
-        navigate("/playersList");
     };
 
-    const onCancelFunc = () => {
-        navigate("/playersList");
+    const returnToList = () => {
+        navigate(`/playersList`);
     };
 
     
     return (
         <div>
             <h2>Player Details</h2>
-            <form onSubmit={onSubmitFunc}>
+            <form onSubmit={(e) => e.preventDefault()}>
                 <label>
                     Nickname:
                     <input type="text" name="nickname" defaultValue={nickname} onChange={(e) => setNickname(e.target.value)} />
                 </label>
                 <br />
                 <br />
-                {/* <label>
+                <label>
                     Friends:
                     {player?.friends && ListFriends(player.friends)}
-                </label> */}
+                </label>
                 <br />
                 <div>
-                    <button>Add Friend</button>
+                    <Link to={`/player/${id}/friends`}>See Friends</Link>
                 </div>
                 <br />
                 <br />
                 <div>
-                    <button type="submit">Save</button>
-                    <button type="button" onClick={onCancelFunc}>
+                    <Button variant="primary" onClick={() => setShowModalSave(true)}>
+                        Save
+                    </Button>
+                    <Button variant="secondary" onClick={returnToList}>
                         Cancel
-                    </button>
+                    </Button>
                 </div>
             </form>
             <br />
             <br />
-                <Link to={`/player/${id}/account`}>Account</Link>
+            <Link to={`/player/${id}/account`}>Account</Link>
+            <ConfirmChanges isOpen={showModalSave} onConfirm={onSubmitFunc} onCancel={() => setShowModalSave(false) } />
         </div>
+    );
+}
+
+function ListFriends(friends: PlayerGetBasicDTO[]) {
+    return (
+        <span>
+            {friends.map((friend) => (
+                <span key={friend.id}> {friend.nickName}</span>
+            ))}
+        </span>
     );
 }
 

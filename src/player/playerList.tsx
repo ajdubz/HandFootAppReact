@@ -6,14 +6,12 @@ import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 const PlayerListTable = () => {
     const [players, setPlayers] = useState<PlayerGetBasicDTO[]>([]);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const data = await PlayerService.getPlayers();
-            setPlayers(data);
-        };
+    const fetchData = async () => {
+        const data = await PlayerService.getPlayers();
+        setPlayers(data);
+    };
 
-        fetchData();
-    });
+    useEffect(() => { fetchData(); }, []);
 
     return (
         <div>
@@ -50,7 +48,7 @@ function ListRow(player: PlayerGetBasicDTO) {
         <tr>
             <td>{player.id}</td>
             <td>
-                <Link to={`/player/${player.id}`} key={player.id}>{player.nickName}</Link>
+                <Link to={`/player/${player.id}`} key={player.id}>{player.nickName ? player.nickName : "No Name"}</Link>
             </td>
         </tr>
     );
