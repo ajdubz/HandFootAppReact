@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import PlayerService from "../services/PlayerService";
+import FriendService from "../services/FriendService";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import TeamService from "../services/TeamService";
@@ -17,8 +18,8 @@ interface RouteParams {
 function PlayerDetails() {
     const { id = "" } = useParams<RouteParams>();
     const [player, setPlayer] = useState<PlayerFullDetailsDTO | undefined>();
-    const [nickname, setNickname] = useState<string>(player?.nickName || '');
-    const [teams, setTeams] = useState<TeamGetBasicDTO[] | undefined>([]);
+    const [nickname, setNickname] = useState<string>(player?.nickName || '');    
+    const [friends, setFriends] = useState<PlayerGetBasicDTO[] | undefined>([]);
     const navigate = useNavigate();
     const [showModalSave, setShowModalSave] = useState(false);
 
@@ -28,13 +29,10 @@ function PlayerDetails() {
 
         const fetchData = async () => {
 
+            await FriendService.getFriends(Number(id)).then((data) => setFriends(data)).catch((error) => { console.error("Error in getFriends:", error); return [] });
 
-            // const player = PlayerService.getPlayerFullDetailsById(Number(id)).then((data) => setPlayer(data)).catch((error) => {
-            //     console.error("Error in getPlayerFullDetailsById:", error);
-            //     return new PlayerFullDetailsDTO;
-            // });
     
-            PlayerService.getPlayerFullDetailsById(Number(id))
+            await PlayerService.getPlayerFullDetailsById(Number(id))
                 .then((data) => {
                     setPlayer(data);
                     setNickname(data?.nickName || '');
@@ -90,7 +88,7 @@ function PlayerDetails() {
                 <br />
                 <label>
                     Friends:
-                    {player?.friends && ListFriends(player.friends)}
+                    {ListFriends(friends)}
                 </label>
                 <br />
                 <div>
@@ -115,11 +113,11 @@ function PlayerDetails() {
     );
 }
 
-function ListFriends(friends: PlayerGetBasicDTO[]) {
+function ListFriends(friends: PlayerGetBasicDTO[] | undefined) {
     return (
         <span>
-            {friends.map((friend) => (
-                <span key={friend.id}> {friend.nickName}</span>
+            {friends?.map((friend) => (
+                <span key={friend.id}><strong> {friend.nickName}</strong></span>
             ))}
         </span>
     );

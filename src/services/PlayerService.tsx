@@ -76,12 +76,6 @@ class PlayerService {
             if (!url.ok) {
                 throw new Error("Error in createPlayer");
             }
-            // Check if the response body is empty
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
         } catch (error) {
             console.log(player);
             console.error("Error in createPlayer:", error);
@@ -101,10 +95,6 @@ class PlayerService {
             if (!url.ok) {
                 throw new Error("Error in updatePlayerAccount");
             }
-
-            const json = await url.json();
-            //console.log(json);
-            return json;
         } catch (error) {
             console.error("Error in updatePlayer:", error);
             throw error;
@@ -119,11 +109,6 @@ class PlayerService {
             if (!url.ok) {
                 throw new Error("Error in deletePlayer");
             }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
         } catch (error) {
             console.error("Error in deletePlayer:", error);
             throw error;

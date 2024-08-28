@@ -1,27 +1,30 @@
 import { useEffect, useState } from "react";
 import PlayerService from "../services/PlayerService";
+import FriendService from "../services/FriendService";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import ConfirmChanges from "../modals/confirmChanges";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
+import { Button } from "react-bootstrap";
 
 interface RouteParams {
     [id: string]: string | undefined;
 }
 
-
-
 function PlayerFriends(): React.ReactElement {
     const { id = "" } = useParams<RouteParams>();
-    const [player, setPlayer] = useState<PlayerFullDetailsDTO>();
+    const [friends, setFriends] = useState<PlayerGetBasicDTO[] | undefined>([]);
+    const [friendRequests, setFriendRequests] = useState<PlayerGetBasicDTO[] | undefined>([]);
+    const [sentFriendRequests, setSentFriendRequests] = useState<PlayerGetBasicDTO[] | undefined>([]);
 
     useEffect(() => {
 
         const fetchData = async () => {
-            
-            const players = !id ? new PlayerFullDetailsDTO : await PlayerService.getPlayerAccountById(Number(id));
-            setPlayer(players);
+
+            await FriendService.getFriends(Number(id)).then((data) => setFriends(data)).catch((error) => { console.error("Error in getFriends:", error); return [] });
+            await FriendService.getFriendRequests(Number(id)).then((data) => setFriendRequests(data)).catch((error) => { console.error("Error in getFriendRequests:", error); return [] });
+            await FriendService.getSentFriendRequests(Number(id)).then((data) => setSentFriendRequests(data)).catch((error) => { console.error("Error in getSentFriendRequests:", error); return [] });
     
         };
         
@@ -34,19 +37,30 @@ function PlayerFriends(): React.ReactElement {
             <h1>Player Friends</h1>
             <label>
                 Friends:
-                {player?.friends && ListFriends(player.friends)}
+                {ListFriends(friends)}
             </label>
             <br />
-            {/* <label>
+            <br />
+            <label>
                 Friend Requests:
-                {player?.friendRequests && ListFriends(player.friendRequests)}
+                {ListFriends(friendRequests)}
             </label>
+            <br />
             <br />
             <label>
                 Sent Friend Requests:
-                {player?.sentFriendRequests && ListFriends(player.sentFriendRequests)}
-            </label> */}
+                {ListFriendRequests(sentFriendRequests)}
+            </label>
             <br />
+            <br />
+            <br />
+            <div>
+                <Button variant="outline-primary">Add Friend</Button>
+            </div>
+            <br />
+            <br />
+
+            
             <Link to={`/player/${id}`}>Back</Link>
 
 
@@ -54,13 +68,23 @@ function PlayerFriends(): React.ReactElement {
     );
 }
 
-function ListFriends(friends: PlayerGetBasicDTO[]) {
+function ListFriends(friends: PlayerGetBasicDTO[] | undefined): React.ReactElement {
     return (
-        <span>
-            {friends.map((friend) => (
-                <span key={friend.id}> {friend.nickName}</span>
+        <div>
+            {friends?.map((friend) => (
+                <div key={friend.id}><strong><Link to={`/player/${friend.id}`}>{friend.nickName}</Link></strong></div>
             ))}
-        </span>
+        </div>
+    );
+}
+
+function ListFriendRequests(friends: PlayerGetBasicDTO[] | undefined): React.ReactElement {
+    return (
+        <div>
+            {friends?.map((friend) => (
+                <div key={friend.id}><strong>{friend.nickName}</strong></div>
+            ))}
+        </div>
     );
 }
 
