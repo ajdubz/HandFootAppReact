@@ -2,18 +2,8 @@ import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 
-//Why have I needed to add the url.text() and JSON.parse() to the response?
-//      Copie's response
-//The fetch API does not automatically parse the response body into a JSON object.
-//The response body is a stream of data that needs to be converted into a JSON object.
-//The response object has a text() method that returns a promise that resolves with the response body as a string.
-//The JSON.parse() function is then used to convert the string into a JSON object.
-//The text() method is asynchronous and returns a promise, so it needs to be awaited.
-//The JSON.parse() function is synchronous and returns a JSON object, so it does not need to be awaited.
-//The JSON.parse() function is used to convert the response body into a JSON object.
-
 class PlayerService {
-    public static async getPlayers(): Promise<PlayerGetBasicDTO[]> {
+    public static async getPlayers(): Promise<PlayerGetBasicDTO[] | undefined> {
         try {
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player`);
             if (!url.ok) {
@@ -25,12 +15,12 @@ class PlayerService {
             const data = JSON.parse(text);
             return data;
         } catch (error) {
-            console.error("Error in getPlayers:", error);
+            console.error("Error in getPlayers FE:", error);
             throw error;
         }
     }
 
-    public static async getPlayerAccountById(id: number): Promise<PlayerAccountDTO> {
+    public static async getPlayerAccountById(id: number): Promise<PlayerAccountDTO | undefined> {
         try {
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/account`);
             if (!url.ok) {
@@ -42,7 +32,7 @@ class PlayerService {
             const data = JSON.parse(text);
             return data;
         } catch (error) {
-            console.error("Error in getPlayerAccountById:", error);
+            console.error("Error in getPlayerAccountById FE:", error);
             throw error;
         }
     }
@@ -59,7 +49,7 @@ class PlayerService {
             const data = JSON.parse(text);
             return data;
         } catch (error) {
-            console.error("Error in getPlayerFullDetailsById:", error);
+            console.error("Error in getPlayerFullDetailsById FE:", error);
             throw error;
         }
     }
@@ -78,7 +68,7 @@ class PlayerService {
             }
         } catch (error) {
             console.log(player);
-            console.error("Error in createPlayer:", error);
+            console.error("Error in createPlayer FE:", error);
             throw error;
         }
     }
@@ -96,7 +86,7 @@ class PlayerService {
                 throw new Error("Error in updatePlayerAccount");
             }
         } catch (error) {
-            console.error("Error in updatePlayer:", error);
+            console.error("Error in updatePlayer FE:", error);
             throw error;
         }
     }
@@ -110,10 +100,46 @@ class PlayerService {
                 throw new Error("Error in deletePlayer");
             }
         } catch (error) {
-            console.error("Error in deletePlayer:", error);
+            console.error("Error in deletePlayer FE:", error);
             throw error;
         }
     }
+
+    public static async searchPlayers(search: string): Promise<PlayerGetBasicDTO[] | undefined> {
+        try {
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/search/${search}`);
+            if (!url.ok) {
+                throw new Error("Error in searchPlayers");
+            }
+            const text = await url.text();
+
+            // Parse the response body
+            const data = JSON.parse(text);
+            return data;
+        } catch (error) {
+            console.error("Error in searchPlayers FE:", error);
+            throw error;
+        }
+    }
+
+    public static async searchNewFriends(search: string): Promise<PlayerGetBasicDTO[] | undefined> {
+        try {
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/friendSearch/${search}`);
+            if (!url.ok) {
+                throw new Error("Error in searchPlayers");
+            }
+            const text = await url.text();
+
+            // Parse the response body
+            const data = JSON.parse(text);
+            return data;
+        } catch (error) {
+            console.error("Error in searchPlayers FE:", error);
+            throw error;
+        }
+    }
+
+
 }
 
 export default PlayerService;

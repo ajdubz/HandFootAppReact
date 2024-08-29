@@ -47,7 +47,7 @@ function PlayerDetails() {
 
         fetchData();
         
-    }, []);
+    }, [id]);
 
 
     const onSubmitFunc = () => {
@@ -117,7 +117,7 @@ function ListFriends(friends: PlayerGetBasicDTO[] | undefined) {
     return (
         <span>
             {friends?.map((friend) => (
-                <span key={friend.id}><strong> {friend.nickName}</strong></span>
+                <span key={friend.id}><strong> <Link to={`/player/${friend.id}`}>{friend.nickName}</Link></strong></span>
             ))}
         </span>
     );

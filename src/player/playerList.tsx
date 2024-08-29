@@ -7,7 +7,7 @@ const PlayerListTable = () => {
     const [players, setPlayers] = useState<PlayerGetBasicDTO[]>([]);
 
     const fetchData = async () => {
-        const data = await PlayerService.getPlayers();
+        const data = (await PlayerService.getPlayers().then((data) => data).catch((error) => console.error(error))) || [];
         setPlayers(data);
     };
 

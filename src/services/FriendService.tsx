@@ -5,9 +5,9 @@ import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 class FriendService {
     public static async getFriends(id: number): Promise<PlayerGetBasicDTO[] | undefined> {
         try {
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Friend/${id}`);
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/friends`);
             if (!url.ok) {
-                throw new Error("Error in getFriends");
+                throw new Error("Error in getFriends FE");
             }
             const text = await url.text();
 
@@ -15,16 +15,16 @@ class FriendService {
             const data = JSON.parse(text);
             return data;
         } catch (error) {
-            console.error("Error in getFriends:", error);
+            console.error("Error in getFriends FE:", error);
             throw error;
         }
     }
 
     public static async getFriendRequests(id: number): Promise<PlayerGetBasicDTO[] | undefined> {
         try {
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Friend/${id}/requests`);
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/friendRequests`);
             if (!url.ok) {
-                throw new Error("Error in getFriendRequests");
+                throw new Error("Error in getFriendRequests FE");
             }
             const text = await url.text();
 
@@ -32,16 +32,16 @@ class FriendService {
             const data = JSON.parse(text);
             return data;
         } catch (error) {
-            console.error("Error in getFriendRequests:", error);
+            console.error("Error in getFriendRequests FE:", error);
             throw error;
         }
     }
 
     public static async getSentFriendRequests(id: number): Promise<PlayerGetBasicDTO[] | undefined> {
         try {
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Friend/${id}/requestsSent`);
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/requestsSent`);
             if (!url.ok) {
-                throw new Error("Error in getSentFriendRequests");
+                throw new Error("Error in getSentFriendRequests FE");
             }
             const text = await url.text();
 
@@ -49,14 +49,32 @@ class FriendService {
             const data = JSON.parse(text);
             return data;
         } catch (error) {
-            console.error("Error in getSentFriendRequests:", error);
+            console.error("Error in getSentFriendRequests FE:", error);
             throw error;
         }
     }
 
     public static async sendFriendRequest(id: number, playerFriend: PlayerFriendBasicDTO) {
         try {
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Friend/${id}/requestAdd`, {
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/requestAdd`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(playerFriend),
+            });
+            if (!url.ok) {
+                throw new Error("Error in sendFriendRequest FE");
+            }
+        } catch (error) {
+            console.error("Error in sendFriendRequest FE:", error);
+            throw error;
+        }
+    }
+
+    public static async acceptFriendRequest(id: number, playerFriend: PlayerFriendBasicDTO) {
+        try {
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/requestAccept`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -64,38 +82,24 @@ class FriendService {
                 body: JSON.stringify(playerFriend),
             });
             if (!url.ok) {
-                throw new Error("Error in sendFriendRequest");
+                throw new Error("Error in acceptFriendRequest FE");
             }
         } catch (error) {
-            console.error("Error in sendFriendRequest:", error);
+            console.error("Error in acceptFriendRequest FE:", error);
             throw error;
         }
     }
 
-    public static async acceptFriendRequest(id: number, friendId: number) {
+    public static async removeFriend(id: number, playerFriend: PlayerFriendBasicDTO) {
         try {
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Friend/${id}/friendRequests/${friendId}`, {
-                method: "PUT",
-            });
-            if (!url.ok) {
-                throw new Error("Error in acceptFriendRequest");
-            }
-        } catch (error) {
-            console.error("Error in acceptFriendRequest:", error);
-            throw error;
-        }
-    }
-
-    public static async removeFriend(id: number, friendId: number) {
-        try {
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Friend/${id}/friends/${friendId}`, {
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/friends/${playerFriend.friendId}`, {
                 method: "DELETE",
             });
             if (!url.ok) {
-                throw new Error("Error in removeFriend");
+                throw new Error("Error in removeFriend FE");
             }
         } catch (error) {
-            console.error("Error in removeFriend:", error);
+            console.error("Error in removeFriend FE:", error);
             throw error;
         }
     }
