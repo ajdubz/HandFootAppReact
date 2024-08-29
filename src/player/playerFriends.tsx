@@ -103,7 +103,7 @@ function PlayerFriends(): React.ReactElement {
         setShowAddFriend(false);
         setSearchText(search);
         if (search.length > 0) {
-            PlayerService.searchNewFriends(search).then((data) => setSearchPlayers(data)).catch((error) => { console.error("Error in searchPlayers:", error); return [] });
+            PlayerService.searchNewFriends(Number(id), search).then((data) => setSearchPlayers(data)).catch((error) => { console.error("Error in searchPlayers:", error); return [] });
         } else {
             setSearchPlayers([]);
         }

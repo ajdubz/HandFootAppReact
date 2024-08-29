@@ -122,9 +122,9 @@ class PlayerService {
         }
     }
 
-    public static async searchNewFriends(search: string): Promise<PlayerGetBasicDTO[] | undefined> {
+    public static async searchNewFriends(playerId: number, search: string): Promise<PlayerGetBasicDTO[] | undefined> {
         try {
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/friendSearch/${search}`);
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${playerId}/friendSearch/${search}`);
             if (!url.ok) {
                 throw new Error("Error in searchPlayers");
             }
