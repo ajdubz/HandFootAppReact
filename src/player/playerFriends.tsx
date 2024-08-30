@@ -8,7 +8,7 @@ import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import { Button, ListGroup } from "react-bootstrap";
 import PlayerFriendBasicDTO from "../models/DTOs/Player/PlayerFriendBasicDTO";
-import { ListFriends } from "./playerList";
+import { ListFriends, performPlayerSearch } from "./playerList";
 
 interface RouteParams {
     [id: string]: string | undefined;
@@ -25,7 +25,7 @@ function PlayerFriends(): React.ReactElement {
     const [showAddFriend, setShowAddFriend] = useState<boolean>(false);
     const [newFriendId, setNewFriendId] = useState<number>(0);
     const [showConfirmChanges, setShowConfirmChanges] = useState<boolean>(false);
-    const [playerFriend, setPlayerFriend] = useState<PlayerFriendBasicDTO>(new PlayerFriendBasicDTO());
+    const [selectedPlayerFriend, setSelectedPlayerFriend] = useState<PlayerFriendBasicDTO>(new PlayerFriendBasicDTO());
     const navigateTo = useNavigate();
 
 
@@ -78,9 +78,9 @@ function PlayerFriends(): React.ReactElement {
             <br />
             <br />
             <div>
-                <input type="text" name="searchText" placeholder="Search Players" value={searchText} onChange={(e) => { e.preventDefault(); handleSearchPlayers(e); }} />
-                {searchPlayersResults && ShowSearchPlayers(searchPlayersResults)}
-                {showAddFriend && <Button onClick={handleSendRequest}>Add Player</Button>}
+                <input type="text" name="searchText" placeholder="Search Players" value={searchText} onChange={(e) => { e.preventDefault(); performPlayerSearch(Number(id), e.target.value, maybePerformPlayerSearch); }} />
+                {searchPlayersResults && ListFriends(searchPlayersResults, searchPlayersOnClick)}
+                {showAddFriend && <Button onClick={clickAddPlayerButton}>Add Player</Button>}
             </div>
             <br />
             <br />
@@ -92,46 +92,18 @@ function PlayerFriends(): React.ReactElement {
         </div>
     );
 
-    function acceptFriendClick(playerId: number | undefined) {
-        let miniPlayerFriend = new PlayerFriendBasicDTO();
-
-        miniPlayerFriend.friendId = playerId;
-        miniPlayerFriend.playerId = Number(id);
-
-        setPlayerFriend(miniPlayerFriend);
-
-        setShowConfirmChanges(true);
-    }
-
-    function ShowSearchPlayers(searchPlayers: PlayerGetBasicDTO[] | undefined): ReactElement {
-        return (
-            <div>
-                {searchPlayers?.map((player) => (
-                    <div key={player.id}>
-                        <strong>
-                            <a href="#" onClick={(e) => { e.preventDefault(); handleSearchPlayersClick(player.id, player.nickName); }}>{player.nickName}</a>
-                        </strong>
-                    </div>
-                ))}
-            </div>
-        );
-    }
-
-    function handleSearchPlayers(event: ChangeEvent<HTMLInputElement>) {
-        let search = event.target.value;
+    function maybePerformPlayerSearch(players: PlayerGetBasicDTO[] | undefined, text: string) {
+        let search = text;
         setShowAddFriend(false);
         setSearchText(search);
-        if (search.length > 0) {
-            FriendService.searchNewFriends(Number(id), search).then((data) => setSearchPlayers(data)).catch((error) => { console.error("Error in searchPlayers:", error); return [] });
-        } else {
-            setSearchPlayers([]);
-        }
+        setSearchPlayers(players);
+        // performPlayerSearch(search, setSearchPlayers);
     }
 
-    function handleSearchPlayersClick(newFriendId: number | undefined, inPlayerName: string | undefined) {
-        let search = inPlayerName;
+    function searchPlayersOnClick(playerClicked: PlayerGetBasicDTO| undefined) {
+        let search = playerClicked?.nickName;
 
-        if (search && newFriendId && search.length > 0) {
+        if (search && search.length > 0) {
             setSearchText(search);
             setSearchPlayers([]);
             setShowAddFriend(true);
@@ -139,7 +111,7 @@ function PlayerFriends(): React.ReactElement {
         }
     }
 
-    function handleSendRequest( event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+    function clickAddPlayerButton( event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
         event.preventDefault();
         let playerFriend = new PlayerFriendBasicDTO();
         playerFriend.friendId = newFriendId;
@@ -153,13 +125,23 @@ function PlayerFriends(): React.ReactElement {
         sendRequest(playerFriend);
     }
 
-    function friendRequestClick() {
-        setShowConfirmChanges(false);
-        acceptRequest(playerFriend);
+    function acceptFriendClick(playerClicked: PlayerGetBasicDTO | undefined) {
+        let miniPlayerFriend = new PlayerFriendBasicDTO();
+
+        miniPlayerFriend.friendId = playerClicked?.id;
+        miniPlayerFriend.playerId = Number(id);
+
+        setSelectedPlayerFriend(miniPlayerFriend);
+        setShowConfirmChanges(true);
     }
 
-    function friendListClick(playerId: number | undefined) {
-        navigateTo(`/player/${playerId}`);
+    function friendRequestClick() {
+        setShowConfirmChanges(false);
+        acceptRequest(selectedPlayerFriend);
+    }
+
+    function friendListClick(playerClicked: PlayerGetBasicDTO | undefined) {
+        navigateTo(`/player/${playerClicked?.id}`);
 
     }
 

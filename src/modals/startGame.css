@@ -1,0 +1,33 @@
+/* startGame.css */
+
+
+.modal-content {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto; /* Center the modal content */
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-body {
+    width: 100%; /* Ensure the modal body takes full width */
+    margin: 0 auto;
+}
+
+/* table {
+    width: 100%;
+}
+
+th,
+td {
+    padding: 8px;
+    text-align: left;
+} */
+
+button {
+    margin-top: 16px;
+}

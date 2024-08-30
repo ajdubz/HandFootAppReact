@@ -9,6 +9,7 @@ import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import Button from "react-bootstrap/Button";
 import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import ConfirmChanges from "../modals/confirmChanges";
+import StartGame from "../modals/startGame";
 
 interface RouteParams {
     [id: string]: string | undefined;
@@ -22,28 +23,27 @@ function PlayerDetails() {
     const [friends, setFriends] = useState<PlayerGetBasicDTO[] | undefined>([]);
     const navigate = useNavigate();
     const [showModalSave, setShowModalSave] = useState(false);
+    const [showModalStart, setShowModalStart] = useState(false);
 
-    
+    const fetchData = async () => {
+
+        await FriendService.getFriends(Number(id)).then((data) => setFriends(data)).catch((error) => { console.error("Error in getFriends:", error); return [] });
+
+
+        await PlayerService.getPlayerFullDetailsById(Number(id))
+            .then((data) => {
+                setPlayer(data);
+                setNickname(data?.nickName || '');
+            })
+            .catch((error) => {
+                console.error("Error in getPlayerFullDetailsById:", error);
+                setPlayer(new PlayerFullDetailsDTO());
+            });
+
+
+    };
 
     useEffect(() => {
-
-        const fetchData = async () => {
-
-            await FriendService.getFriends(Number(id)).then((data) => setFriends(data)).catch((error) => { console.error("Error in getFriends:", error); return [] });
-
-    
-            await PlayerService.getPlayerFullDetailsById(Number(id))
-                .then((data) => {
-                    setPlayer(data);
-                    setNickname(data?.nickName || '');
-                })
-                .catch((error) => {
-                    console.error("Error in getPlayerFullDetailsById:", error);
-                    setPlayer(new PlayerFullDetailsDTO());
-                });
-    
-    
-        };
 
         fetchData();
         
@@ -85,15 +85,7 @@ function PlayerDetails() {
                     <input type="text" name="nickname" defaultValue={nickname} onChange={(e) => setNickname(e.target.value)} />
                 </label>
                 <br />
-                <br />
-                <label>
-                    Friends:
-                    {ListFriends(friends)}
-                </label>
-                <br />
-                <div>
-                    <Link to={`/player/${id}/friends`}>See Friends</Link>
-                </div>
+                
                 <br />
                 <br />
                 <div>
@@ -107,7 +99,16 @@ function PlayerDetails() {
             </form>
             <br />
             <br />
-            <Link to={`/player/${id}/account`}>Account</Link>
+            <Link to={`/player/${id}/account`}>Account </Link>
+            <br />
+            <Link to={`/player/${id}/friends`}> See Friends</Link>
+            <br />
+            <br />
+            <Button variant="primary" onClick={() => setShowModalStart(true)}>
+                Start Game
+            </Button>
+
+            <StartGame isOpen={showModalStart} onCancel={() => setShowModalStart(false)} onConfirm={() => setShowModalStart(false)} />
             <ConfirmChanges isOpen={showModalSave} onConfirm={onSubmitFunc} onCancel={() => setShowModalSave(false) } />
         </div>
     );
