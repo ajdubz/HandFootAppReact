@@ -122,22 +122,7 @@ class PlayerService {
         }
     }
 
-    public static async searchNewFriends(playerId: number, search: string): Promise<PlayerGetBasicDTO[] | undefined> {
-        try {
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${playerId}/friendSearch/${search}`);
-            if (!url.ok) {
-                throw new Error("Error in searchPlayers");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
-        } catch (error) {
-            console.error("Error in searchPlayers FE:", error);
-            throw error;
-        }
-    }
+    
 
 
 }

@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, Link } from "react-router-dom";
-import PlayerListTable from "./player/playerList";
+import { PlayerListTable } from "./player/playerList";
 import TeamListTable from "./team/teamList";
 import PlayerDetails from "./player/playerDetails";
 import PlayerAccount from "./player/playerAccount";
@@ -35,7 +35,6 @@ const ProtectedRoutes: React.FC<{ isAuthenticated: boolean; children: React.Reac
     return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 };
 
-//difference between this now being an react.FC vs a normal function
 const App: React.FC = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 

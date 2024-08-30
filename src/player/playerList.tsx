@@ -1,67 +1,51 @@
 import { useEffect, useState } from "react";
 import PlayerService from "../services/PlayerService";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 
 const PlayerListTable = () => {
-    const [players, setPlayers] = useState<PlayerGetBasicDTO[]>([]);
+    const [players, setPlayers] = useState<PlayerGetBasicDTO[] | undefined>([]);
+    const navigateTo = useNavigate();
 
     const fetchData = async () => {
-        const data = (await PlayerService.getPlayers().then((data) => data).catch((error) => console.error(error))) || [];
-        setPlayers(data);
+        await PlayerService.getPlayers().then((data) => setPlayers(data)).catch((error) => console.error(error));
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => {
+        fetchData();
+    }, []);
 
     return (
         <div>
             <table>
-                <ListHeaderRow></ListHeaderRow>
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Name</th>
+                    </tr>
+                </thead>
                 <tbody>
-                    {players.map((player) => {
-                        return <ListRow key={player.id} {...player}></ListRow>;
-                    })}
+                    {players && ListFriends(players, (playerId) => { navigateTo(`/player/${playerId}`)})}
                 </tbody>
             </table>
             <br />
-
-            <AddPlayerRow />
+            <div>
+                <span>
+                    <Link to="/player/account">Add Player</Link>
+                </span>
+            </div>
         </div>
     );
 };
 
-
-
-function ListHeaderRow() {
-    return (
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Name</th>
-            </tr>
-        </thead>
-    );
-}
-
-function ListRow(player: PlayerGetBasicDTO) {
-    return (
-        <tr>
-            <td>{player.id}</td>
-            <td>
-                <Link to={`/player/${player.id}`} key={player.id}>{player.nickName ? player.nickName : "No Name"}</Link>
-            </td>
-        </tr>
-    );
-}
-
-function AddPlayerRow() {
+const ListFriends = (friends: PlayerGetBasicDTO[] | undefined, onClickFunc: (playerId: number | undefined) => void) => {
     return (
         <div>
-            <span>
-                <Link to="/player/account">Add Player</Link>
-            </span>
+            {friends?.map((friend) => (
+                <div key={friend.id}><strong><a href="#" onClick={(e) => {e.preventDefault(); onClickFunc(friend.id)}}>{friend.nickName}</a></strong></div>
+            ))}
         </div>
     );
-}
+};
 
-export default PlayerListTable;
+export { PlayerListTable, ListFriends };
