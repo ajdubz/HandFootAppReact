@@ -1,23 +1,39 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import PlayerService from '../services/PlayerService';
+import PlayerLoginDTO from '../models/DTOs/Player/PlayerLoginDTO';
+import PlayerAccountDTO from '../models/DTOs/Player/PlayerAccountDTO';
 
 const Login: React.FC<{ onLogin: () => void}> = ({onLogin}) => {
     const navigate = useNavigate();
-    const [email, setEmail] = useState('');
+    const [emailOrName, setEmailOrName] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setEmail(e.target.value);
+    const handleEmailOrNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setEmailOrName(e.target.value);
     };
 
     const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setPassword(e.target.value);
     };
 
-    const handleLogin = () => {
-        onLogin();
-        navigate("/playersList");
-        // Add your login logic here
+    const  handleLogin = async () => {
+        let player = new PlayerAccountDTO();
+        if(emailOrName.includes('@')) {
+            player.email = emailOrName;
+        } else {
+            player.nickName = emailOrName;
+        }
+        player.password = password;
+        
+        await PlayerService.LoginPlayer(player).then((data) => {
+            if (data) {
+                onLogin();
+                navigate("/playersList");
+            }
+        }).catch((error) => {
+            console.error("Error in LoginPlayer:", error);
+        });
     };
 
     return (
@@ -25,8 +41,8 @@ const Login: React.FC<{ onLogin: () => void}> = ({onLogin}) => {
             <h2>Login</h2>
             <div>
                 <div>
-                    <label>Email:</label>
-                    <input type="email" value={email} onChange={handleEmailChange} />
+                    <label>Username or Email:</label>
+                    <input type="text" value={emailOrName} onChange={handleEmailOrNameChange} />
                 </div>
                 <div>
                     <label>Password:</label>

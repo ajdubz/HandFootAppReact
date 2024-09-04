@@ -100,14 +100,14 @@ function PlayerFriends(): React.ReactElement {
         // performPlayerSearch(search, setSearchPlayers);
     }
 
-    function searchPlayersOnClick(playerClicked: PlayerGetBasicDTO| undefined) {
+    function searchPlayersOnClick(playerClicked: PlayerGetBasicDTO | undefined) {
         let search = playerClicked?.nickName;
 
         if (search && search.length > 0) {
             setSearchText(search);
             setSearchPlayers([]);
             setShowAddFriend(true);
-            setNewFriendId(newFriendId);
+            setNewFriendId(playerClicked?.id || 0);
         }
     }
 

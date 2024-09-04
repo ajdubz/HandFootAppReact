@@ -32,7 +32,13 @@ const PlayerListTable = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {players && ListFriends(players, (player) => { navigateTo(`/player/${player?.id}`)})}
+                    <tr>
+                        <td>
+                            <div>
+                                {players && ListFriends(players, (player) => { navigateTo(`/player/${player?.id}`)})}
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
             <br />

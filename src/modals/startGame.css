@@ -15,10 +15,11 @@
 
 .modal-body {
     width: 100%; /* Ensure the modal body takes full width */
+    max-width: 1000px;
     margin: 0 auto;
 }
 
-/* table {
+.tableClass {
     width: 100%;
 }
 
@@ -26,8 +27,9 @@ th,
 td {
     padding: 8px;
     text-align: left;
-} */
+}
 
 button {
     margin-top: 16px;
 }
+

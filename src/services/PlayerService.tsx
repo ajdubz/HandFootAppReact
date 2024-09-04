@@ -1,11 +1,44 @@
 import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
+import PlayerLoginDTO from "../models/DTOs/Player/PlayerLoginDTO";
 
 class PlayerService {
+
+    public static async LoginPlayer(playerAccountDTO: PlayerAccountDTO): Promise<PlayerLoginDTO | undefined> {
+        try {
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/auth/login`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(playerAccountDTO),
+            });
+
+            if (!url.ok) {
+                throw new Error("Error in LoginPlayer FE");
+            }
+            const text = await url.text();
+
+            // Parse the response body
+            const data = JSON.parse(text);
+            // console.log(data);
+            return data;
+        } catch (error) {
+            console.error("Error in LoginPlayer FE:", error);
+            throw error;
+        }
+    }
+
     public static async getPlayers(): Promise<PlayerGetBasicDTO[] | undefined> {
         try {
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player`);
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg`,
+                },
+            });
             if (!url.ok) {
                 throw new Error("Error in updatePlayerAccount");
             }
@@ -22,7 +55,13 @@ class PlayerService {
 
     public static async getPlayerAccountById(id: number): Promise<PlayerAccountDTO | undefined> {
         try {
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/account`);
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/account`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                }
+            });
             if (!url.ok) {
                 throw new Error("Error in getPlayerAccountById");
             }
@@ -39,7 +78,13 @@ class PlayerService {
 
     public static async getPlayerFullDetailsById(id: number): Promise<PlayerFullDetailsDTO | undefined> {
         try {
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}`);
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                },
+            });
             if (!url.ok) {
                 throw new Error("Error in getPlayerFullDetailsById");
             }
@@ -60,6 +105,7 @@ class PlayerService {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
                 },
                 body: JSON.stringify(player),
             });
@@ -79,6 +125,7 @@ class PlayerService {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
                 },
                 body: JSON.stringify(player),
             });
@@ -95,6 +142,10 @@ class PlayerService {
         try {
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${playerId}/account`, {
                 method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                },
             });
             if (!url.ok) {
                 throw new Error("Error in deletePlayer");
@@ -107,7 +158,13 @@ class PlayerService {
 
     public static async searchPlayers(search: string): Promise<PlayerGetBasicDTO[] | undefined> {
         try {
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/search/${search}`);
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/search/${search}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                },
+            });
             if (!url.ok) {
                 throw new Error("Error in searchPlayers");
             }
