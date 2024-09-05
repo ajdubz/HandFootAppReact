@@ -130,7 +130,7 @@ class FriendService {
 
     public static async searchNewFriends(playerId: number, search: string): Promise<PlayerGetBasicDTO[] | undefined> {
         try {
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${playerId}/friendSearch/${search}`, {
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${playerId}/newFriendSearch/${search}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -138,7 +138,7 @@ class FriendService {
                 },
             });
             if (!url.ok) {
-                throw new Error("Error in searchPlayers");
+                throw new Error("Error in searchNewFriends");
             }
             const text = await url.text();
 
@@ -147,6 +147,29 @@ class FriendService {
             return data;
         } catch (error) {
             console.error("Error in searchNewFriends FE:", error);
+            throw error;
+        }
+    }
+
+    public static async searchCurrentFriends(playerId: number, search: string): Promise<PlayerGetBasicDTO[] | undefined> {
+        try {
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${playerId}/currFriendSearch/${search}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                },
+            });
+            if (!url.ok) {
+                throw new Error("Error in searchCurrentFriends");
+            }
+            const text = await url.text();
+
+            // Parse the response body
+            const data = JSON.parse(text);
+            return data;
+        } catch (error) {
+            console.error("Error in searchCurrentFriends FE:", error);
             throw error;
         }
     }

@@ -108,7 +108,7 @@ function PlayerDetails() {
                 Start Game
             </Button>
 
-            <StartGame isOpen={showModalStart} onCancel={() => setShowModalStart(false)} onConfirm={() => setShowModalStart(false)} />
+            <StartGame id={Number(id)} isOpen={showModalStart} onCancel={() => setShowModalStart(false)} onConfirm={() => setShowModalStart(false)} />
             <ConfirmChanges isOpen={showModalSave} onConfirm={onSubmitFunc} onCancel={() => setShowModalSave(false) } />
         </div>
     );

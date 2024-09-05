@@ -33,3 +33,27 @@ button {
     margin-top: 16px;
 }
 
+/* .dropdown {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    z-index: 1000;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 4px;
+}
+
+.dropdown div {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.dropdown div:hover {
+    background-color: #f0f0f0;
+}
+
+.input-container {
+    position: relative;
+    margin-bottom: 16px;
+} */

@@ -63,6 +63,15 @@ const performPlayerSearch = async (inId: number, searchText: string, setSearchPl
     return await FriendService.searchNewFriends(inId , searchText).then((data) => setSearchPlayersFunc(data, searchText)).catch((error) => console.error(error));
 }
 
+const performFriendSearch = async (inId: number, searchText: string, setSearchPlayersFunc: ( players: PlayerGetBasicDTO[] | undefined, text: string) => void)=> {
+    if (searchText === "") {
+        setSearchPlayersFunc(undefined, "");
+        return { inId, searchText, setSearchPlayersFunc };
+    }
+
+    return await FriendService.searchCurrentFriends(inId , searchText).then((data) => setSearchPlayersFunc(data, searchText)).catch((error) => console.error(error));
+}
+
 
 
 
@@ -86,4 +95,4 @@ const ListFriends = (friends: PlayerGetBasicDTO[] | undefined, onClickFunc: (pla
 
 
 
-export { PlayerListTable, ListFriends, performPlayerSearch };
+export { PlayerListTable, ListFriends, performPlayerSearch, performFriendSearch };
