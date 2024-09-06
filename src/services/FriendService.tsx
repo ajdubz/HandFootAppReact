@@ -5,6 +5,11 @@ import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 class FriendService {
     public static async getFriends(id: number): Promise<PlayerGetBasicDTO[] | undefined> {
         try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/friends`, {
                 method: "GET",
                 headers: {
@@ -28,6 +33,11 @@ class FriendService {
 
     public static async getFriendRequests(id: number): Promise<PlayerGetBasicDTO[] | undefined> {
         try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/friendRequests`, {
                 method: "GET",
                 headers: {
@@ -51,6 +61,11 @@ class FriendService {
 
     public static async getSentFriendRequests(id: number): Promise<PlayerGetBasicDTO[] | undefined> {
         try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/requestsSent`, {
                 method: "GET",
                 headers: {
@@ -74,6 +89,11 @@ class FriendService {
 
     public static async sendFriendRequest(id: number, playerFriend: PlayerFriendBasicDTO) {
         try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/requestAdd`, {
                 method: "POST",
                 headers: {
@@ -93,6 +113,11 @@ class FriendService {
 
     public static async acceptFriendRequest(id: number, playerFriend: PlayerFriendBasicDTO) {
         try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/requestAccept`, {
                 method: "PUT",
                 headers: {
@@ -112,6 +137,11 @@ class FriendService {
 
     public static async removeFriend(id: number, playerFriend: PlayerFriendBasicDTO) {
         try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/friends/${playerFriend.friendId}`, {
                 method: "DELETE",
                 headers: {
@@ -130,6 +160,11 @@ class FriendService {
 
     public static async searchNewFriends(playerId: number, search: string): Promise<PlayerGetBasicDTO[] | undefined> {
         try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${playerId}/newFriendSearch/${search}`, {
                 method: "GET",
                 headers: {
@@ -153,6 +188,11 @@ class FriendService {
 
     public static async searchCurrentFriends(playerId: number, search: string): Promise<PlayerGetBasicDTO[] | undefined> {
         try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+            
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${playerId}/currFriendSearch/${search}`, {
                 method: "GET",
                 headers: {

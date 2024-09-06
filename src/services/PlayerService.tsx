@@ -17,12 +17,18 @@ class PlayerService {
 
             if (!url.ok) {
                 throw new Error("Error in LoginPlayer FE");
-            }
+            } 
+
+
             const text = await url.text();
 
             // Parse the response body
             const data = JSON.parse(text);
-            // console.log(data);
+
+            //data should be a PlayerLoginDTO
+            localStorage.setItem("token", data?.token ?? "");
+
+
             return data;
         } catch (error) {
             console.error("Error in LoginPlayer FE:", error);
@@ -32,11 +38,16 @@ class PlayerService {
 
     public static async getPlayers(): Promise<PlayerGetBasicDTO[] | undefined> {
         try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg`,
+                    "Authorization": `Bearer ${myToken}`,
                 },
             });
             if (!url.ok) {
@@ -55,11 +66,16 @@ class PlayerService {
 
     public static async getPlayerAccountById(id: number): Promise<PlayerAccountDTO | undefined> {
         try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/account`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                    "Authorization": `Bearer ${myToken}`,
                 }
             });
             if (!url.ok) {
@@ -78,11 +94,16 @@ class PlayerService {
 
     public static async getPlayerFullDetailsById(id: number): Promise<PlayerFullDetailsDTO | undefined> {
         try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                    "Authorization": `Bearer ${myToken}`,
                 },
             });
             if (!url.ok) {
@@ -101,11 +122,16 @@ class PlayerService {
 
     public static async createPlayer(player: PlayerAccountDTO) {
         try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/account`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                    "Authorization": `Bearer ${myToken}`,
                 },
                 body: JSON.stringify(player),
             });
@@ -121,11 +147,16 @@ class PlayerService {
 
     public static async updatePlayerAccount(playerId: number, player: PlayerAccountDTO) {
         try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${playerId}/account`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                    "Authorization": `Bearer ${myToken}`,
                 },
                 body: JSON.stringify(player),
             });
@@ -140,11 +171,16 @@ class PlayerService {
 
     public static async deletePlayer(playerId: number) {
         try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${playerId}/account`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                    "Authorization": `Bearer ${myToken}`,
                 },
             });
             if (!url.ok) {
@@ -158,11 +194,16 @@ class PlayerService {
 
     public static async searchPlayers(search: string): Promise<PlayerGetBasicDTO[] | undefined> {
         try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/search/${search}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                    "Authorization": `Bearer ${myToken}`,
                 },
             });
             if (!url.ok) {
@@ -178,8 +219,6 @@ class PlayerService {
             throw error;
         }
     }
-
-    
 
 
 }
