@@ -6,6 +6,7 @@ import PlayerLoginDTO from "../models/DTOs/Player/PlayerLoginDTO";
 class PlayerService {
 
     public static async LoginPlayer(playerAccountDTO: PlayerAccountDTO): Promise<PlayerLoginDTO | undefined> {
+        
         try {
             const url = await fetch(`${process.env.REACT_APP_API_URL}/auth/login`, {
                 method: "POST",
@@ -92,11 +93,12 @@ class PlayerService {
         }
     }
 
-    public static async getPlayerFullDetailsById(id: number): Promise<PlayerFullDetailsDTO | undefined> {
+    public static async getPlayerFullDetailsById(id: number): Promise<PlayerFullDetailsDTO> {
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
-                throw new Error("No token found");
+                //    throw new Error("No token found");
+                window.location.href = "/login";
             }
 
             const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}`, {
@@ -220,6 +222,9 @@ class PlayerService {
         }
     }
 
+    public static getIsAuthenticated() {
+        return localStorage.getItem("token") ? true : false;
+    }
 
 }
 

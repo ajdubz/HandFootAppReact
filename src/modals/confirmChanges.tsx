@@ -18,13 +18,13 @@ function ConfirmChanges({ isOpen, onCancel, onConfirm }: ConfirmChangesProps) {
     // backdrop="static" keyboard={false} for not allowing click outside the modal or escape key to close the modal
     return (
         <Modal show={isOpen} onHide={onCancel}>
-            <form onSubmit={handleSubmit}>
+            <form>
                 <Modal.Header closeButton>
                     <Modal.Title>Confirm Changes</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>Are you sure you want to continue?</Modal.Body>
                 <Modal.Footer>
-                    <Button variant="primary" type="submit">
+                    <Button variant="primary" type="button" onClick={handleSubmit}>
                         Continue
                     </Button>
                     <Button variant="secondary" onClick={onCancel}>

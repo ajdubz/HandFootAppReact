@@ -14,7 +14,7 @@ class FriendService {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                    "Authorization": `Bearer ${myToken}`,
                 },
             });
             if (!url.ok) {
@@ -42,7 +42,7 @@ class FriendService {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                    "Authorization": `Bearer ${myToken}`,
                 },
             });
             if (!url.ok) {
@@ -70,7 +70,7 @@ class FriendService {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                    "Authorization": `Bearer ${myToken}`,
                 },
             });
             if (!url.ok) {
@@ -98,7 +98,7 @@ class FriendService {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                    "Authorization": `Bearer ${myToken}`,
                 },
                 body: JSON.stringify(playerFriend),
             });
@@ -122,7 +122,7 @@ class FriendService {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                    "Authorization": `Bearer ${myToken}`,
                 },
                 body: JSON.stringify(playerFriend),
             });
@@ -146,7 +146,7 @@ class FriendService {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                    "Authorization": `Bearer ${myToken}`,
                 },
             });
             if (!url.ok) {
@@ -169,7 +169,7 @@ class FriendService {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                    "Authorization": `Bearer ${myToken}`,
                 },
             });
             if (!url.ok) {
@@ -197,7 +197,7 @@ class FriendService {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhamR1YnoiLCJ1bmlxdWVfbmFtZSI6ImFqZHVieiIsImVtYWlsIjoiIiwibmJmIjoxNzI1NDc0MTM0LCJleHAiOjE3MjgwNjYxMzQsImlhdCI6MTcyNTQ3NDEzNH0.CYV6kviovofqJvzfjwNr7VpQjXXmZUFRIjoEYQ275kg",
+                    "Authorization": `Bearer ${myToken}`,
                 },
             });
             if (!url.ok) {

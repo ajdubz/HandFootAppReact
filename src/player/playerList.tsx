@@ -52,6 +52,15 @@ const PlayerListTable = () => {
 };
 
 
+const ListFriends = (friends: PlayerGetBasicDTO[] | undefined, onClickFunc: (playerSelected: PlayerGetBasicDTO | undefined) => void) => {
+    return (
+        <div>
+            {friends?.map((friend) => (
+                <div key={friend.id}><strong><a href="#" onClick={(e) => {e.preventDefault(); onClickFunc(friend)}}>{friend.nickName}</a></strong>{" (" + friend.fullName + ")"}</div>
+            ))}
+        </div>
+    );
+};
 
 
 const performPlayerSearch = async (inId: number, searchText: string, setSearchPlayersFunc: ( players: PlayerGetBasicDTO[] | undefined, text: string) => void)=> {
@@ -60,7 +69,7 @@ const performPlayerSearch = async (inId: number, searchText: string, setSearchPl
         return { inId, searchText, setSearchPlayersFunc };
     }
 
-    return await FriendService.searchNewFriends(inId , searchText).then((data) => setSearchPlayersFunc(data, searchText)).catch((error) => console.error(error));
+    return await FriendService.searchNewFriends(inId, searchText).then((data) => setSearchPlayersFunc(data, searchText)).catch((error) => console.error(error));
 }
 
 const performFriendSearch = async (inId: number, searchText: string, setSearchPlayersFunc: ( players: PlayerGetBasicDTO[] | undefined, text: string) => void)=> {
@@ -69,29 +78,8 @@ const performFriendSearch = async (inId: number, searchText: string, setSearchPl
         return { inId, searchText, setSearchPlayersFunc };
     }
 
-    return await FriendService.searchCurrentFriends(inId , searchText).then((data) => setSearchPlayersFunc(data, searchText)).catch((error) => console.error(error));
+    return await FriendService.searchCurrentFriends(inId, searchText).then((data) => setSearchPlayersFunc(data, searchText)).catch((error) => console.error(error));
 }
-
-
-
-
-
-const ListFriends = (friends: PlayerGetBasicDTO[] | undefined, onClickFunc: (playerSelected: PlayerGetBasicDTO | undefined) => void) => {
-    return (
-        <div>
-            {friends?.map((friend) => (
-                <div key={friend.id}><strong><a href="#" onClick={(e) => {e.preventDefault(); onClickFunc(friend)}}>{friend.nickName}</a></strong></div>
-            ))}
-        </div>
-    );
-};
-
-
-
-
-
-
-
 
 
 

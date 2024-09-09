@@ -1,12 +1,13 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, Link } from "react-router-dom";
 import { PlayerListTable } from "./player/playerList";
-import TeamListTable from "./team/teamList";
+import { TeamListTable } from "./team/teamList";
 import PlayerDetails from "./player/playerDetails";
 import PlayerAccount from "./player/playerAccount";
 import Login from "./pages/login";
 import React from "react";
 import { useState } from "react";
 import PlayerFriends from "./player/playerFriends";
+import PlayerService from "./services/PlayerService";
 
 function NewHeader() {
     return (
@@ -26,7 +27,6 @@ const NewRoutes: React.FC = () => {
             <Route path="/player/account" element={<PlayerAccount />} />
             <Route path="/player/:id/account" element={<PlayerAccount />} />
             <Route path="/teams" element={<TeamListTable />} />
-            <Route path="/team/:id" element={<TeamListTable />} />
         </Routes>
     );
 };
@@ -36,7 +36,7 @@ const ProtectedRoutes: React.FC<{ isAuthenticated: boolean; children: React.Reac
 };
 
 const App: React.FC = () => {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(PlayerService.getIsAuthenticated());
 
     const handleLogin = () => {
         setIsAuthenticated(true);
