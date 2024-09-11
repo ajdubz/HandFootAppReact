@@ -18,6 +18,7 @@ import TeamService from "../services/TeamService";
 import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
 import GetTeamsByPlayerIdsDTO from "../models/DTOs/Team/GetTeamsByPlayerIdsDTO";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
+import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 
 interface StartGameProps {
     id: number;
@@ -27,12 +28,16 @@ interface StartGameProps {
 }
 
 interface Row {
-    player1: string;
-    player2: string;
-    teamName: string;
+    playerSearch1: string;
+    player1: PlayerGetBasicDTO | undefined;
+    playerSearch2: string;
+    player2: PlayerGetBasicDTO | undefined;
+    teamName: TeamGetBasicDTO | undefined;
+    teamSearch: string;
 }
 
 function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
+    const [currentPlayer, setCurrentPlayer] = useState<PlayerFullDetailsDTO | undefined>(undefined);
     const [searchPlayersResults, setSearchPlayersResults] = useState<PlayerGetBasicDTO[] | undefined>([]);
     const [searchPlayer2Results, setSearchPlayer2Results] = useState<PlayerGetBasicDTO[] | undefined>([]);
     const [searchTeamResults, setSearchTeamResults] = useState<TeamGetBasicDTO[] | undefined>([]);
@@ -40,102 +45,162 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
     const [showFriendListOne, setShowFriendListOne] = useState<boolean>(false);
     const [showFriendListTwo, setShowFriendListTwo] = useState<boolean>(false);
     const [showTeamList, setShowTeamList] = useState<boolean>(false);
-    const [rows, setRows] = useState<Row[]>([{ player1: "", player2: "", teamName: "" }]);
+    const [rows, setRows] = useState<Row[]>([{ playerSearch1: currentPlayer?.nickName ?? "", player1: currentPlayer, playerSearch2: "", player2: new PlayerGetBasicDTO(), teamName: new TeamGetBasicDTO(), teamSearch: "" }]);
     const [activeRowIndex, setActiveRowIndex] = useState<number>(0);
     const [playerCount, setPlayerCount] = useState<number>(2); // Default to 2 players
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
     useEffect(() => {
-        if (isOpen) {
-            setRows([{ player1: "", player2: "", teamName: "" }]);
-            setSearchPlayersResults([]);
-            setSearchPlayer2Results([]);
-            setSearchTeamResults([]);
-            setSearchTeamsByPlayersResults([]);
-            setShowFriendListOne(false);
-            setShowFriendListTwo(false);
-            setShowTeamList(false);
-            setActiveRowIndex(0);
+        getCurrentPlayer();
+    }, [isOpen]);
+
+    const getCurrentPlayer = async () => {
+        await PlayerService.getPlayerFullDetailsById(id)
+            .then((data) => {
+                setCurrentPlayer(data);
+                clearItems();
+            })
+            .catch((error) => {
+                console.error("Error in getPlayerFullDetailsById:", error);
+                setCurrentPlayer(new PlayerFullDetailsDTO());
+            });
+    }
+
+    const setNewTeam = async (teamName: string) => {
+        let newTeam = new TeamCreateDTO();
+        newTeam.name = teamName;
+        await TeamService.createTeam(newTeam);
+    }
+
+    const setNewPlayer = async (playerName: string, setValue: (player: PlayerGetBasicDTO) => void) => {
+        let newPlayer = new PlayerAccountDTO();
+        newPlayer.nickName = playerName + " (Guest)";
+        newPlayer.fullName = playerName + " (Guest)";
+
+        
+
+        await PlayerService.createPlayer(newPlayer)
+            .then(() => {
+                let tempPlayer = new PlayerGetBasicDTO();
+                tempPlayer.nickName = newPlayer.nickName;
+                tempPlayer.fullName = newPlayer.fullName;
+                setValue(tempPlayer);
+            })
+            .catch((error) => {
+                console.error("Error in setNewPlayer:", error);
+                return new PlayerGetBasicDTO();
+            });
+
+    }
+
+    const clearItems = () => {
+        setSearchPlayersResults([]);
+        setSearchPlayer2Results([]);
+        setSearchTeamResults([]);
+        setSearchTeamsByPlayersResults([]);
+        setErrors({});
+
+        setShowFriendListOne(false);
+        setShowFriendListTwo(false);
+        setShowTeamList(false);
+        setActiveRowIndex(0);
+
+        setRows([{ playerSearch1: currentPlayer?.nickName ?? "", player1: currentPlayer, playerSearch2: "", player2: new PlayerGetBasicDTO(), teamName: new TeamGetBasicDTO(), teamSearch: "" }]);
+    }
+
+    const handleRowValidation = (row: Row) => {
+        const tempErrors: { [key: string]: string } = {};
+
+        if(!row.playerSearch1.trim()) {
+            // alert("Player 1 is required");
+            tempErrors[`playerSearch1${rows.indexOf(row)}`] = "Player 1 is required";
         }
-    }, []);
+
+        if (!row.teamSearch.trim()) {
+            tempErrors[`teamSearch${rows.indexOf(row)}`] = "Team name is required";
+            // alert("Team name is required");
+        }
+
+        if(row.player1 && row.player2 && row.player1.id === row.player2.id) {
+            // alert("Players must be different");
+            tempErrors[`playerSearch1${rows.indexOf(row)}`] = "Players must be different";
+            tempErrors[`playerSearch2${rows.indexOf(row)}`] = "Players must be different";
+        }
+
+        return tempErrors;
+    }
+
 
 
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
+        setErrors({});
+
+
+        const newErrors: { [key: string]: string } = {};
+
+        if(rows.length <= 1) {
+            newErrors["teamSearch0"] = "At least two teams are required";
+            setErrors(newErrors);
+            return;
+        }
 
         rows.forEach(row => {
+            
+            const tempErrors = handleRowValidation(row);
+            Object.assign(newErrors, tempErrors);
 
-            // const team = searchTeamResults?.find(team => team.name === row.teamName);
-            const player1 = searchPlayersResults?.find(player => player.nickName === row.player1);
-            const player2 = searchPlayer2Results?.find(player => player.nickName === row.player2);
+            let tempTeam = new GetTeamsByPlayerIdsDTO();
+            tempTeam.player1Id = row.player1?.id ?? 0;
+            tempTeam.player2Id = row.player2?.id ?? 0;
 
-            if (!player1) {
-                let playerDTO = new Player();
-                playerDTO.nickName = row.player1;
-                // Create player
-                PlayerService.createPlayer(playerDTO)
-                    .then(() => {
-                        console.log("Player created:", playerDTO);
-                    })
-                    .catch((error) => {
-                        console.error("Error in createPlayer:", error);
-                    });
+            performTeamByPlayerSearch(tempTeam, setSearchTeamsByPlayersResults);
+
+            alert("Checking if team exists");
+
+            if(searchTeamsByPlayersResults && searchTeamsByPlayersResults.length > 0) {
+
+                if(searchTeamsByPlayersResults.some(team => team === row.teamName)) {
+                    alert("Team already exists");
+                    //this is where I'll add the team to the game
+                    return;
+                }
+                
+            }
+            else {
+                alert("Team does not exist");
+                setNewTeam(row.teamSearch);
+                return;
             }
 
-            if (playerCount == 2 && !player2) {
-                let playerDTO = new Player();
-                playerDTO.nickName = row.player2;
-                // Create player
-                PlayerService.createPlayer(playerDTO)
-                    .then(() => {
-                        console.log("Player created:", playerDTO);
-                    })
-                    .catch((error) => {
-                        console.error("Error in createPlayer:", error);
-                    });
+            if(!row.player1 && row.playerSearch1.trim()) {
+                alert("Player 1 does not exist");
+                // setNewPlayer(row.playerSearch1, (tempPlayer1) => {row.player1 = tempPlayer1});
             }
 
-            let getTeamsWithPlayers = new GetTeamsByPlayerIdsDTO();
-            getTeamsWithPlayers.player1Id = player1?.id ?? 0;
-            getTeamsWithPlayers.player2Id = player2?.id ?? 0;
-
-            performTeamByPlayerSearch(getTeamsWithPlayers, setSearchTeamsByPlayersResults);
-
-
-            if (!searchTeamsByPlayersResults || searchTeamsByPlayersResults.length == 0) {
-                let teamDTO = new TeamCreateDTO();
-                teamDTO.name = row.teamName;
-                // Create team
-                TeamService.createTeam(teamDTO)
-                    .then((newTeam) => {
-                        console.log("Team created:", newTeam);
-
-                        //create the PlayerTeam records
-
-
-                    })
-                    .catch((error) => {
-                        console.error("Error in createTeam:", error);
-                    });
-
+            if(!row.player2 && row.playerSearch2.trim() && playerCount == 2) {
+                alert("Player 2 does not exist");
+                // setNewPlayer(row.playerSearch2, (tempPlayer2) => {row.player2 = tempPlayer2});
             }
-
-
 
         });
+
+
+
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
+        alert("Game started successfully");
 
         onConfirm();
     };
 
 
     const handleCancel = () => {
-        setRows([{ player1: "", player2: "", teamName: "" }]);
-        setSearchPlayersResults([]);
-        setSearchPlayer2Results([]);
-        setSearchTeamResults([]);
-        setShowFriendListOne(false);
-        setShowFriendListTwo(false);
-        setShowTeamList(false);
-        setActiveRowIndex(0);
+        clearItems();
 
         onCancel();
     };
@@ -144,23 +209,82 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
     const handleInputChange = (index: number, field: keyof Row, value: string) => {
         const newRows = [...rows];
         newRows[index][field] = value;
-        setRows(newRows);
 
-        //need to add the current player to the search results
-
-        if (field === "player1") {
+        if (field === "playerSearch1") {
+            newRows[index].player1 = new PlayerGetBasicDTO();
             performFriendSearch(id, value, setSearchPlayersResults);
             setShowFriendListOne(true);
 
-        } else if (field === "player2") {
+        } else if (field === "playerSearch2") {
+            newRows[index].player2 = new PlayerGetBasicDTO();
             performFriendSearch(id, value, setSearchPlayer2Results);
             setShowFriendListTwo(true);
         }
-        else if (field === "teamName") {
+        else if (field === "teamSearch") {
+            newRows[index].teamName = new TeamGetBasicDTO();
             performTeamSearch(id, value, setSearchTeamResults);
             setShowTeamList(true);
         }
 
+
+        setRows(newRows);
+
+    };
+
+    const handlePlayerSelection = (player: PlayerGetBasicDTO | undefined) => {
+        const newRows = [...rows];
+        newRows[activeRowIndex].player1 = player;
+        newRows[activeRowIndex].playerSearch1 = player?.nickName ?? "";
+
+        setRows(newRows);
+    }
+
+    const handlePlayer2Selection = (player: PlayerGetBasicDTO | undefined) => {
+        const newRows = [...rows];
+        newRows[activeRowIndex].player2 = player;
+        newRows[activeRowIndex].playerSearch2 = player?.nickName ?? "";
+        setRows(newRows);
+    }
+
+    const handleTeamSelection = (team: TeamGetBasicDTO | undefined) => {
+        const newRows = [...rows];
+        newRows[activeRowIndex].teamName = team;
+        newRows[activeRowIndex].teamSearch = team?.name ?? "";
+        setRows(newRows);
+    }
+
+
+    const renderTableRowControl = (index: number, field: keyof Row) => {
+        const column = field as string;
+        const colNum = column === "playerSearch1" ? 1 : column === "playerSearch2" ? 2 : 3;
+        const isPlayerField = colNum && colNum >= 1 && colNum <= 2;
+        const searchResults = isPlayerField ? (colNum == 1 ? searchPlayersResults : searchPlayer2Results) : searchTeamResults;
+        const showList = isPlayerField ? (colNum == 1 ? showFriendListOne : showFriendListTwo) : showTeamList;
+        const errorKey = `${field}${index}`;
+        const errorMessage = errors[errorKey];
+
+        const setShowList = isPlayerField ? (colNum == 1 ? setShowFriendListOne : setShowFriendListTwo) : setShowTeamList;
+        const setSelection = isPlayerField ? (colNum == 1 ? handlePlayerSelection : handlePlayer2Selection) : handleTeamSelection;
+        const list = isPlayerField ? ListFriends : ListTeams;
+    
+        
+        return (
+            <Dropdown show={activeRowIndex == index && showList && searchResults != null} autoClose>
+                <FormControl
+                    autoFocus
+                    placeholder={isPlayerField ? `Search Player ${colNum} Name` : `Search Team Name`}
+                    value={rows[index][field] as string}
+                    onFocus={(e) => setActiveRowIndex(index)}
+                    onChange={(e) => handleInputChange(index, field, e.target.value)}
+                    className={`form-control-outline ${errorMessage ? 'is-invalid' : ''}`}
+                    disabled={isPlayerField && colNum == 1 && index == 1 && rows[index].player1 == currentPlayer}
+                />
+                {errorMessage && <div className="invalid-feedback">{errorMessage}</div>}
+                <DropdownMenu>
+                    {list(searchResults, (playerOrTeam) => { setSelection(playerOrTeam); setShowList(false); })}
+                </DropdownMenu>
+            </Dropdown>
+        );
     };
 
 
@@ -169,13 +293,13 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
         return rows.map((row, index) => (
             <tr key={index}>
                 <td>
-                    {renderTableRowControl(index, "player1")}
+                    {renderTableRowControl(index, "playerSearch1")}
                 </td>
                 <td>
-                    {playerCount == 2 && renderTableRowControl(index, "player2")}
+                    {playerCount == 2 && renderTableRowControl(index, "playerSearch2")}
                 </td>
                 <td>
-                    {renderTableRowControl(index, "teamName")}
+                    {renderTableRowControl(index, "teamSearch")}
                 </td>
                 <td>
                     <Button variant="outline-danger" onClick={() => setRows(rows.filter((r, i) => i !== index))} >
@@ -185,37 +309,6 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
             </tr>
         ));
     };
-
-
-
-    const renderTableRowControl = (index: number, field: keyof Row) => {
-        const column = field as string;
-        const colNum = parseInt(column[column.length - 1]);
-        const isPlayerField = !isNaN(colNum) && colNum >= 1 && colNum <= 2;
-        const searchResults = isPlayerField ? (colNum == 1 ? searchPlayersResults : searchPlayer2Results) : searchTeamResults;
-        const showList = isPlayerField ? (colNum == 1 ? showFriendListOne : showFriendListTwo) : showTeamList;
-        const setShowList = isPlayerField ? (colNum == 1 ? setShowFriendListOne : setShowFriendListTwo) : setShowTeamList;
-    
-        return (
-            <Dropdown show={activeRowIndex == index && showList && searchResults != null} autoClose>
-                <FormControl
-                    autoFocus
-                    placeholder={isPlayerField ? `Search Player ${colNum} Name` : `Search Team Name`}
-                    value={rows[index][field]}
-                    onFocus={(e) => setActiveRowIndex(index)}
-                    onChange={(e) => handleInputChange(index, field, e.target.value)}
-                    className="form-control-outline"
-                />
-                <DropdownMenu>
-                    {ListFriends(searchResults, (player) => { handleInputChange(index, field, player?.nickName ?? ""); setShowList(false); })}
-                    {ListTeams(searchResults, (Team) => { handleInputChange(index, field, Team?.name ?? ""); setShowList(false); })}
-                </DropdownMenu>
-            </Dropdown>
-        );
-    };
-
-
-
 
     const renderPlayerRadioSelection = () => {
         return (
@@ -235,6 +328,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
         </div>
         );
     }
+
 
 
 
@@ -262,7 +356,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
                         </tbody>
                     </table>
                     <br />
-                    <Button variant="outline-primary" onClick={() => setRows([...rows, { player1: "", player2: "", teamName: "" }])}>
+                    <Button variant="outline-primary" onClick={() => setRows([...rows, { playerSearch1: "", player1: new PlayerGetBasicDTO(), playerSearch2: "", player2: new PlayerGetBasicDTO(), teamName: new TeamGetBasicDTO(), teamSearch: "" }])}>
                         Add New Team
                     </Button>
                 </Modal.Body>

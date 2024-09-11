@@ -61,7 +61,7 @@ class TeamService {
         }
     }
 
-    public static async createTeam(Team: TeamCreateDTO): Promise<TeamCreateDTO | undefined> {
+    public static async createTeam(Team: TeamCreateDTO) {
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -79,10 +79,6 @@ class TeamService {
             if (!url.ok) {
                 throw new Error("Error in createTeam");
             }
-
-            const text = await url.text();
-            const data = JSON.parse(text);
-            return data;
 
         } catch (error) {
             console.error("Error in createTeam FE:", error);
