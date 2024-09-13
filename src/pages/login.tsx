@@ -29,7 +29,7 @@ const Login: React.FC<{ onLogin: () => void}> = ({onLogin}) => {
         await PlayerService.LoginPlayer(player).then((data) => {
             if (data) {
                 onLogin();
-                navigate("/playersList");
+                navigate(`/player/${data?.id}`);
             }
         }).catch((error) => {
             console.error("Error in LoginPlayer:", error);
@@ -40,15 +40,15 @@ const Login: React.FC<{ onLogin: () => void}> = ({onLogin}) => {
         <div>
             <h2>Login</h2>
             <div>
-                <div>
-                    <label>Username or Email:</label>
-                    <input type="text" value={emailOrName} onChange={handleEmailOrNameChange} />
-                </div>
-                <div>
-                    <label>Password:</label>
-                    <input type="password" value={password} onChange={handlePasswordChange} />
-                </div>
-                <button type="button" onClick={handleLogin}>Login</button>
+            <div>
+                <label>Username or Email:</label>
+                <input type="text" value={emailOrName} onChange={handleEmailOrNameChange} onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }} />
+            </div>
+            <div>
+                <label>Password:</label>
+                <input type="password" value={password} onChange={handlePasswordChange} onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }} />
+            </div>
+            <button type="button" onClick={handleLogin}>Login</button>
             </div>
         </div>
     );
