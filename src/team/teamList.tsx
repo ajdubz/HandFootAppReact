@@ -7,15 +7,19 @@ import TeamService from "../services/TeamService";
 import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
 import { useNavigate } from "react-router-dom";
 import GetTeamsByPlayerIdsDTO from "../models/DTOs/Team/GetTeamsByPlayerIdsDTO";
+import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
 
 const TeamListTable = () => {
-    const [teams, setTeams] = useState<TeamGetBasicDTO[] | undefined>([]);
+    const [teams, setTeams] = useState<TeamGetWithPlayerNamesDTO[] | undefined>([]);
     const navigateTo = useNavigate();
 
     const fetchData = async () => {
-        await TeamService.getTeams()
+        await TeamService.getTeamsWithPlayerNames()
             .then((data) => {
                 setTeams(data);
+                if(data && data.length == 0) {
+                    alert("No data found in TeamListTable");
+                }
             })
             .catch((error) => console.error(error));
     };
@@ -30,7 +34,6 @@ const TeamListTable = () => {
         <table>
             <thead>
                 <tr>
-                    <th>Id</th>
                     <th>Name</th>
                 </tr>
             </thead>
@@ -48,18 +51,20 @@ const TeamListTable = () => {
 };
 
 
-const ListTeams = (teams: TeamGetBasicDTO[] | undefined, onClickFunc: (playerSelected: TeamGetBasicDTO | undefined) => void) => {
+const ListTeams = (teams: TeamGetWithPlayerNamesDTO[] | undefined, onClickFunc: (teamSelected: TeamGetWithPlayerNamesDTO | undefined) => void) => {
 
     return (
         <div>
             {teams?.map((team) => (
                 <div key={team.id}>
                     <strong>
-                        <a href="#"
-                            onClick={(e) => { e.preventDefault(); onClickFunc(team); }} >
-                            {team.name}
-                        </a>
+                        <a href="#" onClick={(e) => {e.preventDefault(); onClickFunc(team)}}>{team.name}</a>
                     </strong>
+                    <span>
+                        {" (" + team.playerNickNames?.map((nickName) => (
+                            nickName + ", "
+                        )) + ")"}
+                    </span>
                 </div>
             ))}
         </div>
@@ -67,16 +72,25 @@ const ListTeams = (teams: TeamGetBasicDTO[] | undefined, onClickFunc: (playerSel
 };
 
 
-const performTeamSearch = async (inId: number, searchText: string, setSearchTeamsFunc: ( teams: TeamGetBasicDTO[] | undefined, text: string) => void)=> {
+const performTeamSearch = async (searchText: string, setSearchTeamsFunc: ( teams: TeamGetBasicDTO[] | undefined, text: string) => void)=> {
+    if (searchText === "") {
+        setSearchTeamsFunc(undefined, "");
+        return { searchText, setSearchTeamsFunc };
+    }
+
+    return await TeamService.searchTeams(searchText).then((data) => setSearchTeamsFunc(data, searchText)).catch((error) => console.error(error));
+}
+
+const performPlayerTeamSearch = async (inId: number, searchText: string, setSearchTeamsFunc: ( teams: TeamGetWithPlayerNamesDTO[] | undefined, text: string) => void)=> {
     if (searchText === "") {
         setSearchTeamsFunc(undefined, "");
         return { inId, searchText, setSearchTeamsFunc };
     }
 
-    return await TeamService.searchTeams(inId , searchText).then((data) => setSearchTeamsFunc(data, searchText)).catch((error) => console.error(error));
+    return await TeamService.searchPlayerTeams(inId, searchText).then((data) => setSearchTeamsFunc(data, searchText)).catch((error) => console.error(error));
 }
 
-const performTeamByPlayerSearch = async (inGetTeamsByPlayerIdDTO: GetTeamsByPlayerIdsDTO, setSearchTeamsFunc: ( teams: TeamGetBasicDTO[] | undefined) => void)=> {
+const getTeamsByPlayerTeams = async (inGetTeamsByPlayerIdDTO: GetTeamsByPlayerIdsDTO, setSearchTeamsFunc: ( teams: TeamGetWithPlayerNamesDTO[] | undefined) => void)=> {
     if (inGetTeamsByPlayerIdDTO.player1Id === 0) {
         setSearchTeamsFunc(undefined);
         return { inGetTeamsByPlayerIdDTO, setSearchTeamsFunc };
@@ -86,4 +100,4 @@ const performTeamByPlayerSearch = async (inGetTeamsByPlayerIdDTO: GetTeamsByPlay
 }
 
 
-export  { TeamListTable, ListTeams, performTeamSearch, performTeamByPlayerSearch };
+export  { TeamListTable, ListTeams, performTeamSearch, getTeamsByPlayerTeams, performPlayerTeamSearch };

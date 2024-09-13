@@ -122,7 +122,7 @@ class PlayerService {
         }
     }
 
-    public static async createPlayer(player: PlayerAccountDTO) {
+    public static async createPlayer(player: PlayerAccountDTO): Promise<PlayerAccountDTO> {
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -140,6 +140,43 @@ class PlayerService {
             if (!url.ok) {
                 throw new Error("Error in createPlayer");
             }
+            const text = await url.text();
+
+            // Parse the response body
+            const data = JSON.parse(text);
+            return data;
+
+        } catch (error) {
+            console.log(player);
+            console.error("Error in createPlayer FE:", error);
+            throw error;
+        }
+    }
+
+    public static async createGuest(player: PlayerAccountDTO): Promise<PlayerAccountDTO> {
+        try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/guest`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${myToken}`,
+                },
+                body: JSON.stringify(player),
+            });
+            if (!url.ok) {
+                throw new Error("Error in createPlayer");
+            }
+            const text = await url.text();
+
+            // Parse the response body
+            const data = JSON.parse(text);
+            return data;
+            
         } catch (error) {
             console.log(player);
             console.error("Error in createPlayer FE:", error);

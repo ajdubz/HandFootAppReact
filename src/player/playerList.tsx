@@ -27,7 +27,6 @@ const PlayerListTable = () => {
             <table>
                 <thead>
                     <tr>
-                        <th>Id</th>
                         <th>Name</th>
                     </tr>
                 </thead>
