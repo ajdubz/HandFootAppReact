@@ -3,12 +3,12 @@ import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import PlayerTeamCreateDTO from "../models/DTOs/Team/PlayerTeamCreateDTO";
 import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
-import { performFriendSearch } from "../player/playerList";
 import PlayerService from "../services/PlayerService";
 import TeamService from "../services/TeamService";
-import { performPlayerTeamSearch } from "../team/teamList";
 
-
+/**
+ * Interface representing a custom row in the form.
+ */
 export interface CustomRow {
     search1: string;
     player1: PlayerGetBasicDTO | undefined;
@@ -18,35 +18,36 @@ export interface CustomRow {
     teamSearch: string;
 }
 
+/**
+ * Validates the rows in the form.
+ * @param inRows - Array of rows to validate.
+ * @param playerCount - Number of players (1 or 2).
+ * @returns An object containing error messages for each invalid field.
+ */
 export const performRowValidation = (inRows: CustomRow[], playerCount: number) => {
-
     const retErrors: { [key: string]: string } = {};
 
-    if(inRows.length <= 1) {
+    if (inRows.length <= 1) {
         retErrors["teamSearch0"] = "At least two teams are required";
-        return;
+        return retErrors;
     }
 
     inRows.forEach((r, index) => {
         const tempErrors: { [key: string]: string } = {};
 
-        if(!r.search1.trim()) {
-            // alert("Player 1 is required");
+        if (!r.search1.trim()) {
             tempErrors[`search1${index}`] = "Player 1 is required";
         }
 
-        if(playerCount == 2 && !r.search2.trim()) {
-            // alert("Player 2 is required");
+        if (playerCount === 2 && !r.search2.trim()) {
             tempErrors[`search2${index}`] = "Player 2 is required";
         }
 
         if (!r.teamSearch.trim()) {
             tempErrors[`teamSearch${index}`] = "Team name is required";
-            // alert("Team name is required");
         }
 
-        if(r.player1 && r.player2 && r.player1.id === r.player2.id) {
-            // alert("Players must be different");
+        if (r.player1 && r.player2 && r.player1.id === r.player2.id) {
             tempErrors[`search1${index}`] = "Players must be different";
             tempErrors[`search2${index}`] = "Players must be different";
         }
@@ -57,9 +58,15 @@ export const performRowValidation = (inRows: CustomRow[], playerCount: number) =
     return retErrors;
 }
 
+/**
+ * Creates a new guest player and sets the player value in the row.
+ * @param row - The row to update.
+ * @param whichCol - The column number (1 or 2) to set the player.
+ * @param setValue - Function to set the player value.
+ */
 export const setNewPlayer = async (row: CustomRow, whichCol: number, setValue: (player: PlayerGetBasicDTO) => void) => {
     let newPlayer = new PlayerAccountDTO();
-    let playerName = whichCol == 1 ? row.search1 : row.search2;
+    let playerName = whichCol === 1 ? row.search1 : row.search2;
     newPlayer.nickName = playerName + " (Guest)";
     newPlayer.fullName = playerName + " (Guest)";
 
@@ -79,6 +86,10 @@ export const setNewPlayer = async (row: CustomRow, whichCol: number, setValue: (
         });
 }
 
+/**
+ * Creates a new team with the players in the row.
+ * @param row - The row containing the players and team name.
+ */
 export const setNewPlayerTeam = async (row: CustomRow) => {
     let newPlayerTeam = new PlayerTeamCreateDTO();
     newPlayerTeam.playerId1 = row.player1?.id ?? 0;
@@ -88,8 +99,13 @@ export const setNewPlayerTeam = async (row: CustomRow) => {
     await TeamService.addPlayersToNewTeam(newPlayerTeam);
 }
 
+/**
+ * Retrieves the current player details by ID.
+ * @param id - The ID of the player.
+ * @param successFunc - Function to call on successful retrieval.
+ * @param failFunc - Function to call on failure.
+ */
 export const getCurrentPlayer = async (id: number, successFunc: (data: PlayerFullDetailsDTO) => void, failFunc: () => void) => {
-
     await PlayerService.getPlayerFullDetailsById(id)
         .then((data) => {
             successFunc(data);
@@ -100,17 +116,21 @@ export const getCurrentPlayer = async (id: number, successFunc: (data: PlayerFul
         });
 }
 
+/**
+ * Handles the selection of a player or team in the dropdown.
+ * @param colNum - The column number (1, 2, or 3).
+ * @param inRow - The row to update.
+ * @param player - The selected player or team.
+ * @param setRowFunc - Function to set the updated row.
+ */
 export const handlePlayerSelection = (colNum: number, inRow: CustomRow, player: PlayerGetBasicDTO | TeamGetWithPlayerNamesDTO | undefined, setRowFunc: (newRow: CustomRow) => void) => {
-
-    if (colNum == 1 || colNum == 2) {
+    if (colNum === 1 || colNum === 2) {
         inRow[`player${colNum}`] = player as PlayerGetBasicDTO;
         inRow[`search${colNum}`] = (player as PlayerGetBasicDTO)?.nickName ?? "";
-    }
-    else if (colNum == 3) {
+    } else if (colNum === 3) {
         inRow.teamName = player as TeamGetWithPlayerNamesDTO;
         inRow.teamSearch = (player as TeamGetWithPlayerNamesDTO)?.name ?? "";
-    }
-    else {
+    } else {
         console.log("Invalid column number");
     }
     setRowFunc(inRow);

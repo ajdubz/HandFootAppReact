@@ -5,25 +5,17 @@ import "./startGame.css";
 import "../App.css";
 import { ListFriends, performFriendSearch } from "../player/playerList";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
-import Player from "../models/Player";
-import PlayerService from "../services/PlayerService";
-import FriendService from "../services/FriendService";
 import Dropdown from "react-bootstrap/Dropdown";
 import FormControl from "react-bootstrap/FormControl";
-import { Form } from "react-router-dom";
 import { DropdownItem, DropdownMenu } from "react-bootstrap";
 import { ListTeams, performTeamSearch, getTeamsByPlayerTeams, performPlayerTeamSearch } from "../team/teamList";
-import TeamCreateDTO from "../models/DTOs/Team/TeamCreateDTO";
-import TeamService from "../services/TeamService";
 import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
 import GetTeamsByPlayerIdsDTO from "../models/DTOs/Team/GetTeamsByPlayerIdsDTO";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
-import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
-import PlayerTeamDTO from "../models/DTOs/Team/PlayerTeamDTO";
-import PlayerTeamCreateDTO from "../models/DTOs/Team/PlayerTeamCreateDTO";
 import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
 import { performRowValidation, CustomRow, setNewPlayer, setNewPlayerTeam, getCurrentPlayer, handlePlayerSelection } from "./startGameUtils";
 
+// Interface for component props
 interface StartGameProps {
     id: number;
     isOpen: boolean;
@@ -31,7 +23,9 @@ interface StartGameProps {
     onConfirm: () => void;
 }
 
+// Main component function
 function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
+    // State variables
     const [currentPlayer, setCurrentPlayer] = useState<PlayerFullDetailsDTO | undefined>(undefined);
     const [searchResults, setSearchResults] = useState<{ players1: PlayerGetBasicDTO[] | undefined, players2: PlayerGetBasicDTO[] | undefined, teams: TeamGetWithPlayerNamesDTO[] | undefined }>({ players1: [], players2: [], teams: [] });
     const [searchTeamsByPlayersResults, setSearchTeamsByPlayersResults] = useState<TeamGetWithPlayerNamesDTO[] | undefined>([]);
@@ -40,19 +34,21 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
     const [playerCount, setPlayerCount] = useState<number>(2); // Default to 2 players
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
+    // Effect to clear items and get current player when modal is opened
     useEffect(() => {
         clearItems();
         getCurrentPlayer(id, (data) => {setCurrentPlayer(data);}, () => {setCurrentPlayer(new PlayerFullDetailsDTO());});
     }, [isOpen]);
 
+    // Function to clear search results and errors, and reset rows
     const clearItems = () => {
         setSearchResults({ players1: [], players2: [], teams: [] });
         setSearchTeamsByPlayersResults([]);
         setErrors({});
-
         setRows([{ search1: currentPlayer?.nickName ?? "", player1: currentPlayer, search2: "", player2: new PlayerGetBasicDTO(), teamName: new TeamGetBasicDTO(), teamSearch: "" }]);
     }
 
+    // Function to handle form submission
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
         setErrors({});
@@ -67,7 +63,6 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
         }
         
         rows.forEach(row => {
-
             if(!row.player1 && row.search1.trim()) {
                 alert("Player 1 does not exist");
                 setNewPlayer(row, 1, (tempPlayer1) => {row.player1 = tempPlayer1});
@@ -85,28 +80,25 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
             getTeamsByPlayerTeams(tempTeam, setSearchTeamsByPlayersResults);
 
             if(searchTeamsByPlayersResults && searchTeamsByPlayersResults.length > 0) {
-
                 if(searchTeamsByPlayersResults.some(team => team === row.teamName)) {
                     alert("Team already exists");
-                    //this is where I'll add the team to the game
+                    // This is where I'll add the team to the game
                     return;
-                }
-                else {
+                } else {
                     alert("Some do, but this Team does not exist");
                     setNewPlayerTeam(row);
                 }
-            }
-            else {
+            } else {
                 console.log("Team does not exist");
                 setNewPlayerTeam(row);
             }
         });
 
         alert("Game started successfully");
-
         onConfirm();
     };
 
+    // Function to handle input changes in the form
     const handleInputChange = (index: number, field: keyof CustomRow, value: string) => {
         const newRows = [...rows];
         newRows[index][field] = value;
@@ -114,12 +106,10 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
         if (field === "search1") {
             newRows[index].player1 = new PlayerGetBasicDTO();
             performFriendSearch(id, value, (players) => setSearchResults({ ...searchResults, players1: players }));
-
         } else if (field === "search2") {
             newRows[index].player2 = new PlayerGetBasicDTO();
             performFriendSearch(id, value, (players) => setSearchResults({ ...searchResults, players2: players }));
-        }
-        else if (field === "teamSearch") {
+        } else if (field === "teamSearch") {
             newRows[index].teamName = new TeamGetWithPlayerNamesDTO();
             performPlayerTeamSearch(id, value, (teams) => setSearchResults({ ...searchResults, teams }));
         }
@@ -127,19 +117,21 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
         setRows(newRows);
     };
 
+    // Helper function to get column number based on field name
     const getColumnNumber = (field: string) => {
         if (field === "search1") return 1;
         if (field === "search2") return 2;
         return 3;
     };
 
+    // Helper function to get search results based on column number
     const getSearchResults = (colNum: number) => {
         if (colNum === 1) return searchResults.players1;
         if (colNum === 2) return searchResults.players2;
         return searchResults.teams;
     };
 
-
+    // Function to render table row controls
     const renderTableRowControl = (index: number, field: keyof CustomRow) => {
         const column = field as string;
         const colNum = getColumnNumber(column);
@@ -152,7 +144,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
         const hasValue = rows[index][field] as string;
 
         return (
-            <Dropdown show={hasValue != "" && searchResults?.length != 0 &&  currentCell} autoClose>
+            <Dropdown show={hasValue != "" && searchResults?.length != 0 && currentCell} autoClose>
                 <FormControl
                     autoFocus
                     placeholder={isPlayer ? `Search Player ${colNum} Name` : `Search Team Name`}
@@ -176,6 +168,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
         );
     };
 
+    // Function to render table rows
     const renderTableRows = () => {
         return rows.map((row, index) => (
             <tr key={index}>
@@ -197,28 +190,27 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
         ));
     };
 
+    // Function to render player radio selection
     const renderPlayerRadioSelection = () => {
         return (
-        <div>
-            <div className="form-check form-check-inline">
-                <input className="form-check-input" type="radio" name="playerCount" id="onePlayer" value="1" checked={playerCount === 1} onChange={() => setPlayerCount(1)} />
-                <label className="form-check-label" htmlFor="onePlayer">
-                    1 Player
-                </label>
+            <div>
+                <div className="form-check form-check-inline">
+                    <input className="form-check-input" type="radio" name="playerCount" id="onePlayer" value="1" checked={playerCount === 1} onChange={() => setPlayerCount(1)} />
+                    <label className="form-check-label" htmlFor="onePlayer">
+                        1 Player
+                    </label>
+                </div>
+                <div className="form-check form-check-inline">
+                    <input className="form-check-input" type="radio" name="playerCount" id="twoPlayers" value="2" checked={playerCount === 2} onChange={() => setPlayerCount(2)} />
+                    <label className="form-check-label" htmlFor="twoPlayers">
+                        2 Players
+                    </label>
+                </div>
             </div>
-            <div className="form-check form-check-inline">
-                <input className="form-check-input" type="radio" name="playerCount" id="twoPlayers" value="2" checked={playerCount === 2} onChange={() => setPlayerCount(2)} />
-                <label className="form-check-label" htmlFor="twoPlayers">
-                    2 Players
-                </label>
-            </div>
-        </div>
         );
     }
 
-
-
-
+    // Main render function
     return (
         <Modal show={isOpen} onHide={onCancel} centered size="lg">
             <form onSubmit={handleSubmit}>
@@ -247,7 +239,6 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
                         Add New Team
                     </Button>
                 </Modal.Body>
-
                 <Modal.Footer>
                     <Button variant="primary" type="submit">
                         Continue
