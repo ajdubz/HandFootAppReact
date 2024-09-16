@@ -42,8 +42,6 @@ const App: React.FC = () => {
         setIsAuthenticated(true);
     };
 
-    
-
     return (
         <Router>
             <Routes>

@@ -3,3 +3,7 @@
     padding: 6px 10px;
     outline: 1px solid #000000;
 }
+
+body {
+    background-color: gray !important;
+}
