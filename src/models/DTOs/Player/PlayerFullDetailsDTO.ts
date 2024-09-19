@@ -1,4 +1,4 @@
-import GameTeamDTO from "../GameTeam/GameTeamDTO";
+import GameTeamDTO from "../Game/GameTeamDTO";
 import PlayerGetBasicDTO from "./PlayerGetBasicDTO";
 
 class PlayerFullDetailsDTO {

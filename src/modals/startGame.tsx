@@ -13,14 +13,16 @@ import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
 import GetTeamsByPlayerIdsDTO from "../models/DTOs/Team/GetTeamsByPlayerIdsDTO";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
-import { performRowValidation, CustomRow, setNewPlayer, setNewPlayerTeam, getCurrentPlayer, handlePlayerSelection } from "./startGameUtils";
+import { performRowValidation, CustomRow, setNewPlayer, setNewPlayerTeam, getCurrentPlayer, handlePlayerSelection, setNewGame, addTeamToGame } from "./startGameUtils";
+import GameAddDTO from "../models/DTOs/Game/GameAddDTO";
+import GameWithRulesDTO from "../models/DTOs/Game/GameWithRulesDTO";
 
 // Interface for component props
 interface StartGameProps {
     id: number;
     isOpen: boolean;
     onCancel: () => void;
-    onConfirm: () => void;
+    onConfirm: (newGameId: number) => void;
 }
 
 // Main component function
@@ -31,8 +33,9 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
     const [searchTeamsByPlayersResults, setSearchTeamsByPlayersResults] = useState<TeamGetWithPlayerNamesDTO[] | undefined>([]);
     const [rows, setRows] = useState<CustomRow[]>([{ search1: currentPlayer?.nickName ?? "", player1: currentPlayer, search2: "", player2: new PlayerGetBasicDTO(), teamName: new TeamGetWithPlayerNamesDTO(), teamSearch: "" }]);
     const [activeCell, setActiveCell] = useState<number[]>([0, 0]);
-    const [playerCount, setPlayerCount] = useState<number>(2); // Default to 2 players
+    const [playerCount, setPlayerCount] = useState<number>(1); // Default to 2 players, but for testing I set it to 1
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const [newTempGame, setNewTempGame] = useState<GameWithRulesDTO | undefined>();
 
     // Effect to clear items and get current player when modal is opened
     useEffect(() => {
@@ -49,16 +52,28 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
     }
 
     // Function to handle form submission
-    const handleSubmit = (event: React.FormEvent) => {
+    const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
         setErrors({});
         const newErrors: { [key: string]: string } = {};
-        const tempErrors = performRowValidation(rows, playerCount);
 
-        Object.assign(newErrors, tempErrors);
+
+        //turned off for testing !!!!!!!!!!!!!!!!!!!
+
+        // const tempErrors = performRowValidation(rows, playerCount);
+        // Object.assign(newErrors, tempErrors);
+
 
         if(Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
+            return;
+        }
+
+        // let newGame = new GameWithRulesDTO();
+        let newGame = await setNewGame(() => {return;});
+
+        if (!newGame || !newGame.id || newGame.id === 0) {
+            console.log("Error creating game, " + (newGame?.id ?? "undefined id"));
             return;
         }
         
@@ -77,25 +92,32 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
             tempTeam.player1Id = row.player1?.id ?? 0;
             tempTeam.player2Id = row.player2?.id ?? 0;
 
-            getTeamsByPlayerTeams(tempTeam, setSearchTeamsByPlayersResults);
+            //getTeamsByPlayerTeams(tempTeam, setSearchTeamsByPlayersResults);
 
             if(searchTeamsByPlayersResults && searchTeamsByPlayersResults.length > 0) {
                 if(searchTeamsByPlayersResults.some(team => team === row.teamName)) {
-                    alert("Team already exists");
-                    // This is where I'll add the team to the game
-                    return;
+                    console.log("Team already exists");
                 } else {
-                    alert("Some do, but this Team does not exist");
+                    console.log("Some do, but this Team does not exist");
                     setNewPlayerTeam(row);
                 }
-            } else {
-                console.log("Team does not exist");
-                setNewPlayerTeam(row);
+            } else if(row.teamSearch.trim()) {
+                console.log("Team does not exist, and this still doesn't work. Turned off for now");
+                // setNewPlayerTeam(row);
             }
+            else {
+                console.log("Something else went wrong");
+                return;
+            }
+
+            addTeamToGame(newGame.id, row.teamName?.id ?? 0);
+
         });
 
-        alert("Game started successfully");
-        onConfirm();
+
+
+        console.log("Game started successfully");
+        onConfirm(newGame.id);
     };
 
     // Function to handle input changes in the form

@@ -3,9 +3,9 @@ import { Team } from "../../Team";
 
 class GameTeamDTO {
 
+    public id?: number;
     public game?: Game = new Game();
     public team?: Team = new Team();
-    public rank?: number = 0;
 
 }
 

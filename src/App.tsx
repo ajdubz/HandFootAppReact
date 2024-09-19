@@ -3,6 +3,7 @@ import { PlayerListTable } from "./player/playerList";
 import { TeamListTable } from "./team/teamList";
 import PlayerDetails from "./player/playerDetails";
 import PlayerAccount from "./player/playerAccount";
+import GamePage from "./game/gameHome";
 import Login from "./pages/login";
 import React from "react";
 import { useState } from "react";
@@ -22,11 +23,13 @@ const NewRoutes: React.FC = () => {
     return (
         <Routes>
             <Route path="/playersList" element={<PlayerListTable />} />
+            <Route path="/teams" element={<TeamListTable />} />
+
+            <Route path="/player/account" element={<PlayerAccount />} />
             <Route path="/player/:id" element={<PlayerDetails />} />
             <Route path="/player/:id/friends" element={<PlayerFriends />} />
-            <Route path="/player/account" element={<PlayerAccount />} />
             <Route path="/player/:id/account" element={<PlayerAccount />} />
-            <Route path="/teams" element={<TeamListTable />} />
+            <Route path="/player/:id/game/:gameId" element={<GamePage />} />
         </Routes>
     );
 };
@@ -49,12 +52,10 @@ const App: React.FC = () => {
                 <Route path="/login" element={<Login onLogin={handleLogin} />} />
                 <Route
                     path="/*"
-                    element={
-                        <ProtectedRoutes isAuthenticated={isAuthenticated}>
-                            <NewHeader />
-                            <NewRoutes />
-                        </ProtectedRoutes>
-                    }
+                    element={<ProtectedRoutes isAuthenticated={isAuthenticated}>
+                                <NewHeader />
+                                <NewRoutes />
+                            </ProtectedRoutes> }
                 />
             </Routes>
         </Router>

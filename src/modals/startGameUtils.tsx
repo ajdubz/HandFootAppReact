@@ -1,3 +1,4 @@
+import GameAddDTO from "../models/DTOs/Game/GameAddDTO";
 import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
@@ -5,6 +6,8 @@ import PlayerTeamCreateDTO from "../models/DTOs/Team/PlayerTeamCreateDTO";
 import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
 import PlayerService from "../services/PlayerService";
 import TeamService from "../services/TeamService";
+import GameService from "../services/GameService";
+import GameWithRulesDTO from "../models/DTOs/Game/GameWithRulesDTO";
 
 /**
  * Interface representing a custom row in the form.
@@ -97,6 +100,37 @@ export const setNewPlayerTeam = async (row: CustomRow) => {
     newPlayerTeam.teamName = row.teamSearch ?? "";
 
     await TeamService.addPlayersToNewTeam(newPlayerTeam);
+}
+
+/**
+ * Creates a new game and sets the game value.
+ * @param game - The game to create.
+ * @param setValue - Function to set the game value.
+ */
+export const setNewGame = async (setValue: (game: GameWithRulesDTO) => void): Promise<GameWithRulesDTO> => {
+
+    let game = new GameAddDTO();
+
+    return await GameService.addGame(game)
+        .then((data) => {
+            console.log(data?.id);
+            setValue(data ?? new GameWithRulesDTO());
+            return data ?? new GameWithRulesDTO();
+        })
+        .catch((error) => {
+            console.error("Error in setNewGame:", error);
+            return new GameWithRulesDTO();
+        });
+}
+
+export const addTeamToGame = async (gameId: number, teamId: number) => {
+    await GameService.addTeamToGame(gameId, teamId)
+        .then(() => {
+            console.log("Team added to game successfully");
+        })
+        .catch((error) => {
+            console.error("Error in addTeamToGame:", error);
+        });
 }
 
 /**

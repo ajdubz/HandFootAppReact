@@ -1,0 +1,22 @@
+/* gameHome.css */
+
+/* Set the background color of the table */
+#gameTable.table tr {
+    /* background-color: gray; */
+    border-color: black;
+}
+
+#gameTable.table td, #gameTable.table th {
+    border-color: black;
+    /* background-color: gray; */
+}
+
+/* Set the alternating row colors */
+#gameTable.table tr:nth-child(even) {
+    background-color: pink;
+}
+
+#gameTable.table tr:nth-child(odd) {
+    background-color: orange;
+}
+

@@ -5,6 +5,7 @@ export class Player {
   nickName?: string = '';
   email?: string = '';
   password?: string = '';
+  fullName?: string = '';
 
 }
 

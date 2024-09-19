@@ -1,6 +1,6 @@
-import GameTeam from "./GameTeam";
+import GameTeam from "../../GameTeam";
 
-class GameRound {
+class GameRoundDTO {
 
     public id?: number = 0;
     public gameTeam?: GameTeam = new GameTeam();
@@ -14,4 +14,4 @@ class GameRound {
 
 }
 
-export default GameRound;
+export default GameRoundDTO;
