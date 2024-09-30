@@ -35,7 +35,6 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
     const [activeCell, setActiveCell] = useState<number[]>([0, 0]);
     const [playerCount, setPlayerCount] = useState<number>(1); // Default to 2 players, but for testing I set it to 1
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
-    const [newTempGame, setNewTempGame] = useState<GameWithRulesDTO | undefined>();
 
     // Effect to clear items and get current player when modal is opened
     useEffect(() => {
@@ -133,7 +132,8 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
             performFriendSearch(id, value, (players) => setSearchResults({ ...searchResults, players2: players }));
         } else if (field === "teamSearch") {
             newRows[index].teamName = new TeamGetWithPlayerNamesDTO();
-            performPlayerTeamSearch(id, value, (teams) => setSearchResults({ ...searchResults, teams }));
+            let tempPlayer = newRows[index].player1;
+            performPlayerTeamSearch(tempPlayer?.id ?? 0, value, (teams) => setSearchResults({ ...searchResults, teams }));
         }
 
         setRows(newRows);

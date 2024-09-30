@@ -61,8 +61,8 @@ const ListTeams = (teams: TeamGetWithPlayerNamesDTO[] | undefined, onClickFunc: 
                         <a href="#" onClick={(e) => {e.preventDefault(); onClickFunc(team)}}>{team.name}</a>
                     </strong>
                     <span>
-                        {" (" + team.teamMembers?.map((nickName) => (
-                            nickName + ", "
+                        {" (" + team.teamMembers?.map((name) => (
+                            name.nickName + ", "
                         )) + ")"}
                     </span>
                 </div>
