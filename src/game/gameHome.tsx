@@ -2,12 +2,13 @@ import { Button, Table } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import "../App.css";
 import "./gameHome.css";
-import { useEffect, useState } from "react";
 import GameWithRulesDTO from "../models/DTOs/Game/GameWithRulesDTO";
 import GameService from "../services/GameService";
 import PlayerTeamDTO from "../models/DTOs/Team/PlayerTeamDTO";
 import GameRoundDTO from "../models/DTOs/Game/GameRoundDTO";
-
+import GameTeamDTO from "../models/DTOs/Game/GameTeamDTO";
+import { calcCleans, calcDirties, calcRed3s, calcScore } from "./gameHomeUtils";
+import { useEffect, useState } from "react";
 
 interface RouteParams {
     [id: string]: string | undefined;
@@ -17,16 +18,21 @@ function GamePage() {
     const { id = "" } = useParams<RouteParams>();
     const { gameId = "" } = useParams<RouteParams>();
     const [game, setGame] = useState<GameWithRulesDTO>();
-    const [teams, setTeams] = useState<PlayerTeamDTO[]>();
+    const [teams, setTeams] = useState<GameTeamDTO[]>();
     const [rounds, setRounds] = useState<GameRoundDTO[]>();
+    let totalScores: number[] = [];
+    let cleanBooks: number[] = [];
+    let dirtyBooks: number[] = [];
+    let redThrees: number[] = [];
 
     const navigate = useNavigate();
 
     const fetchData = async () => {
         await GameService.getGameById(Number(gameId))
             .then((data) => {
+                console.log(`getGameById: `);
+                console.log(data);
                 setGame(data);
-                // alert(`Game ${gameId} fetched`);
             })
             .catch((error) => {
                 console.error("Error in getGameById:", error);
@@ -35,8 +41,19 @@ function GamePage() {
 
         await GameService.getTeamsByGameId(Number(gameId))
             .then((data) => {
+                console.log(`getTeamsByGameId: `);
                 console.log(data);
                 setTeams(data);
+                data?.forEach(async (team) => {
+                    // let totalScore = await calcScore(team);
+                    let cleans = await calcCleans(team);
+                    // let dirties = await calcDirties(team);
+                    // let red3s = await calcRed3s(team);
+                    cleanBooks[team.team?.id != undefined ? team.team?.id : 0] = cleans ?? 0; 
+                    // dirtyBooks[team.team?.id != undefined ? team.team?.id : 0] = dirties ?? 0;
+                    // redThrees[team.team?.id != undefined ? team.team?.id : 0] = red3s ?? 0;
+                    // totalScores[team.team?.id != undefined ? team.team?.id : 0] = totalScore ?? 0;
+                });
             })
             .catch((error) => {
                 console.error("Error in getTeamsByGameId:", error);
@@ -45,6 +62,7 @@ function GamePage() {
 
         // await GameService.getRoundsByGameId(Number(gameId))
         //     .then((data) => {
+        //         console.log(`getRoundsByGameId: `);
         //         console.log(data);
         //         setRounds(data);
         //     })
@@ -58,13 +76,10 @@ function GamePage() {
         fetchData();
     }, [gameId]);
 
-
     const handleBack = () => {
         // alert(`Back to player ${id} from game ${gameId}`);
         navigate(`/player/${id}`);
-    }
-
-
+    };
 
     return (
         <div>
@@ -79,72 +94,30 @@ function GamePage() {
                             <th>Clean Books</th>
                             <th>Dirty Books</th>
                             <th>Red 3's</th>
-                            <th>Round 1 Winner</th>
-                            <th>Round 2 Winner</th>
-                            <th>Round 3 Winner</th>
-                            <th>Round 4 Winner</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {tempData.map((data) => (
-                            <tr key={data.rank}>
-                                <td>{data.rank}</td>
-                                <td>{data.teamName}</td>
-                                <td>{data.totalScore}</td>
-                                <td>{data.cleanBooks}</td>
-                                <td>{data.dirtyBooks}</td>
-                                <td>{data.red3s}</td>
-                                <td>{data.round1Winner}</td>
-                                <td>{data.round2Winner}</td>
-                                <td>{data.round3Winner}</td>
-                                <td>{data.round4Winner}</td>
+                        {teams?.map((team) => (
+                            <tr key={team.team?.id}>
+                                <td>{team.team?.id}</td>
+                                <td>
+                                    {team.team?.name +
+                                        " - " +
+                                        team.team?.teamMembers?.map((names, i) => ((team.team?.teamMembers?.length ?? 0) > i + 1 ? (names?.nickName ?? "") + ", " : names?.nickName ?? ""))}</td>
+                                <td>{(team.team?.id !== undefined && cleanBooks[team.team.id] ? cleanBooks[team.team.id] : 0)}</td>
+                                <td>{0}</td>
+                                <td>{0}</td>
+                                <td>{0}</td>
                             </tr>
                         ))}
                     </tbody>
                 </Table>
             </div>
-            <Button variant="primary" onClick={handleBack}>Back</Button>
+            <Button variant="primary" onClick={handleBack}>
+                Back
+            </Button>
         </div>
     );
 }
-
-const tempData = [
-    {
-        rank: 1,
-        teamName: "Game 1",
-        totalScore: 100,
-        cleanBooks: 12,
-        dirtyBooks: 16,
-        red3s: 1,
-        round1Winner: "X",
-        round2Winner: "",
-        round3Winner: "",
-        round4Winner: "X"
-    },
-    {
-        rank: 2,
-        teamName: "Game 2",
-        totalScore: 200,
-        cleanBooks: 22,
-        dirtyBooks: 26,
-        red3s: 2,
-        round1Winner: "",
-        round2Winner: "X",
-        round3Winner: "",
-        round4Winner: ""
-    },
-    {
-        rank: 3,
-        teamName: "Game 3",
-        totalScore: 300,
-        cleanBooks: 32,
-        dirtyBooks: 36,
-        red3s: 3,
-        round1Winner: "",
-        round2Winner: "",
-        round3Winner: "X",
-        round4Winner: ""
-    }
-];
 
 export default GamePage;

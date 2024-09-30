@@ -1,9 +1,10 @@
+import PlayerGetBasicDTO from "../Player/PlayerGetBasicDTO";
 
 class TeamGetWithPlayerNamesDTO {
     
     id?: number = 0;
     name?: string = '';
-    playerNickNames?: string[] = [];
+    teamMembers?: PlayerGetBasicDTO[] = [];
 
 }
 

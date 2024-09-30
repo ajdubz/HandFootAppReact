@@ -1,3 +1,4 @@
+import GameRoundDTO from "../models/DTOs/Game/GameRoundDTO";
 import GetTeamsByPlayerIdsDTO from "../models/DTOs/Team/GetTeamsByPlayerIdsDTO";
 import PlayerTeamCreateDTO from "../models/DTOs/Team/PlayerTeamCreateDTO";
 import PlayerTeamDTO from "../models/DTOs/Team/PlayerTeamDTO";
@@ -203,6 +204,36 @@ class TeamService {
 
         } catch (error) {
             console.error("Error in addPlayerToTeam FE:", error);
+            throw error;
+        }
+    }
+
+    public static async getRoundsByTeamId(gameTeamId: number): Promise<GameRoundDTO[] | undefined> {
+        try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Team/${gameTeamId}/round`, {
+                method: "GET",
+                headers: {
+                    "content-type": "application/json",
+                    "Authorization": `Bearer ${myToken}`,
+                },
+            });
+
+            if (!url.ok) {
+                throw new Error("Error in getRoundsByTeamId");
+            }
+
+            const text = await url.text();
+            // Parse the response body
+            const data = JSON.parse(text);
+            return data;
+
+        } catch (error) {
+            console.error("Error in getRoundsByTeamId FE:", error);
             throw error;
         }
     }

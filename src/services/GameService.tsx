@@ -1,7 +1,9 @@
 import GameAddDTO from "../models/DTOs/Game/GameAddDTO";
 import GameRoundDTO from "../models/DTOs/Game/GameRoundDTO";
+import GameTeamDTO from "../models/DTOs/Game/GameTeamDTO";
 import GameWithRulesDTO from "../models/DTOs/Game/GameWithRulesDTO";
 import PlayerTeamDTO from "../models/DTOs/Team/PlayerTeamDTO";
+import GameTeam from "../models/GameTeam";
 
 
 class GameService {
@@ -127,7 +129,7 @@ class GameService {
         }
     }
 
-    public static async getTeamsByGameId(gameId: number): Promise<PlayerTeamDTO[] | undefined> {
+    public static async getTeamsByGameId(gameId: number): Promise<GameTeamDTO[] | undefined> {
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
