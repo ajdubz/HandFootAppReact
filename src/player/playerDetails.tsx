@@ -1,14 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import PlayerService from "../services/PlayerService";
-import FriendService from "../services/FriendService";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
-import TeamService from "../services/TeamService";
-import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import Button from "react-bootstrap/Button";
-import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
-import ConfirmChanges from "../modals/confirmChanges";
 import StartGame from "../modals/startGame";
 
 interface RouteParams {
@@ -24,7 +18,7 @@ function PlayerDetails() {
     const navigate = useNavigate();
 
     
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         await PlayerService.getPlayerFullDetailsById(Number(id))
             .then((data) => {
                 setPlayer(data);
@@ -34,11 +28,11 @@ function PlayerDetails() {
                 console.error("Error in getPlayerFullDetailsById:", error);
                 setPlayer(new PlayerFullDetailsDTO());
             });
-    };
+    }, [id]);
 
     useEffect(() => {
         fetchData();
-    }, [id]);
+    }, [fetchData]);
 
     const handleConfirm = (newGameId: number) => {
         setShowModalStart(false);

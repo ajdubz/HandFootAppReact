@@ -1,12 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import PlayerService from "../services/PlayerService";
 import { useParams, useNavigate } from "react-router-dom";
 import { Form } from "react-bootstrap";
 import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import ConfirmChanges from "../modals/confirmChanges";
 import Button from "react-bootstrap/Button";
-import Player from "../models/Player";
-import { Container, Row, Col } from "react-bootstrap";
+import { Row, Col } from "react-bootstrap";
 
 interface RouteParams {
     [id: string]: string | undefined;
@@ -25,7 +24,7 @@ function PlayerAccount(): React.ReactElement {
     const [showModalSave, setShowModalSave] = useState(false);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         await PlayerService.getPlayerAccountById(Number(id))
             .then((response) => {
                 // setPlayer(response);
@@ -39,11 +38,11 @@ function PlayerAccount(): React.ReactElement {
             .catch((error) => {
                 console.log(error);
             });
-    };
+    }, [id]);
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [fetchData]);
 
     const handleCreatePlayer = async () => {
         const playerData: PlayerAccountDTO = {

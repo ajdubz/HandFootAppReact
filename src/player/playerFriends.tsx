@@ -1,12 +1,9 @@
-import { ChangeEvent, ReactElement, useEffect, useState } from "react";
-import PlayerService from "../services/PlayerService";
+import { useCallback, useEffect, useState } from "react";
 import FriendService from "../services/FriendService";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import ConfirmChanges from "../modals/confirmChanges";
-import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
-import { Button, ListGroup } from "react-bootstrap";
+import { Button } from "react-bootstrap";
 import PlayerFriendBasicDTO from "../models/DTOs/Player/PlayerFriendBasicDTO";
 import { ListFriends, performPlayerSearch } from "./playerList";
 
@@ -30,13 +27,13 @@ function PlayerFriends(): React.ReactElement {
 
 
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
 
         await FriendService.getFriends(Number(id)).then((data) => setFriends(data)).catch((error) => { console.error("Error in getFriends:", error); return [] });
         await FriendService.getFriendRequests(Number(id)).then((data) => setFriendRequests(data)).catch((error) => { console.error("Error in getFriendRequests:", error); return [] });
         await FriendService.getSentFriendRequests(Number(id)).then((data) => setSentFriendRequests(data)).catch((error) => { console.error("Error in getSentFriendRequests:", error); return [] });
 
-    };
+    }, [id]);
 
     const sendRequest = async (playerFriend: PlayerFriendBasicDTO) => {
         await FriendService.sendFriendRequest(Number(id), playerFriend).then(() => fetchData()).catch((error) => { console.error("Error in sendFriendRequest:", error); return [] });
@@ -48,7 +45,7 @@ function PlayerFriends(): React.ReactElement {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [fetchData]);
 
     useEffect(() => {
         setSearchPlayersResults(searchPlayers);

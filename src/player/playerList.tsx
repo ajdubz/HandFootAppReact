@@ -4,12 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import FriendService from "../services/FriendService";
 
-interface PlayerSearchProps {
-    id?: number;
-    searchText: string;
-    setSearchPlayersFunc: (players: PlayerGetBasicDTO[] | undefined, text: string) => void;
-}
-
 const PlayerListTable = () => {
     const [players, setPlayers] = useState<PlayerGetBasicDTO[] | undefined>([]);
     const navigateTo = useNavigate();
@@ -55,7 +49,7 @@ const ListFriends = (friends: PlayerGetBasicDTO[] | undefined, onClickFunc: (pla
     return (
         <div>
             {friends?.map((friend) => (
-                <div key={friend.id}><strong><a href="#" onClick={(e) => {e.preventDefault(); onClickFunc(friend)}}>{friend.nickName}</a></strong>{" (" + friend.fullName + ")"}</div>
+                <div key={friend.id}><strong><button type="button" className="link-button" onClick={() => onClickFunc(friend)}>{friend.nickName}</button></strong>{" (" + friend.fullName + ")"}</div>
             ))}
         </div>
     );

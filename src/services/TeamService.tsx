@@ -1,14 +1,18 @@
 import GameRoundDTO from "../models/DTOs/Game/GameRoundDTO";
 import GetTeamsByPlayerIdsDTO from "../models/DTOs/Team/GetTeamsByPlayerIdsDTO";
 import PlayerTeamCreateDTO from "../models/DTOs/Team/PlayerTeamCreateDTO";
-import PlayerTeamDTO from "../models/DTOs/Team/PlayerTeamDTO";
 import TeamCreateDTO from "../models/DTOs/Team/TeamCreateDTO";
 import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
 import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
+import MockApi from "./MockApi";
 
 class TeamService {
 
     public static async getTeamsWithPlayerNames(): Promise<TeamGetWithPlayerNamesDTO[] | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.getTeamsWithPlayerNames();
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -37,6 +41,10 @@ class TeamService {
     }
 
     public static async getTeamById(id: number): Promise<TeamGetBasicDTO> {
+        if (MockApi.isEnabled()) {
+            return MockApi.getTeamById(id);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -65,6 +73,10 @@ class TeamService {
     }
 
     public static async createTeam(Team: TeamCreateDTO): Promise<TeamCreateDTO> {
+        if (MockApi.isEnabled()) {
+            return MockApi.createTeam(Team);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -95,6 +107,10 @@ class TeamService {
     }
 
     public static async searchTeams(searchText: string): Promise<TeamGetBasicDTO[] | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.searchTeams(searchText);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -123,6 +139,10 @@ class TeamService {
     }
 
     public static async searchPlayerTeams(inId: number, searchText: string): Promise<TeamGetWithPlayerNamesDTO[] | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.searchPlayerTeams(inId, searchText);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -151,6 +171,10 @@ class TeamService {
     }
 
     public static async getTeamsByPlayers(getTeamsByPlayers: GetTeamsByPlayerIdsDTO): Promise<TeamGetWithPlayerNamesDTO[] | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.getTeamsByPlayers(getTeamsByPlayers);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -179,6 +203,10 @@ class TeamService {
     }
 
     public static async addPlayersToNewTeam(playerTeamCreate: PlayerTeamCreateDTO) {
+        if (MockApi.isEnabled()) {
+            return MockApi.addPlayersToNewTeam(playerTeamCreate);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -209,6 +237,10 @@ class TeamService {
     }
 
     public static async getRoundsByTeamId(gameTeamId: number): Promise<GameRoundDTO[] | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.getRoundsByTeamId(gameTeamId);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {

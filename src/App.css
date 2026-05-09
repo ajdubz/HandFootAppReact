@@ -7,3 +7,13 @@
 body {
     background-color: gray !important;
 }
+
+.link-button {
+    background: none;
+    border: 0;
+    color: #0d6efd;
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+    text-decoration: underline;
+}

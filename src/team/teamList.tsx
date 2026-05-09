@@ -1,7 +1,3 @@
-import React from "react";
-import logo from "./logo.svg";
-import { Player } from "../models/Player";
-import { Team } from "../models/Team";
 import { useEffect, useState } from "react";
 import TeamService from "../services/TeamService";
 import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
@@ -17,7 +13,7 @@ const TeamListTable = () => {
         await TeamService.getTeamsWithPlayerNames()
             .then((data) => {
                 setTeams(data);
-                if(data && data.length == 0) {
+                if(data && data.length === 0) {
                     alert("No data found in TeamListTable");
                 }
             })
@@ -58,7 +54,7 @@ const ListTeams = (teams: TeamGetWithPlayerNamesDTO[] | undefined, onClickFunc: 
             {teams?.map((team) => (
                 <div key={team.id}>
                     <strong>
-                        <a href="#" onClick={(e) => {e.preventDefault(); onClickFunc(team)}}>{team.name}</a>
+                        <button type="button" className="link-button" onClick={() => onClickFunc(team)}>{team.name}</button>
                     </strong>
                     <span>
                         {" (" + team.teamMembers?.map((name) => (

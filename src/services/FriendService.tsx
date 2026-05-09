@@ -1,9 +1,14 @@
 import PlayerFriendBasicDTO from "../models/DTOs/Player/PlayerFriendBasicDTO";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
+import MockApi from "./MockApi";
 
 
 class FriendService {
     public static async getFriends(id: number): Promise<PlayerGetBasicDTO[] | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.getFriends(id);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -32,6 +37,10 @@ class FriendService {
     }
 
     public static async getFriendRequests(id: number): Promise<PlayerGetBasicDTO[] | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.getFriendRequests(id);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -60,6 +69,10 @@ class FriendService {
     }
 
     public static async getSentFriendRequests(id: number): Promise<PlayerGetBasicDTO[] | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.getSentFriendRequests(id);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -88,6 +101,10 @@ class FriendService {
     }
 
     public static async sendFriendRequest(id: number, playerFriend: PlayerFriendBasicDTO) {
+        if (MockApi.isEnabled()) {
+            return MockApi.sendFriendRequest(id, playerFriend);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -112,6 +129,10 @@ class FriendService {
     }
 
     public static async acceptFriendRequest(id: number, playerFriend: PlayerFriendBasicDTO) {
+        if (MockApi.isEnabled()) {
+            return MockApi.acceptFriendRequest(id, playerFriend);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -136,6 +157,10 @@ class FriendService {
     }
 
     public static async removeFriend(id: number, playerFriend: PlayerFriendBasicDTO) {
+        if (MockApi.isEnabled()) {
+            return MockApi.removeFriend(id, playerFriend);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -159,6 +184,10 @@ class FriendService {
     }
 
     public static async searchNewFriends(playerId: number, search: string): Promise<PlayerGetBasicDTO[] | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.searchNewFriends(playerId, search);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -187,6 +216,10 @@ class FriendService {
     }
 
     public static async searchCurrentFriends(playerId: number, search: string): Promise<PlayerGetBasicDTO[] | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.searchCurrentFriends(playerId, search);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {

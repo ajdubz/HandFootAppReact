@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
 import { PlayerListTable } from "./player/playerList";
 import { TeamListTable } from "./team/teamList";
 import PlayerDetails from "./player/playerDetails";

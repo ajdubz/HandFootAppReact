@@ -2,11 +2,15 @@ import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import PlayerLoginDTO from "../models/DTOs/Player/PlayerLoginDTO";
+import MockApi from "./MockApi";
 
 class PlayerService {
 
     public static async LoginPlayer(playerAccountDTO: PlayerAccountDTO): Promise<PlayerLoginDTO | undefined> {
-        
+        if (MockApi.isEnabled()) {
+            return MockApi.login(playerAccountDTO);
+        }
+
         try {
             const url = await fetch(`${process.env.REACT_APP_API_URL}/auth/login`, {
                 method: "POST",
@@ -38,6 +42,10 @@ class PlayerService {
     }
 
     public static async getPlayers(): Promise<PlayerGetBasicDTO[] | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.getPlayers();
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -66,6 +74,10 @@ class PlayerService {
     }
 
     public static async getPlayerAccountById(id: number): Promise<PlayerAccountDTO | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.getPlayerAccountById(id);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -94,6 +106,10 @@ class PlayerService {
     }
 
     public static async getPlayerFullDetailsById(id: number): Promise<PlayerFullDetailsDTO> {
+        if (MockApi.isEnabled()) {
+            return MockApi.getPlayerFullDetailsById(id);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -123,6 +139,10 @@ class PlayerService {
     }
 
     public static async createPlayer(player: PlayerAccountDTO): Promise<PlayerAccountDTO> {
+        if (MockApi.isEnabled()) {
+            return MockApi.createPlayer(player);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -154,6 +174,10 @@ class PlayerService {
     }
 
     public static async createGuest(player: PlayerAccountDTO): Promise<PlayerAccountDTO> {
+        if (MockApi.isEnabled()) {
+            return MockApi.createGuest(player);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -185,6 +209,10 @@ class PlayerService {
     }
 
     public static async updatePlayerAccount(playerId: number, player: PlayerAccountDTO) {
+        if (MockApi.isEnabled()) {
+            return MockApi.updatePlayerAccount(playerId, player);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -209,6 +237,10 @@ class PlayerService {
     }
 
     public static async deletePlayer(playerId: number) {
+        if (MockApi.isEnabled()) {
+            return MockApi.deletePlayer(playerId);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -232,6 +264,10 @@ class PlayerService {
     }
 
     public static async searchPlayers(search: string): Promise<PlayerGetBasicDTO[] | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.searchPlayers(search);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {

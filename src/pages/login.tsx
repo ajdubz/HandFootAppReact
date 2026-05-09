@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import PlayerService from '../services/PlayerService';
-import PlayerLoginDTO from '../models/DTOs/Player/PlayerLoginDTO';
 import PlayerAccountDTO from '../models/DTOs/Player/PlayerAccountDTO';
 
 const Login: React.FC<{ onLogin: () => void}> = ({onLogin}) => {

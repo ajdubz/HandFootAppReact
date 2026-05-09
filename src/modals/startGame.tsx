@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import "./startGame.css";
@@ -7,15 +7,12 @@ import { ListFriends, performFriendSearch } from "../player/playerList";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import Dropdown from "react-bootstrap/Dropdown";
 import FormControl from "react-bootstrap/FormControl";
-import { DropdownItem, DropdownMenu } from "react-bootstrap";
-import { ListTeams, performTeamSearch, getTeamsByPlayerTeams, performPlayerTeamSearch } from "../team/teamList";
-import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
+import { DropdownMenu } from "react-bootstrap";
+import { ListTeams, performPlayerTeamSearch } from "../team/teamList";
 import GetTeamsByPlayerIdsDTO from "../models/DTOs/Team/GetTeamsByPlayerIdsDTO";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
 import { performRowValidation, CustomRow, setNewPlayer, setNewPlayerTeam, getCurrentPlayer, handlePlayerSelection, setNewGame, addTeamToGame } from "./startGameUtils";
-import GameAddDTO from "../models/DTOs/Game/GameAddDTO";
-import GameWithRulesDTO from "../models/DTOs/Game/GameWithRulesDTO";
 
 // Interface for component props
 interface StartGameProps {
@@ -36,19 +33,38 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
     const [playerCount, setPlayerCount] = useState<number>(1); // Default to 2 players, but for testing I set it to 1
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-    // Effect to clear items and get current player when modal is opened
-    useEffect(() => {
-        clearItems();
-        getCurrentPlayer(id, (data) => {setCurrentPlayer(data);}, () => {setCurrentPlayer(new PlayerFullDetailsDTO());});
-    }, [isOpen]);
+    const createInitialRow = useCallback((player?: PlayerFullDetailsDTO): CustomRow => {
+        const playerBasic = player
+            ? Object.assign(new PlayerGetBasicDTO(), {
+                id,
+                nickName: player.nickName,
+                fullName: player.fullName,
+            })
+            : undefined;
+
+        return { search1: player?.nickName ?? "", player1: playerBasic, search2: "", player2: new PlayerGetBasicDTO(), teamName: new TeamGetWithPlayerNamesDTO(), teamSearch: "" };
+    }, [id]);
 
     // Function to clear search results and errors, and reset rows
-    const clearItems = () => {
+    const clearItems = useCallback((player?: PlayerFullDetailsDTO) => {
         setSearchResults({ players1: [], players2: [], teams: [] });
         setSearchTeamsByPlayersResults([]);
         setErrors({});
-        setRows([{ search1: currentPlayer?.nickName ?? "", player1: currentPlayer, search2: "", player2: new PlayerGetBasicDTO(), teamName: new TeamGetBasicDTO(), teamSearch: "" }]);
-    }
+        setRows([createInitialRow(player)]);
+    }, [createInitialRow]);
+
+    // Effect to clear items and get current player when modal is opened
+    useEffect(() => {
+        clearItems();
+        getCurrentPlayer(id, (data) => {
+            setCurrentPlayer(data);
+            setRows([createInitialRow(data)]);
+        }, () => {
+            const emptyPlayer = new PlayerFullDetailsDTO();
+            setCurrentPlayer(emptyPlayer);
+            setRows([createInitialRow(emptyPlayer)]);
+        });
+    }, [clearItems, createInitialRow, id, isOpen]);
 
     // Function to handle form submission
     const handleSubmit = async (event: React.FormEvent) => {
@@ -57,10 +73,8 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
         const newErrors: { [key: string]: string } = {};
 
 
-        //turned off for testing !!!!!!!!!!!!!!!!!!!
-
-        // const tempErrors = performRowValidation(rows, playerCount);
-        // Object.assign(newErrors, tempErrors);
+        const tempErrors = performRowValidation(rows, playerCount);
+        Object.assign(newErrors, tempErrors);
 
 
         if(Object.keys(newErrors).length > 0) {
@@ -82,7 +96,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
                 setNewPlayer(row, 1, (tempPlayer1) => {row.player1 = tempPlayer1});
             }
 
-            if(!row.player2 && row.search2.trim() && playerCount == 2) {
+            if(!row.player2 && row.search2.trim() && playerCount === 2) {
                 alert("Player 2 does not exist");
                 setNewPlayer(row, 2, (tempPlayer2) => {row.player2 = tempPlayer2});
             }
@@ -159,14 +173,14 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
         const colNum = getColumnNumber(column);
         const isPlayer = colNum >= 1 && colNum <= 2;
         const searchResults = getSearchResults(colNum);
-        const list = colNum == 3 ? ListTeams : ListFriends;
+        const list = colNum === 3 ? ListTeams : ListFriends;
         const errorKey = `${field}${index}`;
         const errorMessage = errors[errorKey];
         const currentCell = activeCell[0] === index && activeCell[1] === colNum;
         const hasValue = rows[index][field] as string;
 
         return (
-            <Dropdown show={hasValue != "" && searchResults?.length != 0 && currentCell} autoClose>
+            <Dropdown show={hasValue !== "" && searchResults?.length !== 0 && currentCell} autoClose>
                 <FormControl
                     autoFocus
                     placeholder={isPlayer ? `Search Player ${colNum} Name` : `Search Team Name`}
@@ -174,7 +188,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
                     onFocus={() => setActiveCell([index, colNum])}
                     onChange={(e) => handleInputChange(index, field, e.target.value)}
                     className={`form-control-outline ${errorMessage ? "is-invalid" : ""}`}
-                    disabled={isPlayer && colNum == 1 && index == 0 && rows[index].player1?.nickName == currentPlayer?.nickName}
+                    disabled={isPlayer && colNum === 1 && index === 0 && rows[index].player1?.nickName === currentPlayer?.nickName}
                 />
                 {errorMessage && <div className="invalid-feedback">{errorMessage}</div>}
                 <DropdownMenu>
@@ -198,7 +212,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
                     {renderTableRowControl(index, "search1")}
                 </td>
                 <td>
-                    {playerCount == 2 && renderTableRowControl(index, "search2")}
+                    {playerCount === 2 && renderTableRowControl(index, "search2")}
                 </td>
                 <td>
                     {renderTableRowControl(index, "teamSearch")}
@@ -247,7 +261,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
                         <thead>
                             <tr>
                                 <th>Player 1</th>
-                                <th>{playerCount == 2 && "Player 2"}</th>
+                            <th>{playerCount === 2 && "Player 2"}</th>
                                 <th>Team Name</th>
                                 <th></th>
                             </tr>
@@ -257,7 +271,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
                         </tbody>
                     </table>
                     <br />
-                    <Button variant="outline-primary" onClick={() => setRows([...rows, { search1: "", player1: new PlayerGetBasicDTO(), search2: "", player2: new PlayerGetBasicDTO(), teamName: new TeamGetBasicDTO(), teamSearch: "" }])}>
+                    <Button variant="outline-primary" onClick={() => setRows([...rows, { search1: "", player1: new PlayerGetBasicDTO(), search2: "", player2: new PlayerGetBasicDTO(), teamName: new TeamGetWithPlayerNamesDTO(), teamSearch: "" }])}>
                         Add New Team
                     </Button>
                 </Modal.Body>
@@ -265,7 +279,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
                     <Button variant="primary" type="submit">
                         Continue
                     </Button>
-                    <Button variant="secondary" onClick={() => {clearItems(); onCancel();}}>
+                    <Button variant="secondary" onClick={() => {clearItems(currentPlayer); onCancel();}}>
                         Cancel
                     </Button>
                 </Modal.Footer>

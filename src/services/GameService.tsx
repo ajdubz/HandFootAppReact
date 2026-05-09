@@ -2,12 +2,14 @@ import GameAddDTO from "../models/DTOs/Game/GameAddDTO";
 import GameRoundDTO from "../models/DTOs/Game/GameRoundDTO";
 import GameTeamDTO from "../models/DTOs/Game/GameTeamDTO";
 import GameWithRulesDTO from "../models/DTOs/Game/GameWithRulesDTO";
-import PlayerTeamDTO from "../models/DTOs/Team/PlayerTeamDTO";
-import GameTeam from "../models/GameTeam";
+import MockApi from "./MockApi";
 
 
 class GameService {
     public static async getGames(): Promise<GameWithRulesDTO[] | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.getGames();
+        }
 
         try {
             const myToken = localStorage.getItem("token");
@@ -39,6 +41,10 @@ class GameService {
     }
 
     public static async getGameById(id: number): Promise<GameWithRulesDTO | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.getGameById(id);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -69,6 +75,10 @@ class GameService {
     }
 
     public static async addGame(game: GameAddDTO): Promise<GameWithRulesDTO | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.addGame(game);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -100,6 +110,10 @@ class GameService {
     }
 
     public static async addTeamToGame(gameId: number, teamId: number) {
+        if (MockApi.isEnabled()) {
+            return MockApi.addTeamToGame(gameId, teamId);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -130,6 +144,10 @@ class GameService {
     }
 
     public static async getTeamsByGameId(gameId: number): Promise<GameTeamDTO[] | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.getTeamsByGameId(gameId);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
@@ -160,6 +178,10 @@ class GameService {
     }
 
     public static async getRoundsByGameId(gameId: number): Promise<GameRoundDTO[] | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.getRoundsByGameId(gameId);
+        }
+
         try {
             const myToken = localStorage.getItem("token");
             if (!myToken) {
