@@ -90,7 +90,7 @@ function GamePage() {
 
     return (
         <div>
-            <h1>Game Home</h1>
+            <h1>Game Center</h1>
             {game?.id && <h2>{`Game ${game.id}`}</h2>}
             <div>
                 <Table bordered id="gameTable">

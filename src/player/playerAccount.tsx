@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import PlayerService from "../services/PlayerService";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Form } from "react-bootstrap";
 import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import ConfirmChanges from "../modals/confirmChanges";
@@ -11,8 +11,14 @@ interface RouteParams {
     [id: string]: string | undefined;
 }
 
-function PlayerAccount(): React.ReactElement {
+interface PlayerAccountProps {
+    isRegistration?: boolean;
+}
+
+function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.ReactElement {
     const { id = "" } = useParams<RouteParams>();
+    const location = useLocation();
+    const isRegistrationPage = isRegistration || new URLSearchParams(location.search).get("registration") === "true";
     const [player, setPlayer] = useState<PlayerAccountDTO | undefined>();
     const [nickname, setNickname] = useState<string>(player?.nickName ?? "");
     const [fullName, setFullName] = useState<string>(player?.fullName ?? "");
@@ -25,6 +31,8 @@ function PlayerAccount(): React.ReactElement {
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
     const fetchData = useCallback(async () => {
+        if (!id) return;
+
         await PlayerService.getPlayerAccountById(Number(id))
             .then((response) => {
                 // setPlayer(response);
@@ -53,7 +61,7 @@ function PlayerAccount(): React.ReactElement {
         };
 
         await PlayerService.createPlayer(playerData)
-            .then(() => { id ? navigate(`/player/${id}`) : navigate("/playersList"); })
+            .then(() => { navigate(isRegistrationPage ? "/login" : "/playersList"); })
             .catch((error) => { console.log(error); });
     };
 
@@ -103,7 +111,7 @@ function PlayerAccount(): React.ReactElement {
         return newErrors;
     };
 
-    const onSubmitFunc = () => {
+    const onSubmitFunc = async () => {
         // e.preventDefault();
         const newErrors = validateForm();
         if (Object.keys(newErrors).length > 0) {
@@ -113,13 +121,11 @@ function PlayerAccount(): React.ReactElement {
 
         if (id) {
             // console.log("Update player");
-            handleUpdatePlayer();
+            await handleUpdatePlayer();
         } else {
-            handleCreatePlayer();
+            await handleCreatePlayer();
             // console.log("Create player");
         }
-
-        returnToDetails();
     };
 
     const returnToDetails = () => {

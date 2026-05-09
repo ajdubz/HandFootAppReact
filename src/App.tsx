@@ -50,6 +50,8 @@ const App: React.FC = () => {
             <Routes>
                 <Route path="/" element={<Login onLogin={handleLogin} />} />
                 <Route path="/login" element={<Login onLogin={handleLogin} />} />
+                <Route path="/register" element={<PlayerAccount isRegistration />} />
+                <Route path="/player/account" element={<PlayerAccount />} />
                 <Route
                     path="/*"
                     element={<ProtectedRoutes isAuthenticated={isAuthenticated}>

@@ -16,6 +16,10 @@ const Login: React.FC<{ onLogin: () => void}> = ({onLogin}) => {
         setPassword(e.target.value);
     };
 
+    const handleRegistration = () => {
+        navigate("/register");
+    };
+
     const  handleLogin = async () => {
         let player = new PlayerAccountDTO();
         if(emailOrName.includes('@')) {
@@ -47,7 +51,12 @@ const Login: React.FC<{ onLogin: () => void}> = ({onLogin}) => {
                 <label>Password:</label>
                 <input type="password" value={password} onChange={handlePasswordChange} onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }} />
             </div>
-            <button type="button" onClick={handleLogin}>Login</button>
+            <div>
+                <button type="button" onClick={handleLogin}>Login</button>
+            </div>
+            <div>
+                <button type="button" onClick={handleRegistration}>Registration</button>
+            </div>
             </div>
         </div>
     );
