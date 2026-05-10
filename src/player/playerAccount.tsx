@@ -130,7 +130,7 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
 
     const returnToDetails = () => {
         if (id) navigate(`/player/${id}`);
-        else navigate(`/playersList`);
+        else navigate(isRegistrationPage ? "/" : "/playersList");
     };
 
     function handleModalConfirm(): void {

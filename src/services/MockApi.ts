@@ -41,8 +41,13 @@ class MockApi {
                 ? p.email?.toLowerCase() === player.email.toLowerCase()
                 : p.nickName?.toLowerCase() === player.nickName?.toLowerCase();
 
-            return identifierMatches && (!player.password || p.password === player.password);
-        }) ?? state.players[0];
+            const passwordMatches = (p.password ?? "") === (player.password ?? "");
+            return identifierMatches && passwordMatches;
+        });
+
+        if (!foundPlayer) {
+            return undefined;
+        }
 
         const login = new PlayerLoginDTO();
         login.id = foundPlayer.id;

@@ -1,0 +1,102 @@
+.login-stage {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #120a06;
+    padding: 8px;
+}
+
+.login-artwork {
+    position: relative;
+    width: min(100vw, calc(100vh * 0.5714));
+    aspect-ratio: 1024 / 1792;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.overlay-input {
+    position: absolute;
+    left: 22.65%;
+    width: 54.8%;
+    height: 4.35%;
+    border: 0;
+    outline: none;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.08);
+    color: rgba(235, 200, 145, 0.95);
+    font-size: clamp(12px, 1.26vw, 20px);
+    line-height: 1;
+    padding: 0 2.5%;
+}
+
+.overlay-input::placeholder {
+    color: rgba(197, 154, 98, 0.85);
+}
+
+.overlay-user {
+    top: 40.22%;
+    transform: translate(30px, 26px);
+}
+
+.overlay-password {
+    top: 50.36%;
+    transform: translate(30px, 32px);
+}
+
+.overlay-login-btn {
+    position: absolute;
+    top: 61.2%;
+    left: 28.4%;
+    width: 43.2%;
+    height: 5.35%;
+    border: 0;
+    background: transparent;
+    color: transparent;
+    cursor: pointer;
+}
+
+.overlay-register-btn {
+    position: absolute;
+    top: 67.4%;
+    left: 35%;
+    width: 30%;
+    height: 3.5%;
+    border: 0;
+    background: transparent;
+    color: transparent;
+    cursor: pointer;
+}
+
+.overlay-dealer-input {
+    position: absolute;
+    top: 87.7%;
+    left: 12.5%;
+    width: 20.5%;
+    height: 5.8%;
+    border: 0;
+    outline: none;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.08);
+    color: rgba(235, 200, 145, 0.95);
+    font-size: clamp(10px, 0.95vw, 14px);
+    text-align: center;
+    cursor: pointer;
+}
+
+.overlay-dealer-input::placeholder {
+    color: rgba(235, 200, 145, 0.95);
+}
+
+.overlay-error {
+    position: absolute;
+    top: 56.4%;
+    left: 22.8%;
+    width: 54.4%;
+    text-align: center;
+    color: #ffd7cb;
+    font-size: clamp(10px, 1vw, 15px);
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
