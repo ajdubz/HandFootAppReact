@@ -1,0 +1,97 @@
+import React from "react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import GamePage from "./gameHome";
+
+const renderGamePage = () => {
+    render(
+        <MemoryRouter initialEntries={["/player/1/game/1"]}>
+            <Routes>
+                <Route path="/player/:id/game/:gameId" element={<GamePage />} />
+            </Routes>
+        </MemoryRouter>
+    );
+};
+
+describe("GamePage round entry", () => {
+    const originalApiUrl = process.env.REACT_APP_API_URL;
+
+    beforeEach(() => {
+        process.env.REACT_APP_API_URL = "mock";
+        localStorage.clear();
+    });
+
+    afterAll(() => {
+        process.env.REACT_APP_API_URL = originalApiUrl;
+    });
+
+    test("renders the current round entry grid", async () => {
+        renderGamePage();
+
+        expect(await screen.findByRole("heading", { name: /score round 1/i })).toBeInTheDocument();
+        expect(await screen.findByLabelText("Alex and Sam Card Points")).toBeInTheDocument();
+        expect(screen.getByLabelText("Jordan and Casey Card Points")).toBeInTheDocument();
+        expect(screen.getByText(/book threshold: 50/i)).toBeInTheDocument();
+        expect(screen.getByLabelText("Alex and Sam Pulled Correct 1")).toBeInTheDocument();
+        expect(screen.getByLabelText("Alex and Sam Pulled Correct 2")).toBeInTheDocument();
+    });
+
+    test("saves a mock round and refreshes the scoreboard", async () => {
+        renderGamePage();
+
+        await screen.findByLabelText("Alex and Sam Card Points");
+
+        fireEvent.change(screen.getByLabelText("Alex and Sam Card Points"), { target: { value: "100" } });
+        fireEvent.change(screen.getByLabelText("Alex and Sam Clean Books"), { target: { value: "1" } });
+        fireEvent.change(screen.getByLabelText("Alex and Sam Red 3s"), { target: { value: "1" } });
+        fireEvent.click(screen.getByLabelText("Alex and Sam Pulled Correct 1"));
+        fireEvent.click(screen.getByLabelText("Alex and Sam Pulled Correct 2"));
+        fireEvent.click(screen.getByLabelText("Alex and Sam Went Out"));
+        fireEvent.click(screen.getByRole("button", { name: /save round/i }));
+
+        expect(await screen.findByRole("heading", { name: /score round 2/i })).toBeInTheDocument();
+        await waitFor(() => expect(screen.getAllByText("500").length).toBeGreaterThan(0));
+        expect(screen.getByText("No")).toBeInTheDocument();
+    });
+
+    test("lets pulled-correct checkboxes work independently", async () => {
+        renderGamePage();
+
+        const firstPulled = await screen.findByLabelText("Alex and Sam Pulled Correct 1");
+        const secondPulled = screen.getByLabelText("Alex and Sam Pulled Correct 2");
+
+        fireEvent.click(secondPulled);
+
+        expect(firstPulled).not.toBeChecked();
+        expect(secondPulled).toBeChecked();
+        expect(screen.getAllByText("50").length).toBeGreaterThan(0);
+    });
+
+    test("clamps red threes to positive counts", async () => {
+        renderGamePage();
+
+        const redThrees = await screen.findByLabelText("Alex and Sam Red 3s");
+
+        fireEvent.change(redThrees, { target: { value: "-2" } });
+
+        expect(redThrees).toHaveValue(0);
+    });
+
+    test("stops round entry after four saved rounds", async () => {
+        renderGamePage();
+
+        await screen.findByLabelText("Alex and Sam Card Points");
+
+        for (const roundNumber of [1, 2, 3, 4]) {
+            fireEvent.click(screen.getByRole("button", { name: /save round/i }));
+
+            const nextHeading = roundNumber === 4
+                ? /game complete/i
+                : new RegExp(`score round ${roundNumber + 1}`, "i");
+            expect(await screen.findByRole("heading", { name: nextHeading })).toBeInTheDocument();
+        }
+
+        expect(screen.getByRole("button", { name: /save round/i })).toBeDisabled();
+        expect(screen.getByText(/game complete\. winner:/i)).toBeInTheDocument();
+    });
+});

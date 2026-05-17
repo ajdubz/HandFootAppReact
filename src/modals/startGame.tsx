@@ -9,10 +9,9 @@ import Dropdown from "react-bootstrap/Dropdown";
 import FormControl from "react-bootstrap/FormControl";
 import { DropdownMenu } from "react-bootstrap";
 import { ListTeams, performPlayerTeamSearch } from "../team/teamList";
-import GetTeamsByPlayerIdsDTO from "../models/DTOs/Team/GetTeamsByPlayerIdsDTO";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
-import { performRowValidation, CustomRow, setNewPlayer, setNewPlayerTeam, getCurrentPlayer, handlePlayerSelection, setNewGame, addTeamToGame } from "./startGameUtils";
+import { performRowValidation, CustomRow, setNewPlayer, setNewPlayerTeam, getCurrentPlayer, handlePlayerSelection, setNewGame, addTeamToGame, getDefaultTeamName } from "./startGameUtils";
 
 // Interface for component props
 interface StartGameProps {
@@ -27,7 +26,6 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
     // State variables
     const [currentPlayer, setCurrentPlayer] = useState<PlayerFullDetailsDTO | undefined>(undefined);
     const [searchResults, setSearchResults] = useState<{ players1: PlayerGetBasicDTO[] | undefined, players2: PlayerGetBasicDTO[] | undefined, teams: TeamGetWithPlayerNamesDTO[] | undefined }>({ players1: [], players2: [], teams: [] });
-    const [searchTeamsByPlayersResults, setSearchTeamsByPlayersResults] = useState<TeamGetWithPlayerNamesDTO[] | undefined>([]);
     const [rows, setRows] = useState<CustomRow[]>([{ search1: currentPlayer?.nickName ?? "", player1: currentPlayer, search2: "", player2: new PlayerGetBasicDTO(), teamName: new TeamGetWithPlayerNamesDTO(), teamSearch: "" }]);
     const [activeCell, setActiveCell] = useState<number[]>([0, 0]);
     const [playerCount, setPlayerCount] = useState<number>(1); // Default to 2 players, but for testing I set it to 1
@@ -48,7 +46,6 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
     // Function to clear search results and errors, and reset rows
     const clearItems = useCallback((player?: PlayerFullDetailsDTO) => {
         setSearchResults({ players1: [], players2: [], teams: [] });
-        setSearchTeamsByPlayersResults([]);
         setErrors({});
         setRows([createInitialRow(player)]);
     }, [createInitialRow]);
@@ -90,42 +87,36 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
             return;
         }
         
-        rows.forEach(row => {
-            if(!row.player1 && row.search1.trim()) {
-                alert("Player 1 does not exist");
-                setNewPlayer(row, 1, (tempPlayer1) => {row.player1 = tempPlayer1});
+        for (const row of rows) {
+            if(!row.player1?.id && row.search1.trim()) {
+                await setNewPlayer(row, 1, (tempPlayer1) => {row.player1 = tempPlayer1});
             }
 
-            if(!row.player2 && row.search2.trim() && playerCount === 2) {
-                alert("Player 2 does not exist");
-                setNewPlayer(row, 2, (tempPlayer2) => {row.player2 = tempPlayer2});
+            if(!row.player2?.id && row.search2.trim() && playerCount === 2) {
+                await setNewPlayer(row, 2, (tempPlayer2) => {row.player2 = tempPlayer2});
             }
 
-            let tempTeam = new GetTeamsByPlayerIdsDTO();
-            tempTeam.player1Id = row.player1?.id ?? 0;
-            tempTeam.player2Id = row.player2?.id ?? 0;
-
-            //getTeamsByPlayerTeams(tempTeam, setSearchTeamsByPlayersResults);
-
-            if(searchTeamsByPlayersResults && searchTeamsByPlayersResults.length > 0) {
-                if(searchTeamsByPlayersResults.some(team => team === row.teamName)) {
-                    console.log("Team already exists");
-                } else {
-                    console.log("Some do, but this Team does not exist");
-                    setNewPlayerTeam(row);
-                }
-            } else if(row.teamSearch.trim()) {
-                console.log("Team does not exist, and this still doesn't work. Turned off for now");
-                // setNewPlayerTeam(row);
-            }
-            else {
-                console.log("Something else went wrong");
+            if (!row.player1?.id || (playerCount === 2 && !row.player2?.id)) {
+                console.log("Unable to resolve players for team");
                 return;
             }
 
-            addTeamToGame(newGame.id, row.teamName?.id ?? 0);
+            let teamId = row.teamName?.id ?? 0;
 
-        });
+            if (!teamId) {
+                const teamName = row.teamSearch.trim() || getDefaultTeamName(row, playerCount);
+                row.teamSearch = teamName;
+                const createdTeam = await setNewPlayerTeam(row, teamName);
+                teamId = createdTeam?.id ?? 0;
+            }
+
+            if (!teamId) {
+                console.log("Unable to resolve team for game");
+                return;
+            }
+
+            await addTeamToGame(newGame.id, teamId);
+        }
 
 
 

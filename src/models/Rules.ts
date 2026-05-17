@@ -8,7 +8,6 @@ class Rules {
         public winnerScore: number = 0;
         public cardsToDraw: number = 0;
         public cardsToStart: number = 0;
-        public roundThresholds: number[] = [];
 }
 
 export default Rules;

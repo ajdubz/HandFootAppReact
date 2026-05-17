@@ -5,6 +5,7 @@ class GameRoundDTO {
     public id?: number = 0;
     public gameTeam?: GameTeam = new GameTeam();
     public roundNumber?: number = 0;
+    public cardPoints?: number = 0;
     public handScore?: number = 0;
     public cleanBooks?: number = 0;
     public dirtyBooks?: number = 0;

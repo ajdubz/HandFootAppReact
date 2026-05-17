@@ -1,6 +1,3 @@
-import Game from "../../Game";
-import { Team } from "../../Team";
-import PlayerGetBasicDTO from "../Player/PlayerGetBasicDTO";
 import TeamGetWithPlayerNamesDTO from "../Team/TeamGetWithPlayerNamesDTO";
 import GameAddDTO from "./GameAddDTO";
 

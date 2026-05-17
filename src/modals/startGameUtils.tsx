@@ -46,11 +46,7 @@ export const performRowValidation = (inRows: CustomRow[], playerCount: number) =
             tempErrors[`search2${index}`] = "Player 2 is required";
         }
 
-        if (!r.teamSearch.trim()) {
-            tempErrors[`teamSearch${index}`] = "Team name is required";
-        }
-
-        if (r.player1 && r.player2 && r.player1.id === r.player2.id) {
+        if (playerCount === 2 && r.player1?.id && r.player2?.id && r.player1.id === r.player2.id) {
             tempErrors[`search1${index}`] = "Players must be different";
             tempErrors[`search2${index}`] = "Players must be different";
         }
@@ -93,13 +89,21 @@ export const setNewPlayer = async (row: CustomRow, whichCol: number, setValue: (
  * Creates a new team with the players in the row.
  * @param row - The row containing the players and team name.
  */
-export const setNewPlayerTeam = async (row: CustomRow) => {
+export const getDefaultTeamName = (row: CustomRow, playerCount: number) => {
+    const player1Name = row.player1?.nickName?.trim() || row.search1.trim();
+    const player2Name = row.player2?.nickName?.trim() || row.search2.trim();
+    const names = playerCount === 2 ? [player1Name, player2Name] : [player1Name];
+
+    return names.filter(Boolean).join(" and ");
+}
+
+export const setNewPlayerTeam = async (row: CustomRow, teamName: string) => {
     let newPlayerTeam = new PlayerTeamCreateDTO();
     newPlayerTeam.playerId1 = row.player1?.id ?? 0;
     newPlayerTeam.playerId2 = row.player2?.id ?? 0;
-    newPlayerTeam.teamName = row.teamSearch ?? "";
+    newPlayerTeam.teamName = teamName;
 
-    await TeamService.addPlayersToNewTeam(newPlayerTeam);
+    return await TeamService.addPlayersToNewTeam(newPlayerTeam);
 }
 
 /**

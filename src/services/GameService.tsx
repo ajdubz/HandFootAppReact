@@ -211,6 +211,39 @@ class GameService {
         }
     }
 
+    public static async saveGameRound(gameId: number, round: GameRoundDTO): Promise<GameRoundDTO | undefined> {
+        if (MockApi.isEnabled()) {
+            return MockApi.saveGameRound(gameId, round);
+        }
+
+        try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Game/${gameId}/round`, {
+                method: "POST",
+                headers: {
+                    "content-type": "application/json",
+                    "Authorization": `Bearer ${myToken}`,
+                },
+                body: JSON.stringify(round),
+            });
+
+            if (!url.ok) {
+                throw new Error("Error in saveGameRound");
+            }
+
+            const text = await url.text();
+            return text ? JSON.parse(text) : round;
+
+        } catch (error) {
+            console.error("Error in saveGameRound FE:", error);
+            throw error;
+        }
+    }
+
 
 }
 

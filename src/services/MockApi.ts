@@ -261,6 +261,35 @@ class MockApi {
         return this.getState().rounds.filter((round) => round.gameTeam?.id === gameTeamId);
     }
 
+    public static async saveGameRound(gameId: number, round: GameRoundDTO): Promise<GameRoundDTO> {
+        const state = this.getState();
+        const gameTeamId = round.gameTeam?.id ?? 0;
+        const gameTeam = state.gameTeams.find((gt) => gt.id === gameTeamId && gt.game?.id === gameId);
+
+        if (!gameTeam) {
+            throw new Error("Unable to save round for missing game team");
+        }
+
+        const savedRound = {
+            ...round,
+            id: round.id || this.nextId(state.rounds),
+            gameTeam,
+        };
+
+        const existingIndex = state.rounds.findIndex((r) =>
+            r.gameTeam?.id === gameTeamId && r.roundNumber === savedRound.roundNumber
+        );
+
+        if (existingIndex >= 0) {
+            state.rounds[existingIndex] = { ...state.rounds[existingIndex], ...savedRound };
+        } else {
+            state.rounds.push(savedRound);
+        }
+
+        this.saveState(state);
+        return savedRound;
+    }
+
     private static getState(): MockState {
         const rawState = localStorage.getItem(MOCK_STATE_KEY);
         if (rawState) {
