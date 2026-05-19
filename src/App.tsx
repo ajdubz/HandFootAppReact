@@ -10,15 +10,17 @@ import { useState } from "react";
 import PlayerFriends from "./player/playerFriends";
 import PlayerService from "./services/PlayerService";
 import TeamResults from "./team/teamResults";
+import { clearAuthState } from "./utils/auth";
 
-function NewHeader() {
+const NewHeader: React.FC<{ onSignOut: () => void }> = ({ onSignOut }) => {
     return (
         <nav>
             <Link to="/playersList">Players</Link>
             <Link to="/teams">Teams</Link>
+            <Link to="/login" onClick={onSignOut}>Sign out</Link>
         </nav>
     );
-}
+};
 
 const NewRoutes: React.FC = () => {
     return (
@@ -47,6 +49,11 @@ const App: React.FC = () => {
         setIsAuthenticated(true);
     };
 
+    const handleSignOut = () => {
+        clearAuthState();
+        setIsAuthenticated(false);
+    };
+
     return (
         <Router>
             <Routes>
@@ -57,7 +64,7 @@ const App: React.FC = () => {
                 <Route
                     path="/*"
                     element={<ProtectedRoutes isAuthenticated={isAuthenticated}>
-                                <NewHeader />
+                                <NewHeader onSignOut={handleSignOut} />
                                 <NewRoutes />
                             </ProtectedRoutes> }
                 />

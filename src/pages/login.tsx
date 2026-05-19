@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import PlayerService from '../services/PlayerService';
 import PlayerAccountDTO from '../models/DTOs/Player/PlayerAccountDTO';
 import './login.css';
+import { clearAuthState } from '../utils/auth';
 
 const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     const navigate = useNavigate();
@@ -12,12 +13,6 @@ const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
     const handleRegistration = () => {
         navigate("/register");
-    };
-
-    const clearAuthState = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("mockPlayerId");
-        localStorage.removeItem("currentPlayerId");
     };
 
     const handleLogin = async () => {
