@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import PlayerService from "../services/PlayerService";
 import { Link, useNavigate } from "react-router-dom";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
@@ -12,7 +12,7 @@ const PlayerListTable = () => {
     const navigateTo = useNavigate();
     const currentPlayerId = Number(localStorage.getItem("currentPlayerId") ?? localStorage.getItem("mockPlayerId") ?? 0);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         await PlayerService.getPlayers()
             .then((data) => {
                 setPlayers(data ?? []);
@@ -32,11 +32,11 @@ const PlayerListTable = () => {
         await FriendService.getSentFriendRequests(currentPlayerId)
             .then((data) => setSentFriendRequests(data ?? []))
             .catch((error) => console.error(error));
-    };
+    }, [currentPlayerId]);
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [fetchData]);
 
     const sendFriendRequest = async (friendId: number) => {
         if (!currentPlayerId || !friendId || friendId === currentPlayerId) {

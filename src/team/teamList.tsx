@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import TeamService from "../services/TeamService";
 import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
 import { useNavigate } from "react-router-dom";
@@ -10,7 +10,7 @@ const TeamListTable = () => {
     const navigateTo = useNavigate();
     const currentPlayerId = Number(localStorage.getItem("currentPlayerId") ?? localStorage.getItem("mockPlayerId") ?? 0);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         await TeamService.getTeamsWithPlayerNames()
             .then((data) => {
                 const filteredTeams = (data ?? []).filter((team) =>
@@ -23,11 +23,11 @@ const TeamListTable = () => {
                 }
             })
             .catch((error) => console.error(error));
-    };
+    }, [currentPlayerId]);
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [fetchData]);
 
     const handleDeletePreviousGames = async (team: TeamGetWithPlayerNamesDTO | undefined) => {
         if (!team?.id || !currentPlayerId) {
