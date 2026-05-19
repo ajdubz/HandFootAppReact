@@ -6,6 +6,7 @@ import GameWithRulesDTO from "../models/DTOs/Game/GameWithRulesDTO";
 import GameService from "../services/GameService";
 import GameTeamDTO from "../models/DTOs/Game/GameTeamDTO";
 import GameRoundDTO from "../models/DTOs/Game/GameRoundDTO";
+import PlayerService from "../services/PlayerService";
 import {
     calculateRoundScore,
     calculateTeamStats,
@@ -125,7 +126,53 @@ function GamePage() {
         setRoundEntries(nextEntries);
     };
 
+    const isGuestAccount = (nickname?: string, fullName?: string, email?: string) => {
+        const normalizedNickname = (nickname ?? "").trim().toLowerCase();
+        const normalizedFullName = (fullName ?? "").trim().toLowerCase();
+        const normalizedEmail = (email ?? "").trim().toLowerCase();
+
+        return normalizedNickname.endsWith("(guest)") ||
+            normalizedFullName.endsWith("(guest)") ||
+            normalizedEmail.endsWith("@mock.local");
+    };
+
+    const removeGuestAccountsForSession = async () => {
+        const teamMemberIds = new Set<number>();
+        teams.forEach((team) => {
+            (team.team?.teamMembers ?? []).forEach((member) => {
+                if (member.id) {
+                    teamMemberIds.add(member.id);
+                }
+            });
+        });
+
+        const memberAccounts = await Promise.all(
+            Array.from(teamMemberIds).map((playerId) => PlayerService.getPlayerAccountById(playerId))
+        );
+
+        const guestPlayerIds = memberAccounts
+            .filter((account) => account?.id && isGuestAccount(account.nickName, account.fullName, account.email))
+            .map((account) => account?.id as number);
+
+        await Promise.all(guestPlayerIds.map((guestPlayerId) => PlayerService.deletePlayer(guestPlayerId)));
+    };
+
     const handleBack = () => {
+        navigate(`/player/${id}?startGame=true`);
+    };
+
+    const handleEndGame = async () => {
+        if (!gameComplete) {
+            setRoundError("You can end the game after round 4 is complete.");
+            return;
+        }
+
+        try {
+            await removeGuestAccountsForSession();
+        } catch (error) {
+            console.error("Error removing guest accounts:", error);
+        }
+
         navigate(`/player/${id}`);
     };
 
@@ -267,9 +314,14 @@ function GamePage() {
                             : `Round ${nextRoundNumber} entry - Book threshold: ${bookThreshold}`}
                     </p>
                 </div>
-                <Button variant="secondary" onClick={handleBack}>
-                    Back
-                </Button>
+                <div>
+                    <Button variant="danger" className="me-2" onClick={handleEndGame} disabled={!gameComplete}>
+                        End Game
+                    </Button>
+                    <Button variant="secondary" onClick={handleBack}>
+                        Back
+                    </Button>
+                </div>
             </div>
 
             {roundError && <div className="round-error">{roundError}</div>}

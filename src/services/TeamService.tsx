@@ -270,6 +270,34 @@ class TeamService {
         }
     }
 
+    public static async deletePreviousGamesForPlayerTeam(playerId: number, teamId: number): Promise<void> {
+        if (MockApi.isEnabled()) {
+            return MockApi.deletePreviousGamesForPlayerTeam(playerId, teamId);
+        }
+
+        try {
+            const myToken = localStorage.getItem("token");
+            if (!myToken) {
+                throw new Error("No token found");
+            }
+
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Team/${teamId}/Player/${playerId}/games`, {
+                method: "DELETE",
+                headers: {
+                    "content-type": "application/json",
+                    "Authorization": `Bearer ${myToken}`,
+                },
+            });
+
+            if (!url.ok) {
+                throw new Error("Error in deletePreviousGamesForPlayerTeam");
+            }
+        } catch (error) {
+            console.error("Error in deletePreviousGamesForPlayerTeam FE:", error);
+            throw error;
+        }
+    }
+
 
 }
 

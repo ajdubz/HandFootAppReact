@@ -64,8 +64,29 @@ export const performRowValidation = (inRows: CustomRow[], playerCount: number) =
  * @param setValue - Function to set the player value.
  */
 export const setNewPlayer = async (row: CustomRow, whichCol: number, setValue: (player: PlayerGetBasicDTO) => void) => {
-    let newPlayer = new PlayerAccountDTO();
-    let playerName = whichCol === 1 ? row.search1 : row.search2;
+    const playerName = (whichCol === 1 ? row.search1 : row.search2).trim();
+    const existingPlayers = await PlayerService.getPlayers().catch((error) => {
+        console.error("Error loading existing players:", error);
+        return [];
+    });
+
+    const matchedExistingPlayer = (existingPlayers ?? []).find((player) => {
+        const nickName = (player.nickName ?? "").trim().toLowerCase();
+        const fullName = (player.fullName ?? "").trim().toLowerCase();
+        const search = playerName.toLowerCase();
+        return nickName === search || fullName === search;
+    });
+
+    if (matchedExistingPlayer?.id) {
+        const existingPlayer = new PlayerGetBasicDTO();
+        existingPlayer.id = matchedExistingPlayer.id;
+        existingPlayer.nickName = matchedExistingPlayer.nickName;
+        existingPlayer.fullName = matchedExistingPlayer.fullName;
+        setValue(existingPlayer);
+        return;
+    }
+
+    const newPlayer = new PlayerAccountDTO();
     newPlayer.nickName = playerName + " (Guest)";
     newPlayer.fullName = playerName + " (Guest)";
 

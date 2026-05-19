@@ -14,6 +14,7 @@ import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
 import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
 
 type MockState = {
+    stateVersion?: number;
     players: PlayerAccountDTO[];
     teams: TeamGetWithPlayerNamesDTO[];
     friendships: PlayerFriendBasicDTO[];
@@ -24,6 +25,7 @@ type MockState = {
 };
 
 const MOCK_STATE_KEY = "handfoot.mockState";
+const MOCK_STATE_VERSION = 2;
 
 class MockApi {
     public static isEnabled() {
@@ -80,6 +82,17 @@ class MockApi {
 
     public static async createPlayer(player: PlayerAccountDTO): Promise<PlayerAccountDTO> {
         const state = this.getState();
+        const normalizedNickName = (player.nickName ?? "").trim().toLowerCase();
+        const normalizedEmail = (player.email ?? "").trim().toLowerCase();
+        const duplicatePlayer = state.players.find((existingPlayer) =>
+            (existingPlayer.nickName ?? "").trim().toLowerCase() === normalizedNickName ||
+            (existingPlayer.email ?? "").trim().toLowerCase() === normalizedEmail
+        );
+
+        if (duplicatePlayer) {
+            throw new Error("An account with that username or email already exists.");
+        }
+
         const newPlayer = { ...player, id: this.nextId(state.players) };
         state.players.push(newPlayer);
         this.saveState(state);
@@ -96,6 +109,20 @@ class MockApi {
 
     public static async updatePlayerAccount(playerId: number, player: PlayerAccountDTO) {
         const state = this.getState();
+        const normalizedNickName = (player.nickName ?? "").trim().toLowerCase();
+        const normalizedEmail = (player.email ?? "").trim().toLowerCase();
+        const duplicatePlayer = state.players.find((existingPlayer) =>
+            existingPlayer.id !== playerId &&
+            (
+                (existingPlayer.nickName ?? "").trim().toLowerCase() === normalizedNickName ||
+                (existingPlayer.email ?? "").trim().toLowerCase() === normalizedEmail
+            )
+        );
+
+        if (duplicatePlayer) {
+            throw new Error("An account with that username or email already exists.");
+        }
+
         const index = state.players.findIndex((p) => p.id === playerId);
         if (index >= 0) {
             state.players[index] = { ...state.players[index], ...player, id: playerId };
@@ -261,6 +288,35 @@ class MockApi {
         return this.getState().rounds.filter((round) => round.gameTeam?.id === gameTeamId);
     }
 
+    public static async deletePreviousGamesForPlayerTeam(playerId: number, teamId: number) {
+        const state = this.getState();
+        const matchingGameTeams = state.gameTeams.filter((gameTeam) =>
+            gameTeam.team?.id === teamId &&
+            gameTeam.team?.teamMembers?.some((member) => member.id === playerId)
+        );
+
+        const matchingGameTeamIds = new Set(matchingGameTeams.map((gameTeam) => gameTeam.id ?? 0));
+        const matchingGameIds = new Set(matchingGameTeams.map((gameTeam) => gameTeam.game?.id ?? 0));
+
+        state.rounds = state.rounds.filter((round) => !matchingGameTeamIds.has(round.gameTeam?.id ?? 0));
+        state.gameTeams = state.gameTeams.filter((gameTeam) => !matchingGameTeamIds.has(gameTeam.id ?? 0));
+        state.games = state.games.filter((game) => !matchingGameIds.has(game.id ?? 0));
+        state.teams = state.teams
+            .map((team) => {
+                if (team.id !== teamId) {
+                    return team;
+                }
+
+                return {
+                    ...team,
+                    teamMembers: (team.teamMembers ?? []).filter((member) => member.id !== playerId),
+                };
+            })
+            .filter((team) => (team.teamMembers?.length ?? 0) > 0);
+
+        this.saveState(state);
+    }
+
     public static async saveGameRound(gameId: number, round: GameRoundDTO): Promise<GameRoundDTO> {
         const state = this.getState();
         const gameTeamId = round.gameTeam?.id ?? 0;
@@ -293,38 +349,42 @@ class MockApi {
     private static getState(): MockState {
         const rawState = localStorage.getItem(MOCK_STATE_KEY);
         if (rawState) {
-            return JSON.parse(rawState);
+            const parsedState = JSON.parse(rawState) as MockState;
+            const migratedState = this.migrateState(parsedState);
+            this.saveState(migratedState);
+            return migratedState;
         }
 
-        const state = this.seedState();
+        const state = this.seedState(true);
         this.saveState(state);
         return state;
     }
 
     private static saveState(state: MockState) {
-        localStorage.setItem(MOCK_STATE_KEY, JSON.stringify(state));
+        localStorage.setItem(MOCK_STATE_KEY, JSON.stringify({ ...state, stateVersion: MOCK_STATE_VERSION }));
     }
 
-    private static seedState(): MockState {
+    private static seedState(clearTeams: boolean = false): MockState {
         const players = [
             { id: 1, nickName: "Alex", fullName: "Alex Davis", email: "alex@example.com", password: "password" },
             { id: 2, nickName: "Sam", fullName: "Sam Taylor", email: "sam@example.com", password: "password" },
             { id: 3, nickName: "Jordan", fullName: "Jordan Lee", email: "jordan@example.com", password: "password" },
             { id: 4, nickName: "Casey", fullName: "Casey Morgan", email: "casey@example.com", password: "password" },
         ];
-        const teams = [
+        const teams = clearTeams ? [] : [
             { id: 1, name: "Alex and Sam", teamMembers: [this.toBasicPlayer(players[0]), this.toBasicPlayer(players[1])] },
             { id: 2, name: "Jordan and Casey", teamMembers: [this.toBasicPlayer(players[2]), this.toBasicPlayer(players[3])] },
         ];
         const game = new GameWithRulesDTO();
         game.id = 1;
         game.date = new Date();
-        const gameTeams = [
+        const gameTeams = clearTeams ? [] : [
             { id: 1, game, team: teams[0] },
             { id: 2, game, team: teams[1] },
         ];
 
         return {
+            stateVersion: MOCK_STATE_VERSION,
             players,
             teams,
             friendships: [
@@ -333,8 +393,23 @@ class MockApi {
                 { playerId: 2, friendId: 4 },
             ],
             friendRequests: [{ playerId: 4, friendId: 1 }],
-            games: [game],
+            games: clearTeams ? [] : [game],
             gameTeams,
+            rounds: [],
+        };
+    }
+
+    private static migrateState(state: MockState): MockState {
+        if ((state.stateVersion ?? 1) >= MOCK_STATE_VERSION) {
+            return state;
+        }
+
+        return {
+            ...state,
+            stateVersion: MOCK_STATE_VERSION,
+            teams: [],
+            games: [],
+            gameTeams: [],
             rounds: [],
         };
     }

@@ -17,6 +17,7 @@ const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     const clearAuthState = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("mockPlayerId");
+        localStorage.removeItem("currentPlayerId");
     };
 
     const handleLogin = async () => {
@@ -41,6 +42,7 @@ const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             const matchesNickname = !!data?.nickName && data.nickName.toLowerCase() === enteredValue;
 
             if (data && (matchesEmail || matchesNickname)) {
+                localStorage.setItem("currentPlayerId", String(data.id ?? ""));
                 onLogin();
                 navigate(`/player/${data?.id}`);
                 return;

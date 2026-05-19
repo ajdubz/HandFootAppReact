@@ -3,18 +3,57 @@ import PlayerService from "../services/PlayerService";
 import { Link, useNavigate } from "react-router-dom";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import FriendService from "../services/FriendService";
+import PlayerFriendBasicDTO from "../models/DTOs/Player/PlayerFriendBasicDTO";
 
 const PlayerListTable = () => {
     const [players, setPlayers] = useState<PlayerGetBasicDTO[] | undefined>([]);
+    const [friends, setFriends] = useState<PlayerGetBasicDTO[] | undefined>([]);
+    const [sentFriendRequests, setSentFriendRequests] = useState<PlayerGetBasicDTO[] | undefined>([]);
     const navigateTo = useNavigate();
+    const currentPlayerId = Number(localStorage.getItem("currentPlayerId") ?? localStorage.getItem("mockPlayerId") ?? 0);
 
     const fetchData = async () => {
-        await PlayerService.getPlayers().then((data) => setPlayers(data)).catch((error) => console.error(error));
+        await PlayerService.getPlayers()
+            .then((data) => {
+                setPlayers(data ?? []);
+            })
+            .catch((error) => console.error(error));
+
+        if (!currentPlayerId) {
+            setFriends([]);
+            setSentFriendRequests([]);
+            return;
+        }
+
+        await FriendService.getFriends(currentPlayerId)
+            .then((data) => setFriends(data ?? []))
+            .catch((error) => console.error(error));
+
+        await FriendService.getSentFriendRequests(currentPlayerId)
+            .then((data) => setSentFriendRequests(data ?? []))
+            .catch((error) => console.error(error));
     };
 
     useEffect(() => {
         fetchData();
     }, []);
+
+    const sendFriendRequest = async (friendId: number) => {
+        if (!currentPlayerId || !friendId || friendId === currentPlayerId) {
+            return;
+        }
+
+        const playerFriend = new PlayerFriendBasicDTO();
+        playerFriend.playerId = currentPlayerId;
+        playerFriend.friendId = friendId;
+
+        await FriendService.sendFriendRequest(currentPlayerId, playerFriend)
+            .then(() => fetchData())
+            .catch((error) => console.error(error));
+    };
+
+    const isAlreadyFriend = (playerId: number) => (friends ?? []).some((friend) => friend.id === playerId);
+    const isPendingRequest = (playerId: number) => (sentFriendRequests ?? []).some((friend) => friend.id === playerId);
 
     return (
         <div>
@@ -22,16 +61,45 @@ const PlayerListTable = () => {
                 <thead>
                     <tr>
                         <th>Name</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>
-                            <div>
-                                {players && ListFriends(players, (player) => { navigateTo(`/player/${player?.id}`)})}
-                            </div>
-                        </td>
-                    </tr>
+                    {(players ?? []).map((player) => {
+                        const isCurrentUser = (player.id ?? 0) === currentPlayerId;
+                        const playerId = player.id ?? 0;
+                        const showSendRequest = !isCurrentUser && !isAlreadyFriend(playerId) && !isPendingRequest(playerId);
+
+                        return (
+                            <tr key={player.id}>
+                                <td>
+                                    {isCurrentUser ? (
+                                        <strong>
+                                            <button type="button" className="link-button" onClick={() => navigateTo(`/player/${player.id}`)}>
+                                                {player.nickName}
+                                            </button>
+                                        </strong>
+                                    ) : (
+                                        <strong>{player.nickName}</strong>
+                                    )}
+                                    {` (${player.fullName})`}
+                                </td>
+                                <td>
+                                    {showSendRequest && (
+                                        <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => sendFriendRequest(playerId)}>
+                                            Send Friend Request
+                                        </button>
+                                    )}
+                                    {!showSendRequest && !isCurrentUser && isPendingRequest(playerId) && (
+                                        <span>Request Sent</span>
+                                    )}
+                                    {!showSendRequest && !isCurrentUser && isAlreadyFriend(playerId) && (
+                                        <span>Already Friends</span>
+                                    )}
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
             <br />

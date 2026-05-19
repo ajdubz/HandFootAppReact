@@ -8,12 +8,17 @@ import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerName
 const TeamListTable = () => {
     const [teams, setTeams] = useState<TeamGetWithPlayerNamesDTO[] | undefined>([]);
     const navigateTo = useNavigate();
+    const currentPlayerId = Number(localStorage.getItem("currentPlayerId") ?? localStorage.getItem("mockPlayerId") ?? 0);
 
     const fetchData = async () => {
         await TeamService.getTeamsWithPlayerNames()
             .then((data) => {
-                setTeams(data);
-                if(data && data.length === 0) {
+                const filteredTeams = (data ?? []).filter((team) =>
+                    team.teamMembers?.some((teamMember) => teamMember.id === currentPlayerId)
+                );
+
+                setTeams(filteredTeams);
+                if(filteredTeams.length === 0) {
                     alert("No data found in TeamListTable");
                 }
             })
@@ -23,6 +28,24 @@ const TeamListTable = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
+    const handleDeletePreviousGames = async (team: TeamGetWithPlayerNamesDTO | undefined) => {
+        if (!team?.id || !currentPlayerId) {
+            return;
+        }
+
+        const shouldDelete = window.confirm("Delete your previous games for this team?");
+        if (!shouldDelete) {
+            return;
+        }
+
+        await TeamService.deletePreviousGamesForPlayerTeam(currentPlayerId, team.id)
+            .then(() => {
+                alert("Previous games deleted.");
+                setTeams((currentTeams) => (currentTeams ?? []).filter((currentTeam) => currentTeam.id !== team.id));
+            })
+            .catch((error) => console.error(error));
+    };
 
 
 
@@ -37,7 +60,11 @@ const TeamListTable = () => {
                 <tr>
                     <td>
                         <div>
-                            {teams && ListTeams(teams, (team) => { navigateTo(`/team/${team?.id}`)})}
+                            {teams && ListTeams(
+                                teams,
+                                (team) => { navigateTo(`/team/${team?.id}`)},
+                                (team) => { handleDeletePreviousGames(team); }
+                            )}
                         </div>
                     </td>
                 </tr>
@@ -47,7 +74,11 @@ const TeamListTable = () => {
 };
 
 
-const ListTeams = (teams: TeamGetWithPlayerNamesDTO[] | undefined, onClickFunc: (teamSelected: TeamGetWithPlayerNamesDTO | undefined) => void) => {
+const ListTeams = (
+    teams: TeamGetWithPlayerNamesDTO[] | undefined,
+    onClickFunc: (teamSelected: TeamGetWithPlayerNamesDTO | undefined) => void,
+    onDeleteGamesFunc?: (teamSelected: TeamGetWithPlayerNamesDTO | undefined) => void
+) => {
 
     return (
         <div>
@@ -61,6 +92,11 @@ const ListTeams = (teams: TeamGetWithPlayerNamesDTO[] | undefined, onClickFunc: 
                             name.nickName + ", "
                         )) + ")"}
                     </span>
+                    {onDeleteGamesFunc && (
+                        <button type="button" className="btn btn-sm btn-outline-danger ms-2" onClick={() => onDeleteGamesFunc(team)}>
+                            Delete My Previous Games
+                        </button>
+                    )}
                 </div>
             ))}
         </div>

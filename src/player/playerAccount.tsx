@@ -62,7 +62,13 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
 
         await PlayerService.createPlayer(playerData)
             .then(() => { navigate(isRegistrationPage ? "/login" : "/playersList"); })
-            .catch((error) => { console.log(error); });
+            .catch((error: Error) => {
+                if (error.message.toLowerCase().includes("already exists")) {
+                    setErrors({ accountExists: "Account already exists. Please use a different username or email." });
+                    return;
+                }
+                console.log(error);
+            });
     };
 
     const deletePlayer = async () => {
@@ -81,7 +87,13 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
 
         await PlayerService.updatePlayerAccount(Number(id), playerData)
             .then(() => { navigate(`/player/${id}`); })
-            .catch((error) => { console.log(error); });
+            .catch((error: Error) => {
+                if (error.message.toLowerCase().includes("already exists")) {
+                    setErrors({ accountExists: "Account already exists. Please use a different username or email." });
+                    return;
+                }
+                console.log(error);
+            });
     }
 
     const validateForm = () => {
@@ -111,12 +123,54 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
         return newErrors;
     };
 
+    const checkDuplicateUser = async (): Promise<string | undefined> => {
+        const allPlayers = await PlayerService.getPlayers();
+        const normalizedNickname = nickname.trim().toLowerCase();
+        const normalizedEmail = email.trim().toLowerCase();
+        const currentId = id ? Number(id) : undefined;
+        const playerAccounts = await Promise.all(
+            (allPlayers ?? []).map((existingPlayer) => PlayerService.getPlayerAccountById(existingPlayer.id ?? 0))
+        );
+
+        const duplicate = playerAccounts.find((existingPlayer) => {
+            if (!existingPlayer) {
+                return false;
+            }
+            if (currentId && existingPlayer.id === currentId) {
+                return false;
+            }
+
+            const sameNickname = (existingPlayer.nickName ?? "").trim().toLowerCase() === normalizedNickname;
+            const sameEmail = (existingPlayer.email ?? "").trim().toLowerCase() === normalizedEmail;
+            return sameNickname || sameEmail;
+        });
+
+        if (!duplicate) {
+            return undefined;
+        }
+
+        return "Account already exists. Please use a different username or email.";
+    };
+
     const onSubmitFunc = async () => {
         // e.preventDefault();
         const newErrors = validateForm();
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             return;
+        }
+        setErrors({});
+
+        try {
+            const duplicateError = await checkDuplicateUser();
+            if (duplicateError) {
+                setErrors({ accountExists: duplicateError });
+                return;
+            }
+        } catch (error) {
+            // If fetching existing users fails (for example unauthenticated register mode),
+            // server/mock create/update checks still enforce uniqueness.
+            console.log(error);
         }
 
         if (id) {
@@ -181,6 +235,7 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
                 <Button type="submit" variant="primary" className="me-2" onClick={() => setShowModalSave(true)}>
                     Save
                 </Button>
+                {errors.accountExists && <div className="text-danger mt-2">{errors.accountExists}</div>}
                 <Button type="button" variant="secondary" className="me-2" onClick={returnToDetails}>
                     Cancel
                 </Button>

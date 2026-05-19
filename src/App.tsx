@@ -9,6 +9,7 @@ import React from "react";
 import { useState } from "react";
 import PlayerFriends from "./player/playerFriends";
 import PlayerService from "./services/PlayerService";
+import TeamResults from "./team/teamResults";
 
 function NewHeader() {
     return (
@@ -24,6 +25,7 @@ const NewRoutes: React.FC = () => {
         <Routes>
             <Route path="/playersList" element={<PlayerListTable />} />
             <Route path="/teams" element={<TeamListTable />} />
+            <Route path="/team/:id" element={<TeamResults />} />
 
             <Route path="/player/account" element={<PlayerAccount />} />
             <Route path="/player/:id" element={<PlayerDetails />} />

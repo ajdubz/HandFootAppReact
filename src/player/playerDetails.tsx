@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import PlayerService from "../services/PlayerService";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import Button from "react-bootstrap/Button";
 import StartGame from "../modals/startGame";
@@ -11,6 +11,8 @@ interface RouteParams {
 
 function PlayerDetails() {
     const { id = "" } = useParams<RouteParams>();
+    const location = useLocation();
+    const currentPlayerId = Number(localStorage.getItem("currentPlayerId") ?? localStorage.getItem("mockPlayerId") ?? 0);
     const [player, setPlayer] = useState<PlayerFullDetailsDTO | undefined>();
     const [nickname, setNickname] = useState<string>(player?.nickName || "");
     // const [showModalSave, setShowModalSave] = useState(false);
@@ -31,8 +33,20 @@ function PlayerDetails() {
     }, [id]);
 
     useEffect(() => {
+        if (currentPlayerId && Number(id) !== currentPlayerId) {
+            navigate(`/player/${currentPlayerId}`);
+            return;
+        }
+
         fetchData();
-    }, [fetchData]);
+    }, [currentPlayerId, fetchData, id, navigate]);
+
+    useEffect(() => {
+        const shouldOpenStartGame = new URLSearchParams(location.search).get("startGame") === "true";
+        if (shouldOpenStartGame) {
+            setShowModalStart(true);
+        }
+    }, [location.search]);
 
     const handleConfirm = (newGameId: number) => {
         setShowModalStart(false);

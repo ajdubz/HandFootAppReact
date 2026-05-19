@@ -11,7 +11,7 @@ import { DropdownMenu } from "react-bootstrap";
 import { ListTeams, performPlayerTeamSearch } from "../team/teamList";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
-import { performRowValidation, CustomRow, setNewPlayer, setNewPlayerTeam, getCurrentPlayer, handlePlayerSelection, setNewGame, addTeamToGame, getDefaultTeamName } from "./startGameUtils";
+import { performRowValidation, CustomRow, setNewPlayer, setNewPlayerTeam, handlePlayerSelection, setNewGame, addTeamToGame, getDefaultTeamName, getCurrentPlayer } from "./startGameUtils";
 
 // Interface for component props
 interface StartGameProps {
@@ -26,7 +26,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
     // State variables
     const [currentPlayer, setCurrentPlayer] = useState<PlayerFullDetailsDTO | undefined>(undefined);
     const [searchResults, setSearchResults] = useState<{ players1: PlayerGetBasicDTO[] | undefined, players2: PlayerGetBasicDTO[] | undefined, teams: TeamGetWithPlayerNamesDTO[] | undefined }>({ players1: [], players2: [], teams: [] });
-    const [rows, setRows] = useState<CustomRow[]>([{ search1: currentPlayer?.nickName ?? "", player1: currentPlayer, search2: "", player2: new PlayerGetBasicDTO(), teamName: new TeamGetWithPlayerNamesDTO(), teamSearch: "" }]);
+    const [rows, setRows] = useState<CustomRow[]>([{ search1: "", player1: new PlayerGetBasicDTO(), search2: "", player2: new PlayerGetBasicDTO(), teamName: new TeamGetWithPlayerNamesDTO(), teamSearch: "" }]);
     const [activeCell, setActiveCell] = useState<number[]>([0, 0]);
     const [playerCount, setPlayerCount] = useState<number>(1); // Default to 2 players, but for testing I set it to 1
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -38,7 +38,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
                 nickName: player.nickName,
                 fullName: player.fullName,
             })
-            : undefined;
+            : new PlayerGetBasicDTO();
 
         return { search1: player?.nickName ?? "", player1: playerBasic, search2: "", player2: new PlayerGetBasicDTO(), teamName: new TeamGetWithPlayerNamesDTO(), teamSearch: "" };
     }, [id]);
@@ -48,20 +48,25 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
         setSearchResults({ players1: [], players2: [], teams: [] });
         setErrors({});
         setRows([createInitialRow(player)]);
+        setPlayerCount(1);
+        setActiveCell([0, 0]);
     }, [createInitialRow]);
 
-    // Effect to clear items and get current player when modal is opened
+    // Effect to reset items when modal is opened
     useEffect(() => {
-        clearItems();
+        if (!isOpen) {
+            return;
+        }
+
         getCurrentPlayer(id, (data) => {
             setCurrentPlayer(data);
-            setRows([createInitialRow(data)]);
+            clearItems(data);
         }, () => {
             const emptyPlayer = new PlayerFullDetailsDTO();
             setCurrentPlayer(emptyPlayer);
-            setRows([createInitialRow(emptyPlayer)]);
+            clearItems(emptyPlayer);
         });
-    }, [clearItems, createInitialRow, id, isOpen]);
+    }, [clearItems, id, isOpen]);
 
     // Function to handle form submission
     const handleSubmit = async (event: React.FormEvent) => {
@@ -101,14 +106,12 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
                 return;
             }
 
-            let teamId = row.teamName?.id ?? 0;
-
-            if (!teamId) {
-                const teamName = row.teamSearch.trim() || getDefaultTeamName(row, playerCount);
-                row.teamSearch = teamName;
-                const createdTeam = await setNewPlayerTeam(row, teamName);
-                teamId = createdTeam?.id ?? 0;
-            }
+            const teamName = row.teamSearch.trim() || getDefaultTeamName(row, playerCount);
+            row.teamSearch = teamName;
+            // Always create a fresh team for a new game so the scoreboard only reflects
+            // the users selected in this Start Game session.
+            const createdTeam = await setNewPlayerTeam(row, teamName);
+            const teamId = createdTeam?.id ?? 0;
 
             if (!teamId) {
                 console.log("Unable to resolve team for game");
@@ -270,7 +273,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
                     <Button variant="primary" type="submit">
                         Continue
                     </Button>
-                    <Button variant="secondary" onClick={() => {clearItems(currentPlayer); onCancel();}}>
+                    <Button variant="secondary" onClick={() => { clearItems(currentPlayer); onCancel(); }}>
                         Cancel
                     </Button>
                 </Modal.Footer>
