@@ -2,6 +2,7 @@ import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import GamePage from "./gameHome";
+import MockApi from "../services/MockApi";
 
 const renderGamePage = () => {
     render(
@@ -13,12 +14,17 @@ const renderGamePage = () => {
     );
 };
 
+const clickSaveRound = () => {
+    fireEvent.click(screen.getAllByRole("button", { name: /save round/i })[0]);
+};
+
 describe("GamePage round entry", () => {
     const originalApiUrl = process.env.REACT_APP_API_URL;
 
     beforeEach(() => {
         process.env.REACT_APP_API_URL = "mock";
         localStorage.clear();
+        MockApi.reset();
     });
 
     afterAll(() => {
@@ -36,6 +42,20 @@ describe("GamePage round entry", () => {
         expect(screen.getByLabelText("Alex and Sam Pulled Correct 2")).toBeInTheDocument();
     });
 
+    test("renders mobile scoring cards with touch-friendly controls", async () => {
+        renderGamePage();
+
+        expect(await screen.findByLabelText("Mobile Alex and Sam Card Points")).toBeInTheDocument();
+        expect(screen.getByLabelText("Mobile Alex and Sam Clean Books")).toBeInTheDocument();
+        expect(screen.getByLabelText("Mobile Alex and Sam Dirty Books")).toBeInTheDocument();
+        expect(screen.getByLabelText("Mobile Alex and Sam Red 3s")).toBeInTheDocument();
+        expect(screen.getByLabelText("Mobile Alex and Sam Pulled Correct 1")).toBeInTheDocument();
+        expect(screen.getByLabelText("Mobile Alex and Sam Pulled Correct 2")).toBeInTheDocument();
+        expect(screen.getByLabelText("Mobile Alex and Sam Went Out")).toBeInTheDocument();
+        expect(screen.getByLabelText("Mobile scoreboard")).toBeInTheDocument();
+        expect(screen.getByLabelText("Mobile previous rounds")).toBeInTheDocument();
+    });
+
     test("saves a mock round and refreshes the scoreboard", async () => {
         renderGamePage();
 
@@ -47,7 +67,7 @@ describe("GamePage round entry", () => {
         fireEvent.click(screen.getByLabelText("Alex and Sam Pulled Correct 1"));
         fireEvent.click(screen.getByLabelText("Alex and Sam Pulled Correct 2"));
         fireEvent.click(screen.getByLabelText("Alex and Sam Went Out"));
-        fireEvent.click(screen.getByRole("button", { name: /save round/i }));
+        clickSaveRound();
 
         expect(await screen.findByRole("heading", { name: /score round 2/i })).toBeInTheDocument();
         await waitFor(() => expect(screen.getAllByText("500").length).toBeGreaterThan(0));
@@ -83,7 +103,7 @@ describe("GamePage round entry", () => {
         await screen.findByLabelText("Alex and Sam Card Points");
 
         for (const roundNumber of [1, 2, 3, 4]) {
-            fireEvent.click(screen.getByRole("button", { name: /save round/i }));
+            clickSaveRound();
 
             const nextHeading = roundNumber === 4
                 ? /game complete/i
@@ -91,7 +111,9 @@ describe("GamePage round entry", () => {
             expect(await screen.findByRole("heading", { name: nextHeading })).toBeInTheDocument();
         }
 
-        expect(screen.getByRole("button", { name: /save round/i })).toBeDisabled();
+        screen.getAllByRole("button", { name: /save round/i }).forEach((button) => {
+            expect(button).toBeDisabled();
+        });
         expect(screen.getByText(/game complete\. winner:/i)).toBeInTheDocument();
     });
 });

@@ -264,7 +264,7 @@ function GamePage() {
         }
     };
 
-    const renderScoreInput = (team: GameTeamDTO, field: "cardPoints" | "cleanBooks" | "dirtyBooks" | "redThrees", label: string) => {
+    const renderScoreInput = (team: GameTeamDTO, field: "cardPoints" | "cleanBooks" | "dirtyBooks" | "redThrees", label: string, labelPrefix = "") => {
         const gameTeamId = team.id ?? 0;
         const entry = roundEntries[gameTeamId] ?? emptyRoundEntry();
         const handleChange = (value: string) => {
@@ -276,7 +276,7 @@ function GamePage() {
 
         return (
             <Form.Control
-                aria-label={`${team.team?.name} ${label}`}
+                aria-label={`${labelPrefix}${team.team?.name} ${label}`}
                 className="score-input"
                 min={field === "redThrees" ? 0 : undefined}
                 step="1"
@@ -287,14 +287,14 @@ function GamePage() {
         );
     };
 
-    const renderPulledCorrectChecks = (team: GameTeamDTO) => {
+    const renderPulledCorrectChecks = (team: GameTeamDTO, labelPrefix = "") => {
         const gameTeamId = team.id ?? 0;
         const entry = roundEntries[gameTeamId] ?? emptyRoundEntry();
         const teamMemberCount = Math.max(1, Math.min(team.team?.teamMembers?.length ?? 1, 2));
 
         return Array.from({ length: teamMemberCount }, (_, index) => (
             <Form.Check
-                aria-label={`${team.team?.name} Pulled Correct ${index + 1}`}
+                aria-label={`${labelPrefix}${team.team?.name} Pulled Correct ${index + 1}`}
                 checked={entry.pulledCorrect[index] ?? false}
                 className="pulled-correct-check"
                 key={`${gameTeamId}-pulled-${index}`}
@@ -302,6 +302,13 @@ function GamePage() {
             />
         ));
     };
+
+    const renderMobileScoreField = (team: GameTeamDTO, field: "cardPoints" | "cleanBooks" | "dirtyBooks" | "redThrees", label: string) => (
+        <label className="mobile-score-field">
+            <span>{label}</span>
+            {renderScoreInput(team, field, label, "Mobile ")}
+        </label>
+    );
 
     return (
         <div className="game-page">
@@ -328,122 +335,228 @@ function GamePage() {
 
             <section className="game-section">
                 <h2>Scoreboard</h2>
-                <Table bordered responsive id="gameTable">
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Team Name</th>
-                            <th>Total Score</th>
-                            <th>Clean Books</th>
-                            <th>Dirty Books</th>
-                            <th>Red 3's</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {rankedTeams.map((team, index) => {
-                            const gameTeamId = team.id ?? 0;
+                <div className="desktop-table-wrap">
+                    <Table bordered responsive id="gameTable">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Team Name</th>
+                                <th>Total Score</th>
+                                <th>Clean Books</th>
+                                <th>Dirty Books</th>
+                                <th>Red 3's</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rankedTeams.map((team, index) => {
+                                const gameTeamId = team.id ?? 0;
 
-                            return (
-                                <tr key={gameTeamId}>
-                                    <td>{index + 1}</td>
-                                    <td>{team.team?.name}</td>
-                                    <td>{teamStats[gameTeamId]?.totalScore ?? 0}</td>
-                                    <td>{teamStats[gameTeamId]?.cleanBooks ?? 0}</td>
-                                    <td>{teamStats[gameTeamId]?.dirtyBooks ?? 0}</td>
-                                    <td>{teamStats[gameTeamId]?.redThrees ?? 0}</td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </Table>
+                                return (
+                                    <tr key={gameTeamId}>
+                                        <td>{index + 1}</td>
+                                        <td>{team.team?.name}</td>
+                                        <td>{teamStats[gameTeamId]?.totalScore ?? 0}</td>
+                                        <td>{teamStats[gameTeamId]?.cleanBooks ?? 0}</td>
+                                        <td>{teamStats[gameTeamId]?.dirtyBooks ?? 0}</td>
+                                        <td>{teamStats[gameTeamId]?.redThrees ?? 0}</td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </Table>
+                </div>
+                <div className="mobile-card-list" aria-label="Mobile scoreboard">
+                    {rankedTeams.map((team, index) => {
+                        const gameTeamId = team.id ?? 0;
+
+                        return (
+                            <article className="scoreboard-card" key={gameTeamId}>
+                                <div className="scoreboard-card-header">
+                                    <span className="rank-badge">#{index + 1}</span>
+                                    <h3>{team.team?.name}</h3>
+                                </div>
+                                <div className="mobile-total-row">
+                                    <span>Total Score</span>
+                                    <strong>{teamStats[gameTeamId]?.totalScore ?? 0}</strong>
+                                </div>
+                                <div className="scoreboard-stat-grid">
+                                    <div>
+                                        <span>Clean</span>
+                                        <strong>{teamStats[gameTeamId]?.cleanBooks ?? 0}</strong>
+                                    </div>
+                                    <div>
+                                        <span>Dirty</span>
+                                        <strong>{teamStats[gameTeamId]?.dirtyBooks ?? 0}</strong>
+                                    </div>
+                                    <div>
+                                        <span>Red 3s</span>
+                                        <strong>{teamStats[gameTeamId]?.redThrees ?? 0}</strong>
+                                    </div>
+                                </div>
+                            </article>
+                        );
+                    })}
+                </div>
             </section>
 
             <section className="game-section">
                 <div className="section-heading-row">
                     <h2>{gameComplete ? "Game Complete" : `Score Round ${nextRoundNumber}`}</h2>
-                    <Button variant="primary" onClick={handleSaveRound} disabled={!teams.length || isSavingRound || gameComplete}>
+                    <Button className="desktop-save-button" variant="primary" onClick={handleSaveRound} disabled={!teams.length || isSavingRound || gameComplete}>
                         {isSavingRound ? "Saving..." : "Save Round"}
                     </Button>
                 </div>
-                <Table bordered responsive className="round-entry-table">
-                    <thead>
-                        <tr>
-                            <th>Team</th>
-                            <th>Card Points</th>
-                            <th>Clean Books</th>
-                            <th>Dirty Books</th>
-                            <th>Red 3s</th>
-                            <th>Pulled Correct</th>
-                            <th>Went Out</th>
-                            <th>Round Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {teams.map((team) => {
-                            const gameTeamId = team.id ?? 0;
-                            const entry = roundEntries[gameTeamId] ?? emptyRoundEntry();
+                <div className="desktop-table-wrap">
+                    <Table bordered responsive className="round-entry-table">
+                        <thead>
+                            <tr>
+                                <th>Team</th>
+                                <th>Card Points</th>
+                                <th>Clean Books</th>
+                                <th>Dirty Books</th>
+                                <th>Red 3s</th>
+                                <th>Pulled Correct</th>
+                                <th>Went Out</th>
+                                <th>Round Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {teams.map((team) => {
+                                const gameTeamId = team.id ?? 0;
+                                const entry = roundEntries[gameTeamId] ?? emptyRoundEntry();
 
-                            return (
-                                <tr key={gameTeamId}>
-                                    <td>{team.team?.name}</td>
-                                    <td>{renderScoreInput(team, "cardPoints", "Card Points")}</td>
-                                    <td>{renderScoreInput(team, "cleanBooks", "Clean Books")}</td>
-                                    <td>{renderScoreInput(team, "dirtyBooks", "Dirty Books")}</td>
-                                    <td>{renderScoreInput(team, "redThrees", "Red 3s")}</td>
-                                    <td className="pulled-correct-cell">{renderPulledCorrectChecks(team)}</td>
-                                    <td className="went-out-cell">
-                                        <Form.Check
-                                            aria-label={`${team.team?.name} Went Out`}
-                                            checked={entry.isWinner}
-                                            onChange={(event) => handleWinnerChange(gameTeamId, event.target.checked)}
-                                        />
-                                    </td>
-                                    <td className="round-total">{getEntryScore(team)}</td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </Table>
+                                return (
+                                    <tr key={gameTeamId}>
+                                        <td>{team.team?.name}</td>
+                                        <td>{renderScoreInput(team, "cardPoints", "Card Points")}</td>
+                                        <td>{renderScoreInput(team, "cleanBooks", "Clean Books")}</td>
+                                        <td>{renderScoreInput(team, "dirtyBooks", "Dirty Books")}</td>
+                                        <td>{renderScoreInput(team, "redThrees", "Red 3s")}</td>
+                                        <td className="pulled-correct-cell">{renderPulledCorrectChecks(team)}</td>
+                                        <td className="went-out-cell">
+                                            <Form.Check
+                                                aria-label={`${team.team?.name} Went Out`}
+                                                checked={entry.isWinner}
+                                                onChange={(event) => handleWinnerChange(gameTeamId, event.target.checked)}
+                                            />
+                                        </td>
+                                        <td className="round-total">{getEntryScore(team)}</td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </Table>
+                </div>
+                <div className="mobile-card-list mobile-round-entry-list" aria-label="Mobile round scoring">
+                    {teams.map((team) => {
+                        const gameTeamId = team.id ?? 0;
+                        const entry = roundEntries[gameTeamId] ?? emptyRoundEntry();
+
+                        return (
+                            <article className="round-entry-card" key={gameTeamId}>
+                                <div className="round-entry-card-header">
+                                    <h3>{team.team?.name}</h3>
+                                    <div className="mobile-round-total">
+                                        <span>Round Total</span>
+                                        <strong>{getEntryScore(team)}</strong>
+                                    </div>
+                                </div>
+                                <div className="mobile-score-grid">
+                                    {renderMobileScoreField(team, "cardPoints", "Card Points")}
+                                    {renderMobileScoreField(team, "cleanBooks", "Clean Books")}
+                                    {renderMobileScoreField(team, "dirtyBooks", "Dirty Books")}
+                                    {renderMobileScoreField(team, "redThrees", "Red 3s")}
+                                </div>
+                                <div className="mobile-check-row">
+                                    <div>
+                                        <span className="mobile-check-label">Pulled Correct</span>
+                                        <div className="mobile-check-group">{renderPulledCorrectChecks(team, "Mobile ")}</div>
+                                    </div>
+                                    <Form.Check
+                                        aria-label={`Mobile ${team.team?.name} Went Out`}
+                                        checked={entry.isWinner}
+                                        className="mobile-went-out"
+                                        label="Went Out"
+                                        onChange={(event) => handleWinnerChange(gameTeamId, event.target.checked)}
+                                    />
+                                </div>
+                            </article>
+                        );
+                    })}
+                    <div className="mobile-save-bar">
+                        <Button variant="primary" onClick={handleSaveRound} disabled={!teams.length || isSavingRound || gameComplete}>
+                            {isSavingRound ? "Saving..." : "Save Round"}
+                        </Button>
+                    </div>
+                </div>
             </section>
 
             <section className="game-section">
                 <h2>Previous Rounds</h2>
-                <Table bordered responsive className="round-history-table">
-                    <thead>
-                        <tr>
-                            <th>Round</th>
-                            <th>Team</th>
-                            <th>Card Points</th>
-                            <th>Clean Books</th>
-                            <th>Dirty Books</th>
-                            <th>Red 3s</th>
-                            <th>Pulled Correct</th>
-                            <th>Went Out</th>
-                            <th>Round Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {sortedRounds.length ? sortedRounds.map((round) => (
-                            <tr key={round.id ?? `${round.gameTeam?.id}-${round.roundNumber}`}>
-                                <td>{round.roundNumber}</td>
-                                <td>{round.gameTeam?.team?.name}</td>
-                                <td>{round.cardPoints ?? 0}</td>
-                                <td>{round.cleanBooks ?? 0}</td>
-                                <td>{round.dirtyBooks ?? 0}</td>
-                                <td>{round.redThrees ?? 0}</td>
-                                <td>{round.pulledCorrect ?? 0}</td>
-                                <td>{round.isWinner ? "Yes" : "No"}</td>
-                                <td>{round.handScore ?? 0}</td>
-                            </tr>
-                        )) : (
+                <div className="desktop-table-wrap">
+                    <Table bordered responsive className="round-history-table">
+                        <thead>
                             <tr>
-                                <td colSpan={9} className="empty-rounds">
-                                    No rounds saved yet.
-                                </td>
+                                <th>Round</th>
+                                <th>Team</th>
+                                <th>Card Points</th>
+                                <th>Clean Books</th>
+                                <th>Dirty Books</th>
+                                <th>Red 3s</th>
+                                <th>Pulled Correct</th>
+                                <th>Went Out</th>
+                                <th>Round Total</th>
                             </tr>
-                        )}
-                    </tbody>
-                </Table>
+                        </thead>
+                        <tbody>
+                            {sortedRounds.length ? sortedRounds.map((round) => (
+                                <tr key={round.id ?? `${round.gameTeam?.id}-${round.roundNumber}`}>
+                                    <td>{round.roundNumber}</td>
+                                    <td>{round.gameTeam?.team?.name}</td>
+                                    <td>{round.cardPoints ?? 0}</td>
+                                    <td>{round.cleanBooks ?? 0}</td>
+                                    <td>{round.dirtyBooks ?? 0}</td>
+                                    <td>{round.redThrees ?? 0}</td>
+                                    <td>{round.pulledCorrect ?? 0}</td>
+                                    <td>{round.isWinner ? "Yes" : "No"}</td>
+                                    <td>{round.handScore ?? 0}</td>
+                                </tr>
+                            )) : (
+                                <tr>
+                                    <td colSpan={9} className="empty-rounds">
+                                        No rounds saved yet.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </Table>
+                </div>
+                <div className="mobile-card-list" aria-label="Mobile previous rounds">
+                    {sortedRounds.length ? sortedRounds.map((round) => (
+                        <article className="round-history-card" key={round.id ?? `${round.gameTeam?.id}-${round.roundNumber}`}>
+                            <div className="round-history-card-header">
+                                <span>Round {round.roundNumber}</span>
+                                <strong>{round.gameTeam?.team?.name}</strong>
+                            </div>
+                            <div className="round-history-total">
+                                <span>Round Total</span>
+                                <strong>{round.handScore ?? 0}</strong>
+                            </div>
+                            <div className="round-history-grid">
+                                <span>Cards: {round.cardPoints ?? 0}</span>
+                                <span>Clean: {round.cleanBooks ?? 0}</span>
+                                <span>Dirty: {round.dirtyBooks ?? 0}</span>
+                                <span>Red 3s: {round.redThrees ?? 0}</span>
+                                <span>Pulled: {round.pulledCorrect ?? 0}</span>
+                                <span>Went Out: {round.isWinner ? "Yes" : "No"}</span>
+                            </div>
+                        </article>
+                    )) : (
+                        <div className="empty-rounds mobile-empty-rounds">
+                            No rounds saved yet.
+                        </div>
+                    )}
+                </div>
             </section>
         </div>
     );

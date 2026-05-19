@@ -2,6 +2,14 @@
     padding: 24px;
 }
 
+.desktop-table-wrap {
+    display: block;
+}
+
+.mobile-card-list {
+    display: none;
+}
+
 .game-header,
 .section-heading-row {
     align-items: center;
@@ -79,4 +87,249 @@
 
 .empty-rounds {
     text-align: center;
+}
+
+@media (max-width: 767px) {
+    .game-page {
+        padding: 16px 12px 24px;
+    }
+
+    .game-header,
+    .section-heading-row {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .game-header .btn,
+    .section-heading-row .btn {
+        width: 100%;
+    }
+
+    .game-header h1 {
+        font-size: 1.8rem;
+    }
+
+    .game-section h2 {
+        font-size: 1.35rem;
+    }
+
+    .round-context {
+        color: #242424;
+        font-size: 0.95rem;
+    }
+
+    .desktop-table-wrap,
+    .desktop-save-button {
+        display: none;
+    }
+
+    .mobile-card-list {
+        display: grid;
+        gap: 12px;
+        margin-top: 12px;
+    }
+
+    .scoreboard-card,
+    .round-entry-card,
+    .round-history-card {
+        background: #ffffff;
+        border: 1px solid #1f1f1f;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+        padding: 14px;
+    }
+
+    .scoreboard-card-header,
+    .round-entry-card-header,
+    .round-history-card-header,
+    .mobile-total-row,
+    .round-history-total {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .scoreboard-card h3,
+    .round-entry-card h3 {
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    .rank-badge {
+        background: #212529;
+        border-radius: 999px;
+        color: #ffffff;
+        display: inline-flex;
+        font-weight: 700;
+        justify-content: center;
+        min-width: 42px;
+        padding: 4px 10px;
+    }
+
+    .mobile-total-row,
+    .round-history-total {
+        border-top: 1px solid #d7d7d7;
+        margin-top: 12px;
+        padding-top: 12px;
+    }
+
+    .mobile-total-row strong,
+    .mobile-round-total strong,
+    .round-history-total strong {
+        font-size: 1.35rem;
+    }
+
+    .scoreboard-stat-grid,
+    .round-history-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 12px;
+    }
+
+    .scoreboard-stat-grid div,
+    .round-history-grid span {
+        background: #f4f6f8;
+        border: 1px solid #d8dde3;
+        border-radius: 6px;
+        padding: 8px;
+    }
+
+    .scoreboard-stat-grid span,
+    .mobile-round-total span,
+    .mobile-score-field span,
+    .mobile-check-label,
+    .round-history-total span {
+        color: #505a63;
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .scoreboard-stat-grid strong {
+        display: block;
+        font-size: 1.1rem;
+        margin-top: 2px;
+    }
+
+    .mobile-round-entry-list {
+        padding-bottom: 76px;
+    }
+
+    .round-entry-card-header {
+        align-items: flex-start;
+        border-bottom: 1px solid #d7d7d7;
+        padding-bottom: 12px;
+    }
+
+    .mobile-round-total {
+        text-align: right;
+    }
+
+    .mobile-score-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 14px;
+    }
+
+    .mobile-score-field {
+        margin: 0;
+    }
+
+    .mobile-score-field .score-input {
+        font-size: 1.05rem;
+        min-height: 46px;
+        min-width: 0;
+        margin-top: 5px;
+        text-align: center;
+    }
+
+    .mobile-check-row {
+        align-items: center;
+        border-top: 1px solid #d7d7d7;
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        margin-top: 14px;
+        padding-top: 12px;
+    }
+
+    .mobile-check-group {
+        display: flex;
+        gap: 12px;
+        margin-top: 6px;
+    }
+
+    .mobile-check-group .pulled-correct-check {
+        margin: 0;
+        transform: scale(1.2);
+        transform-origin: left center;
+    }
+
+    .mobile-went-out {
+        border: 1px solid #d8dde3;
+        border-radius: 6px;
+        margin: 0;
+        min-width: 112px;
+        padding: 10px 10px 10px 34px;
+    }
+
+    .mobile-save-bar {
+        background: linear-gradient(180deg, rgba(128, 128, 128, 0), gray 25%);
+        bottom: 0;
+        display: block;
+        margin: 0 -12px;
+        padding: 18px 12px 12px;
+        position: sticky;
+        z-index: 2;
+    }
+
+    .mobile-save-bar .btn {
+        min-height: 48px;
+        width: 100%;
+    }
+
+    .round-history-card-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .round-history-card-header span {
+        color: #505a63;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+
+    .round-history-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .mobile-empty-rounds {
+        background: #ffffff;
+        border: 1px solid #1f1f1f;
+        border-radius: 8px;
+        padding: 14px;
+    }
+}
+
+@media (max-width: 420px) {
+    .mobile-score-grid,
+    .scoreboard-stat-grid,
+    .round-history-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mobile-check-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .mobile-went-out {
+        min-width: 0;
+    }
 }
