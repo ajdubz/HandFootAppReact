@@ -399,10 +399,10 @@ function GamePage() {
                 </div>
             </section>
 
-            <section className="game-section">
+            <section className="game-section score-round-section">
                 <div className="section-heading-row">
                     <h2>{gameComplete ? "Game Complete" : `Score Round ${nextRoundNumber}`}</h2>
-                    <Button className="desktop-save-button" variant="primary" onClick={handleSaveRound} disabled={!teams.length || isSavingRound || gameComplete}>
+                    <Button className="round-save-button" variant="primary" onClick={handleSaveRound} disabled={!teams.length || isSavingRound || gameComplete}>
                         {isSavingRound ? "Saving..." : "Save Round"}
                     </Button>
                 </div>
@@ -421,7 +421,7 @@ function GamePage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {teams.map((team) => {
+                            {teams.length ? teams.map((team) => {
                                 const gameTeamId = team.id ?? 0;
                                 const entry = roundEntries[gameTeamId] ?? emptyRoundEntry();
 
@@ -443,12 +443,18 @@ function GamePage() {
                                         <td className="round-total">{getEntryScore(team)}</td>
                                     </tr>
                                 );
-                            })}
+                            }) : (
+                                <tr>
+                                    <td colSpan={8} className="empty-rounds">
+                                        No teams in this game yet.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </Table>
                 </div>
                 <div className="mobile-card-list mobile-round-entry-list" aria-label="Mobile round scoring">
-                    {teams.map((team) => {
+                    {teams.length ? teams.map((team) => {
                         const gameTeamId = team.id ?? 0;
                         const entry = roundEntries[gameTeamId] ?? emptyRoundEntry();
 
@@ -482,12 +488,11 @@ function GamePage() {
                                 </div>
                             </article>
                         );
-                    })}
-                    <div className="mobile-save-bar">
-                        <Button variant="primary" onClick={handleSaveRound} disabled={!teams.length || isSavingRound || gameComplete}>
-                            {isSavingRound ? "Saving..." : "Save Round"}
-                        </Button>
-                    </div>
+                    }) : (
+                        <div className="empty-rounds mobile-empty-rounds">
+                            No teams in this game yet.
+                        </div>
+                    )}
                 </div>
             </section>
 

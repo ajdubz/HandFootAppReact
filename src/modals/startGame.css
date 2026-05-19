@@ -23,6 +23,14 @@
     width: 100%;
 }
 
+.start-game-error {
+    background: #f8d7da;
+    border: 1px solid #842029;
+    color: #842029;
+    margin-top: 12px;
+    padding: 10px 12px;
+}
+
 th,
 td {
     padding: 8px;

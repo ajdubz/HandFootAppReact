@@ -40,6 +40,7 @@ describe("GamePage round entry", () => {
         expect(screen.getByText(/book threshold: 50/i)).toBeInTheDocument();
         expect(screen.getByLabelText("Alex and Sam Pulled Correct 1")).toBeInTheDocument();
         expect(screen.getByLabelText("Alex and Sam Pulled Correct 2")).toBeInTheDocument();
+        expect(screen.getAllByRole("button", { name: /save round/i })).toHaveLength(1);
     });
 
     test("renders mobile scoring cards with touch-friendly controls", async () => {

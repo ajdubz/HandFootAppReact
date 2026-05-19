@@ -21,6 +21,10 @@ interface StartGameProps {
     onConfirm: (newGameId: number) => void;
 }
 
+const getErrorMessage = (error: unknown) => error instanceof Error && error.message
+    ? error.message
+    : "Check the teams and try again.";
+
 // Main component function
 function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
     // State variables
@@ -30,6 +34,8 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
     const [activeCell, setActiveCell] = useState<number[]>([0, 0]);
     const [playerCount, setPlayerCount] = useState<number>(1); // Default to 2 players, but for testing I set it to 1
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const [startGameError, setStartGameError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const createInitialRow = useCallback((player?: PlayerFullDetailsDTO): CustomRow => {
         const playerBasic = player
@@ -50,6 +56,8 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
         setRows([createInitialRow(player)]);
         setPlayerCount(1);
         setActiveCell([0, 0]);
+        setStartGameError("");
+        setIsSubmitting(false);
     }, [createInitialRow]);
 
     // Effect to reset items when modal is opened
@@ -72,6 +80,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
         setErrors({});
+        setStartGameError("");
         const newErrors: { [key: string]: string } = {};
 
 
@@ -84,47 +93,55 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
             return;
         }
 
-        // let newGame = new GameWithRulesDTO();
-        let newGame = await setNewGame(() => {return;});
+        setIsSubmitting(true);
 
-        if (!newGame || !newGame.id || newGame.id === 0) {
-            console.log("Error creating game, " + (newGame?.id ?? "undefined id"));
-            return;
+        try {
+            const resolvedRows = rows.map((row) => ({ ...row }));
+
+            for (const row of resolvedRows) {
+                if(!row.player1?.id && row.search1.trim()) {
+                    row.player1 = await setNewPlayer(row, 1, (tempPlayer1) => { row.player1 = tempPlayer1; });
+                }
+
+                if(!row.player2?.id && row.search2.trim() && playerCount === 2) {
+                    row.player2 = await setNewPlayer(row, 2, (tempPlayer2) => { row.player2 = tempPlayer2; });
+                }
+
+                if (!row.player1?.id || (playerCount === 2 && !row.player2?.id)) {
+                    throw new Error("Unable to resolve players for team");
+                }
+
+                const teamName = row.teamSearch.trim() || getDefaultTeamName(row, playerCount);
+                row.teamSearch = teamName;
+            }
+
+            let newGame = await setNewGame(() => {return;});
+
+            if (!newGame || !newGame.id || newGame.id === 0) {
+                throw new Error("Error creating game, " + (newGame?.id ?? "undefined id"));
+            }
+
+            for (const row of resolvedRows) {
+                // Always create a fresh team for a new game so the scoreboard only reflects
+                // the users selected in this Start Game session.
+                const createdTeam = await setNewPlayerTeam(row, row.teamSearch);
+                const teamId = createdTeam?.id ?? 0;
+
+                if (!teamId) {
+                    throw new Error("Unable to resolve team for game");
+                }
+
+                await addTeamToGame(newGame.id, teamId);
+            }
+
+            setRows(resolvedRows);
+            onConfirm(newGame.id);
+        } catch (error) {
+            console.error("Error starting game:", error);
+            setStartGameError(`Unable to start game. ${getErrorMessage(error)}`);
+        } finally {
+            setIsSubmitting(false);
         }
-        
-        for (const row of rows) {
-            if(!row.player1?.id && row.search1.trim()) {
-                await setNewPlayer(row, 1, (tempPlayer1) => {row.player1 = tempPlayer1});
-            }
-
-            if(!row.player2?.id && row.search2.trim() && playerCount === 2) {
-                await setNewPlayer(row, 2, (tempPlayer2) => {row.player2 = tempPlayer2});
-            }
-
-            if (!row.player1?.id || (playerCount === 2 && !row.player2?.id)) {
-                console.log("Unable to resolve players for team");
-                return;
-            }
-
-            const teamName = row.teamSearch.trim() || getDefaultTeamName(row, playerCount);
-            row.teamSearch = teamName;
-            // Always create a fresh team for a new game so the scoreboard only reflects
-            // the users selected in this Start Game session.
-            const createdTeam = await setNewPlayerTeam(row, teamName);
-            const teamId = createdTeam?.id ?? 0;
-
-            if (!teamId) {
-                console.log("Unable to resolve team for game");
-                return;
-            }
-
-            await addTeamToGame(newGame.id, teamId);
-        }
-
-
-
-        console.log("Game started successfully");
-        onConfirm(newGame.id);
     };
 
     // Function to handle input changes in the form
@@ -212,7 +229,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
                     {renderTableRowControl(index, "teamSearch")}
                 </td>
                 <td>
-                    <Button variant="outline-danger" onClick={() => setRows(rows.filter((r, i) => i !== index))} >
+                    <Button type="button" variant="outline-danger" onClick={() => setRows(rows.filter((r, i) => i !== index))} >
                         Remove
                     </Button>
                 </td>
@@ -249,6 +266,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
                 </Modal.Header>
                 <Modal.Body>
                     {renderPlayerRadioSelection()}
+                    {startGameError && <div className="start-game-error">{startGameError}</div>}
                     <br />
                     <h5>Enter team details:</h5>
                     <table className="tableClass">
@@ -265,15 +283,15 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
                         </tbody>
                     </table>
                     <br />
-                    <Button variant="outline-primary" onClick={() => setRows([...rows, { search1: "", player1: new PlayerGetBasicDTO(), search2: "", player2: new PlayerGetBasicDTO(), teamName: new TeamGetWithPlayerNamesDTO(), teamSearch: "" }])}>
+                    <Button type="button" variant="outline-primary" onClick={() => setRows([...rows, { search1: "", player1: new PlayerGetBasicDTO(), search2: "", player2: new PlayerGetBasicDTO(), teamName: new TeamGetWithPlayerNamesDTO(), teamSearch: "" }])}>
                         Add New Team
                     </Button>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="primary" type="submit">
-                        Continue
+                    <Button variant="primary" type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? "Starting..." : "Continue"}
                     </Button>
-                    <Button variant="secondary" onClick={() => { clearItems(currentPlayer); onCancel(); }}>
+                    <Button type="button" variant="secondary" onClick={() => { clearItems(currentPlayer); onCancel(); }}>
                         Cancel
                     </Button>
                 </Modal.Footer>

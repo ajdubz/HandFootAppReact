@@ -119,8 +119,20 @@
         font-size: 0.95rem;
     }
 
-    .desktop-table-wrap,
-    .desktop-save-button {
+    .score-round-section .section-heading-row {
+        background: #808080;
+        margin: 0 -12px 12px;
+        padding: 12px;
+        position: sticky;
+        top: 0;
+        z-index: 3;
+    }
+
+    .score-round-section .section-heading-row h2 {
+        margin: 0;
+    }
+
+    .desktop-table-wrap {
         display: none;
     }
 
@@ -215,10 +227,6 @@
         margin-top: 2px;
     }
 
-    .mobile-round-entry-list {
-        padding-bottom: 76px;
-    }
-
     .round-entry-card-header {
         align-items: flex-start;
         border-bottom: 1px solid #d7d7d7;
@@ -278,19 +286,8 @@
         padding: 10px 10px 10px 34px;
     }
 
-    .mobile-save-bar {
-        background: linear-gradient(180deg, rgba(128, 128, 128, 0), gray 25%);
-        bottom: 0;
-        display: block;
-        margin: 0 -12px;
-        padding: 18px 12px 12px;
-        position: sticky;
-        z-index: 2;
-    }
-
-    .mobile-save-bar .btn {
+    .round-save-button {
         min-height: 48px;
-        width: 100%;
     }
 
     .round-history-card-header {

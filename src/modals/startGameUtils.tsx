@@ -21,6 +21,18 @@ export interface CustomRow {
     teamSearch: string;
 }
 
+const normalizeName = (value: string | undefined) => (value ?? "").trim().toLowerCase();
+
+const removeGuestSuffix = (value: string | undefined) => (value ?? "").trim().replace(/\s+\(guest\)$/i, "");
+
+const namesMatch = (existingName: string | undefined, searchName: string) => {
+    const normalizedSearch = normalizeName(searchName);
+    const normalizedExisting = normalizeName(existingName);
+    const normalizedWithoutGuestSuffix = normalizeName(removeGuestSuffix(existingName));
+
+    return normalizedExisting === normalizedSearch || normalizedWithoutGuestSuffix === normalizedSearch;
+}
+
 /**
  * Validates the rows in the form.
  * @param inRows - Array of rows to validate.
@@ -63,19 +75,16 @@ export const performRowValidation = (inRows: CustomRow[], playerCount: number) =
  * @param whichCol - The column number (1 or 2) to set the player.
  * @param setValue - Function to set the player value.
  */
-export const setNewPlayer = async (row: CustomRow, whichCol: number, setValue: (player: PlayerGetBasicDTO) => void) => {
+export const setNewPlayer = async (row: CustomRow, whichCol: number, setValue: (player: PlayerGetBasicDTO) => void): Promise<PlayerGetBasicDTO | undefined> => {
     const playerName = (whichCol === 1 ? row.search1 : row.search2).trim();
     const existingPlayers = await PlayerService.getPlayers().catch((error) => {
         console.error("Error loading existing players:", error);
         return [];
     });
 
-    const matchedExistingPlayer = (existingPlayers ?? []).find((player) => {
-        const nickName = (player.nickName ?? "").trim().toLowerCase();
-        const fullName = (player.fullName ?? "").trim().toLowerCase();
-        const search = playerName.toLowerCase();
-        return nickName === search || fullName === search;
-    });
+    const matchedExistingPlayer = (existingPlayers ?? []).find((player) =>
+        namesMatch(player.nickName, playerName) || namesMatch(player.fullName, playerName)
+    );
 
     if (matchedExistingPlayer?.id) {
         const existingPlayer = new PlayerGetBasicDTO();
@@ -83,26 +92,25 @@ export const setNewPlayer = async (row: CustomRow, whichCol: number, setValue: (
         existingPlayer.nickName = matchedExistingPlayer.nickName;
         existingPlayer.fullName = matchedExistingPlayer.fullName;
         setValue(existingPlayer);
-        return;
+        return existingPlayer;
     }
 
     const newPlayer = new PlayerAccountDTO();
     newPlayer.nickName = playerName + " (Guest)";
     newPlayer.fullName = playerName + " (Guest)";
 
-    await PlayerService.createGuest(newPlayer)
+    return await PlayerService.createGuest(newPlayer)
         .then((data) => {
-            alert("Player created successfully");
-
             let tempPlayer = new PlayerGetBasicDTO();
             tempPlayer.id = data.id;
             tempPlayer.nickName = data.nickName;
             tempPlayer.fullName = data.fullName;
             setValue(tempPlayer);
+            return tempPlayer;
         })
         .catch((error) => {
             console.error("Error in setNewPlayer:", error);
-            return new PlayerGetBasicDTO();
+            throw error;
         });
 }
 
@@ -111,8 +119,8 @@ export const setNewPlayer = async (row: CustomRow, whichCol: number, setValue: (
  * @param row - The row containing the players and team name.
  */
 export const getDefaultTeamName = (row: CustomRow, playerCount: number) => {
-    const player1Name = row.player1?.nickName?.trim() || row.search1.trim();
-    const player2Name = row.player2?.nickName?.trim() || row.search2.trim();
+    const player1Name = row.search1.trim() || removeGuestSuffix(row.player1?.nickName);
+    const player2Name = row.search2.trim() || removeGuestSuffix(row.player2?.nickName);
     const names = playerCount === 2 ? [player1Name, player2Name] : [player1Name];
 
     return names.filter(Boolean).join(" and ");
@@ -138,24 +146,22 @@ export const setNewGame = async (setValue: (game: GameWithRulesDTO) => void): Pr
 
     return await GameService.addGame(game)
         .then((data) => {
-            console.log(data?.id);
             setValue(data ?? new GameWithRulesDTO());
             return data ?? new GameWithRulesDTO();
         })
         .catch((error) => {
             console.error("Error in setNewGame:", error);
-            return new GameWithRulesDTO();
+            throw error;
         });
 }
 
 export const addTeamToGame = async (gameId: number, teamId: number) => {
-    await GameService.addTeamToGame(gameId, teamId)
-        .then(() => {
-            console.log("Team added to game successfully");
-        })
-        .catch((error) => {
-            console.error("Error in addTeamToGame:", error);
-        });
+    try {
+        await GameService.addTeamToGame(gameId, teamId);
+    } catch (error) {
+        console.error("Error in addTeamToGame:", error);
+        throw error;
+    }
 }
 
 /**
