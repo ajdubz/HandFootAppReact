@@ -2,6 +2,7 @@ import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import PlayerLoginDTO from "../models/DTOs/Player/PlayerLoginDTO";
+import { setAuthState, setGuestAuthState } from "../utils/auth";
 import MockApi from "./MockApi";
 
 class PlayerService {
@@ -31,7 +32,7 @@ class PlayerService {
             const data = JSON.parse(text);
 
             //data should be a PlayerLoginDTO
-            localStorage.setItem("token", data?.token ?? "");
+            setAuthState(data?.id, data?.token ?? "");
 
 
             return data;
@@ -39,6 +40,12 @@ class PlayerService {
             console.error("Error in LoginPlayer FE:", error);
             throw error;
         }
+    }
+
+    public static async startGuestSession(): Promise<PlayerLoginDTO> {
+        const login = await MockApi.startGuestSession();
+        setGuestAuthState(login.id, login.token ?? "");
+        return login;
     }
 
     public static async getPlayers(): Promise<PlayerGetBasicDTO[] | undefined> {

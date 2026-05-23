@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import PlayerService from "../services/PlayerService";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
+import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import Button from "react-bootstrap/Button";
 import StartGame from "../modals/startGame";
+import { isGuestSession } from "../utils/auth";
 
 interface RouteParams {
     [id: string]: string | undefined;
@@ -18,6 +20,7 @@ function PlayerDetails() {
     // const [showModalSave, setShowModalSave] = useState(false);
     const [showModalStart, setShowModalStart] = useState(false);
     const navigate = useNavigate();
+    const canEditGuestNickname = isGuestSession() && Number(id) === currentPlayerId;
 
     
     const fetchData = useCallback(async () => {
@@ -53,13 +56,52 @@ function PlayerDetails() {
         navigate(`/player/${id}/game/${newGameId}`);
     };
 
+    const saveGuestNickname = async () => {
+        if (!canEditGuestNickname) {
+            return;
+        }
+
+        const nextNickname = nickname.trim() || "Guest Player";
+        setNickname(nextNickname);
+
+        const existingAccount = await PlayerService.getPlayerAccountById(Number(id));
+        const playerData = Object.assign(new PlayerAccountDTO(), existingAccount, {
+            nickName: nextNickname,
+            fullName: nextNickname,
+        });
+
+        await PlayerService.updatePlayerAccount(Number(id), playerData);
+    };
+
+    const handleStartGame = async () => {
+        try {
+            await saveGuestNickname();
+        } catch (error) {
+            console.error("Error saving guest nickname:", error);
+        }
+
+        setShowModalStart(true);
+    };
+
     return (
         <div>
             <h2>Player Details</h2>
             <div>
                 <label>
                     Nickname:
-                    <input type="text" name="nickname" defaultValue={nickname} disabled />
+                    <input
+                        type="text"
+                        name="nickname"
+                        value={nickname}
+                        disabled={!canEditGuestNickname}
+                        onBlur={() => { saveGuestNickname().catch((error) => console.error("Error saving guest nickname:", error)); }}
+                        onChange={(event) => setNickname(event.target.value)}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                                event.currentTarget.blur();
+                            }
+                        }}
+                    />
                 </label>
                 <br />
             </div>
@@ -70,7 +112,7 @@ function PlayerDetails() {
             <Link to={`/player/${id}/friends`}> See Friends</Link>
             <br />
             <br />
-            <Button variant="primary" onClick={() => setShowModalStart(true)}>
+            <Button variant="primary" onClick={handleStartGame}>
                 Start Game
             </Button>
 

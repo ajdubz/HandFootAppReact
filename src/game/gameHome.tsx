@@ -7,6 +7,7 @@ import GameService from "../services/GameService";
 import GameTeamDTO from "../models/DTOs/Game/GameTeamDTO";
 import GameRoundDTO from "../models/DTOs/Game/GameRoundDTO";
 import PlayerService from "../services/PlayerService";
+import StartGame from "../modals/startGame";
 import {
     calculateRoundScore,
     calculateTeamStats,
@@ -51,6 +52,7 @@ function GamePage() {
     const [roundEntries, setRoundEntries] = useState<Record<number, RoundEntry>>({});
     const [isSavingRound, setIsSavingRound] = useState(false);
     const [roundError, setRoundError] = useState("");
+    const [showStartGameModal, setShowStartGameModal] = useState(false);
 
     const navigate = useNavigate();
     const scoringRules = useMemo(() => getEffectiveRules(game?.rules), [game]);
@@ -137,6 +139,7 @@ function GamePage() {
     };
 
     const removeGuestAccountsForSession = async () => {
+        const activePlayerId = Number(localStorage.getItem("currentPlayerId") ?? id);
         const teamMemberIds = new Set<number>();
         teams.forEach((team) => {
             (team.team?.teamMembers ?? []).forEach((member) => {
@@ -151,7 +154,11 @@ function GamePage() {
         );
 
         const guestPlayerIds = memberAccounts
-            .filter((account) => account?.id && isGuestAccount(account.nickName, account.fullName, account.email))
+            .filter((account) =>
+                account?.id &&
+                account.id !== activePlayerId &&
+                isGuestAccount(account.nickName, account.fullName, account.email)
+            )
             .map((account) => account?.id as number);
 
         await Promise.all(guestPlayerIds.map((guestPlayerId) => PlayerService.deletePlayer(guestPlayerId)));
@@ -159,6 +166,11 @@ function GamePage() {
 
     const handleBack = () => {
         navigate(`/player/${id}?startGame=true`);
+    };
+
+    const handleNewGameConfirm = (newGameId: number) => {
+        setShowStartGameModal(false);
+        navigate(`/player/${id}/game/${newGameId}`);
     };
 
     const handleEndGame = async () => {
@@ -325,11 +337,21 @@ function GamePage() {
                     <Button variant="danger" className="me-2" onClick={handleEndGame} disabled={!gameComplete}>
                         End Game
                     </Button>
+                    <Button variant="primary" className="me-2" onClick={() => setShowStartGameModal(true)}>
+                        New Game
+                    </Button>
                     <Button variant="secondary" onClick={handleBack}>
                         Back
                     </Button>
                 </div>
             </div>
+
+            <StartGame
+                id={Number(id)}
+                isOpen={showStartGameModal}
+                onCancel={() => setShowStartGameModal(false)}
+                onConfirm={handleNewGameConfirm}
+            />
 
             {roundError && <div className="round-error">{roundError}</div>}
 

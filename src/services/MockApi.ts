@@ -12,6 +12,7 @@ import PlayerTeamCreateDTO from "../models/DTOs/Team/PlayerTeamCreateDTO";
 import TeamCreateDTO from "../models/DTOs/Team/TeamCreateDTO";
 import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
 import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
+import { isGuestSession } from "../utils/auth";
 
 type MockState = {
     stateVersion?: number;
@@ -29,7 +30,7 @@ const MOCK_STATE_VERSION = 2;
 
 class MockApi {
     public static isEnabled() {
-        return process.env.REACT_APP_API_URL === "mock";
+        return process.env.REACT_APP_API_URL === "mock" || isGuestSession();
     }
 
     public static reset() {
@@ -58,6 +59,30 @@ class MockApi {
         login.token = `mock-token-${foundPlayer.id}`;
         localStorage.setItem("token", login.token);
         localStorage.setItem("mockPlayerId", String(foundPlayer.id ?? 1));
+        return login;
+    }
+
+    public static async startGuestSession(): Promise<PlayerLoginDTO> {
+        const state = this.getState();
+        let guestPlayer = state.players.find((player) => player.email === "guest@mock.local");
+
+        if (!guestPlayer) {
+            guestPlayer = {
+                id: this.nextId(state.players),
+                nickName: "Guest Player",
+                fullName: "Guest Player",
+                email: "guest@mock.local",
+                password: "guest",
+            };
+            state.players.push(guestPlayer);
+            this.saveState(state);
+        }
+
+        const login = new PlayerLoginDTO();
+        login.id = guestPlayer.id;
+        login.nickName = guestPlayer.nickName;
+        login.email = guestPlayer.email;
+        login.token = `guest-token-${guestPlayer.id}`;
         return login;
     }
 

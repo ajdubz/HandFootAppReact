@@ -1,8 +1,21 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import GamePage from "./gameHome";
 import MockApi from "../services/MockApi";
+import PlayerDetails from "../player/playerDetails";
+import PlayerService from "../services/PlayerService";
+import TeamService from "../services/TeamService";
+import GameService from "../services/GameService";
+import GameAddDTO from "../models/DTOs/Game/GameAddDTO";
+import GameRoundDTO from "../models/DTOs/Game/GameRoundDTO";
+import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
+import PlayerTeamCreateDTO from "../models/DTOs/Team/PlayerTeamCreateDTO";
+
+const LocationDisplay = () => {
+    const location = useLocation();
+    return <div data-testid="location">{location.pathname}</div>;
+};
 
 const renderGamePage = () => {
     render(
@@ -10,6 +23,19 @@ const renderGamePage = () => {
             <Routes>
                 <Route path="/player/:id/game/:gameId" element={<GamePage />} />
             </Routes>
+            <LocationDisplay />
+        </MemoryRouter>
+    );
+};
+
+const renderGamePageWithPlayerDetailsRoute = (initialEntry: string) => {
+    render(
+        <MemoryRouter initialEntries={[initialEntry]}>
+            <Routes>
+                <Route path="/player/:id/game/:gameId" element={<GamePage />} />
+                <Route path="/player/:id" element={<PlayerDetails />} />
+            </Routes>
+            <LocationDisplay />
         </MemoryRouter>
     );
 };
@@ -41,6 +67,79 @@ describe("GamePage round entry", () => {
         expect(screen.getByLabelText("Alex and Sam Pulled Correct 1")).toBeInTheDocument();
         expect(screen.getByLabelText("Alex and Sam Pulled Correct 2")).toBeInTheDocument();
         expect(screen.getAllByRole("button", { name: /save round/i })).toHaveLength(1);
+        expect(screen.getByRole("button", { name: /new game/i })).toBeInTheDocument();
+    });
+
+    test("opens the start game modal from New Game", async () => {
+        renderGamePage();
+
+        fireEvent.click(await screen.findByRole("button", { name: /new game/i }));
+
+        expect(await screen.findByText("Start Game")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /continue/i })).toBeInTheDocument();
+    });
+
+    test("starts a new game from Game Center and navigates to it", async () => {
+        renderGamePage();
+
+        fireEvent.click(await screen.findByRole("button", { name: /new game/i }));
+        expect(await screen.findByDisplayValue("Alex")).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: /add new team/i }));
+
+        const playerOneInputs = screen.getAllByPlaceholderText("Search Player 1 Name");
+        fireEvent.change(playerOneInputs[1], { target: { value: "Jordan" } });
+        fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+        await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/player/1/game/2"));
+    });
+
+    test("end game preserves the active guest nickname", async () => {
+        const guestLogin = await PlayerService.startGuestSession();
+        const guestId = guestLogin.id ?? 0;
+        const guestAccount = Object.assign(new PlayerAccountDTO(), await PlayerService.getPlayerAccountById(guestId), {
+            nickName: "Wild Bill",
+            fullName: "Wild Bill",
+        });
+        await PlayerService.updatePlayerAccount(guestId, guestAccount);
+
+        const temporaryGuest = new PlayerAccountDTO();
+        temporaryGuest.nickName = "Blaze (Guest)";
+        temporaryGuest.fullName = "Blaze (Guest)";
+        const temporaryGuestAccount = await PlayerService.createGuest(temporaryGuest);
+
+        const newGame = await GameService.addGame(new GameAddDTO());
+        const firstTeamCreate = new PlayerTeamCreateDTO();
+        firstTeamCreate.playerId1 = guestId;
+        firstTeamCreate.teamName = "Wild Bill";
+        const firstTeam = await TeamService.addPlayersToNewTeam(firstTeamCreate);
+
+        const secondTeamCreate = new PlayerTeamCreateDTO();
+        secondTeamCreate.playerId1 = temporaryGuestAccount.id;
+        secondTeamCreate.teamName = "Blaze";
+        const secondTeam = await TeamService.addPlayersToNewTeam(secondTeamCreate);
+
+        await GameService.addTeamToGame(newGame?.id ?? 0, firstTeam?.id ?? 0);
+        await GameService.addTeamToGame(newGame?.id ?? 0, secondTeam?.id ?? 0);
+
+        const gameTeams = await GameService.getTeamsByGameId(newGame?.id ?? 0);
+        for (const roundNumber of [1, 2, 3, 4]) {
+            await Promise.all((gameTeams ?? []).map((gameTeam) => {
+                const round = new GameRoundDTO();
+                round.gameTeam = gameTeam;
+                round.roundNumber = roundNumber;
+                round.handScore = 0;
+                return GameService.saveGameRound(newGame?.id ?? 0, round);
+            }));
+        }
+
+        renderGamePageWithPlayerDetailsRoute(`/player/${guestId}/game/${newGame?.id}`);
+
+        fireEvent.click(await screen.findByRole("button", { name: /end game/i }));
+
+        expect(await screen.findByRole("heading", { name: /player details/i })).toBeInTheDocument();
+        expect(await screen.findByDisplayValue("Wild Bill")).toBeInTheDocument();
+        expect(await PlayerService.getPlayerAccountById(guestId)).toMatchObject({ nickName: "Wild Bill" });
+        expect(await PlayerService.getPlayerAccountById(temporaryGuestAccount.id ?? 0)).toBeUndefined();
     });
 
     test("renders mobile scoring cards with touch-friendly controls", async () => {

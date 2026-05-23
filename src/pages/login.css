@@ -57,9 +57,31 @@
     cursor: pointer;
 }
 
+.overlay-guest-btn {
+    position: absolute;
+    top: 69.5%;
+    left: 28.4%;
+    width: 43.2%;
+    height: 3.9%;
+    border: 1px solid rgba(235, 200, 145, 0.75);
+    border-radius: 4px;
+    background: rgba(18, 10, 6, 0.82);
+    color: rgba(248, 220, 170, 0.96);
+    cursor: pointer;
+    font-size: clamp(11px, 1.1vw, 16px);
+    font-weight: 700;
+}
+
+.overlay-guest-btn:hover,
+.overlay-guest-btn:focus-visible {
+    background: rgba(54, 30, 16, 0.92);
+    outline: 2px solid rgba(248, 220, 170, 0.55);
+    outline-offset: 2px;
+}
+
 .overlay-register-btn {
     position: absolute;
-    top: 67.4%;
+    top: 74.2%;
     left: 35%;
     width: 30%;
     height: 3.5%;

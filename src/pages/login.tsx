@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import PlayerService from '../services/PlayerService';
 import PlayerAccountDTO from '../models/DTOs/Player/PlayerAccountDTO';
 import './login.css';
-import { clearAuthState } from '../utils/auth';
+import { clearAuthState, setAuthState } from '../utils/auth';
 
 const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     const navigate = useNavigate();
@@ -37,7 +37,7 @@ const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             const matchesNickname = !!data?.nickName && data.nickName.toLowerCase() === enteredValue;
 
             if (data && (matchesEmail || matchesNickname)) {
-                localStorage.setItem("currentPlayerId", String(data.id ?? ""));
+                setAuthState(data.id, data.token ?? "");
                 onLogin();
                 navigate(`/player/${data?.id}`);
                 return;
@@ -50,6 +50,21 @@ const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             setError("Incorrect user or password");
             console.error("Error in LoginPlayer:", loginError);
         });
+    };
+
+    const handleGuestLogin = async () => {
+        clearAuthState();
+        setError("");
+
+        try {
+            const data = await PlayerService.startGuestSession();
+            onLogin();
+            navigate(`/player/${data.id}`);
+        } catch (guestLoginError) {
+            clearAuthState();
+            setError("Unable to start guest session");
+            console.error("Error in guest login:", guestLoginError);
+        }
     };
 
     return (
@@ -79,6 +94,7 @@ const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                     placeholder="Enter your password"
                 />
                 <button className="overlay-login-btn" type="button" onClick={handleLogin}>Login</button>
+                <button className="overlay-guest-btn" type="button" onClick={handleGuestLogin}>Play as Guest</button>
                 <button className="overlay-register-btn" type="button" onClick={handleRegistration}>Registration</button>
                 <input
                     className="overlay-dealer-input"
