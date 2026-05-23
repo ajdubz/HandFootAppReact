@@ -23,3 +23,10 @@ yarn-debug.log*
 yarn-error.log*
 dev-server*.log
 start-test.log
+
+# Firebase local cache
+.firebase/
+
+# Firebase agent helper files
+.agents/
+skills-lock.json
