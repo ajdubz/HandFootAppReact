@@ -8,6 +8,7 @@ import PlayerService from "../services/PlayerService";
 import TeamService from "../services/TeamService";
 import GameService from "../services/GameService";
 import GameWithRulesDTO from "../models/DTOs/Game/GameWithRulesDTO";
+import Rules from "../models/Rules";
 
 /**
  * Interface representing a custom row in the form.
@@ -32,6 +33,49 @@ const namesMatch = (existingName: string | undefined, searchName: string) => {
 
     return normalizedExisting === normalizedSearch || normalizedWithoutGuestSuffix === normalizedSearch;
 }
+
+const findMatchingPlayer = (players: PlayerGetBasicDTO[] | undefined, playerName: string) => {
+    return (players ?? []).find((player) =>
+        namesMatch(player.nickName, playerName) || namesMatch(player.fullName, playerName)
+    );
+};
+
+const toBasicPlayer = (player: PlayerGetBasicDTO | PlayerAccountDTO) => {
+    const basicPlayer = new PlayerGetBasicDTO();
+    basicPlayer.id = player.id;
+    basicPlayer.nickName = player.nickName;
+    basicPlayer.fullName = player.fullName;
+    return basicPlayer;
+};
+
+const resolveExistingPlayer = async (playerName: string): Promise<PlayerGetBasicDTO | undefined> => {
+    const existingPlayers = await PlayerService.getPlayers().catch((error) => {
+        console.error("Error loading existing players:", error);
+        return [];
+    });
+    const matchedExistingPlayer = findMatchingPlayer(existingPlayers, playerName);
+
+    if (matchedExistingPlayer?.id) {
+        return toBasicPlayer(matchedExistingPlayer);
+    }
+
+    const searchResults = await PlayerService.searchPlayers(playerName).catch((error) => {
+        console.error("Error searching existing players:", error);
+        return [];
+    });
+    const matchedSearchedPlayer = findMatchingPlayer(searchResults, playerName);
+
+    return matchedSearchedPlayer?.id ? toBasicPlayer(matchedSearchedPlayer) : undefined;
+};
+
+const isDuplicateAccountError = (error: unknown) => {
+    return error instanceof Error && error.message.toLowerCase().includes("already exists");
+};
+
+const buildGuestEmail = (playerName: string) => {
+    const normalizedName = playerName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "guest";
+    return `${normalizedName}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@guest.local`;
+};
 
 /**
  * Validates the rows in the form.
@@ -77,38 +121,34 @@ export const performRowValidation = (inRows: CustomRow[], playerCount: number) =
  */
 export const setNewPlayer = async (row: CustomRow, whichCol: number, setValue: (player: PlayerGetBasicDTO) => void): Promise<PlayerGetBasicDTO | undefined> => {
     const playerName = (whichCol === 1 ? row.search1 : row.search2).trim();
-    const existingPlayers = await PlayerService.getPlayers().catch((error) => {
-        console.error("Error loading existing players:", error);
-        return [];
-    });
-
-    const matchedExistingPlayer = (existingPlayers ?? []).find((player) =>
-        namesMatch(player.nickName, playerName) || namesMatch(player.fullName, playerName)
-    );
+    const matchedExistingPlayer = await resolveExistingPlayer(playerName);
 
     if (matchedExistingPlayer?.id) {
-        const existingPlayer = new PlayerGetBasicDTO();
-        existingPlayer.id = matchedExistingPlayer.id;
-        existingPlayer.nickName = matchedExistingPlayer.nickName;
-        existingPlayer.fullName = matchedExistingPlayer.fullName;
-        setValue(existingPlayer);
-        return existingPlayer;
+        setValue(matchedExistingPlayer);
+        return matchedExistingPlayer;
     }
 
     const newPlayer = new PlayerAccountDTO();
     newPlayer.nickName = playerName + " (Guest)";
     newPlayer.fullName = playerName + " (Guest)";
+    newPlayer.email = buildGuestEmail(playerName);
+    newPlayer.password = "guest";
 
     return await PlayerService.createGuest(newPlayer)
         .then((data) => {
-            let tempPlayer = new PlayerGetBasicDTO();
-            tempPlayer.id = data.id;
-            tempPlayer.nickName = data.nickName;
-            tempPlayer.fullName = data.fullName;
+            let tempPlayer = toBasicPlayer(data);
             setValue(tempPlayer);
             return tempPlayer;
         })
-        .catch((error) => {
+        .catch(async (error) => {
+            if (isDuplicateAccountError(error)) {
+                const existingPlayer = await resolveExistingPlayer(playerName);
+                if (existingPlayer?.id) {
+                    setValue(existingPlayer);
+                    return existingPlayer;
+                }
+            }
+
             console.error("Error in setNewPlayer:", error);
             throw error;
         });
@@ -140,9 +180,10 @@ export const setNewPlayerTeam = async (row: CustomRow, teamName: string) => {
  * @param game - The game to create.
  * @param setValue - Function to set the game value.
  */
-export const setNewGame = async (setValue: (game: GameWithRulesDTO) => void): Promise<GameWithRulesDTO> => {
+export const setNewGame = async (setValue: (game: GameWithRulesDTO) => void, rules?: Rules): Promise<GameWithRulesDTO> => {
 
     let game = new GameAddDTO();
+    game.rules = rules;
 
     return await GameService.addGame(game)
         .then((data) => {

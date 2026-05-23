@@ -1,0 +1,114 @@
+.rules-page {
+    padding: 24px;
+}
+
+.rules-header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.rules-header h1,
+.rules-section h2 {
+    margin: 0;
+}
+
+.rules-header p {
+    margin: 6px 0 0;
+}
+
+.rules-form {
+    margin-top: 24px;
+}
+
+.rules-section {
+    margin-top: 24px;
+}
+
+.rules-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+    margin-top: 12px;
+}
+
+.rules-field {
+    background: #ffffff;
+    border: 1px solid #1f1f1f;
+    border-radius: 8px;
+    padding: 14px;
+}
+
+.rules-field label {
+    font-weight: 700;
+}
+
+.rules-defaults-summary {
+    background: #ffffff;
+    border: 1px solid #1f1f1f;
+    border-radius: 8px;
+    padding: 14px;
+}
+
+.rules-defaults-summary dl {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    margin: 12px 0 0;
+}
+
+.rules-defaults-summary div {
+    background: #f4f6f8;
+    border: 1px solid #d8dde3;
+    border-radius: 6px;
+    padding: 8px;
+}
+
+.rules-defaults-summary dt {
+    color: #505a63;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.rules-defaults-summary dd {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 2px 0 0;
+}
+
+.rules-save-message {
+    background: #d1e7dd;
+    border: 1px solid #0f5132;
+    color: #0f5132;
+    margin-top: 18px;
+    padding: 10px 12px;
+}
+
+.rules-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+@media (max-width: 767px) {
+    .rules-page {
+        padding: 16px 12px 24px;
+    }
+
+    .rules-grid,
+    .rules-defaults-summary dl {
+        grid-template-columns: 1fr;
+    }
+
+    .rules-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .rules-actions .btn {
+        width: 100%;
+    }
+}
+

@@ -1,6 +1,7 @@
 import GameRoundDTO from "../models/DTOs/Game/GameRoundDTO";
 import GameTeamDTO from "../models/DTOs/Game/GameTeamDTO";
 import Rules from "../models/Rules";
+import { DEFAULT_RULE_VALUES, normalizeRules } from "../rules/rulesDefaults";
 
 export type ScoringRules = {
     cleanBookScore: number;
@@ -18,23 +19,27 @@ export type TeamStats = {
 };
 
 export const DEFAULT_SCORING_RULES: ScoringRules = {
-    cleanBookScore: 500,
-    dirtyBookScore: 300,
-    redThreeScore: -300,
-    pulledScore: 50,
-    winnerScore: 100,
+    cleanBookScore: DEFAULT_RULE_VALUES.cleanBookScore,
+    dirtyBookScore: DEFAULT_RULE_VALUES.dirtyBookScore,
+    redThreeScore: DEFAULT_RULE_VALUES.redThreeScore,
+    pulledScore: DEFAULT_RULE_VALUES.pulledScore,
+    winnerScore: DEFAULT_RULE_VALUES.winnerScore,
 };
 
 export const BOOK_THRESHOLDS = [50, 90, 120, 150];
 export const MAX_ROUNDS = 4;
 
-export const getEffectiveRules = (rules?: Rules): ScoringRules => ({
-    cleanBookScore: rules?.cleanBookScore || DEFAULT_SCORING_RULES.cleanBookScore,
-    dirtyBookScore: rules?.dirtyBookScore || DEFAULT_SCORING_RULES.dirtyBookScore,
-    redThreeScore: -Math.abs(rules?.redThreeScore || DEFAULT_SCORING_RULES.redThreeScore),
-    pulledScore: rules?.pulledScore || DEFAULT_SCORING_RULES.pulledScore,
-    winnerScore: rules?.winnerScore || DEFAULT_SCORING_RULES.winnerScore,
-});
+export const getEffectiveRules = (rules?: Rules): ScoringRules => {
+    const effectiveRules = normalizeRules(rules);
+
+    return {
+        cleanBookScore: effectiveRules.cleanBookScore,
+        dirtyBookScore: effectiveRules.dirtyBookScore,
+        redThreeScore: effectiveRules.redThreeScore,
+        pulledScore: effectiveRules.pulledScore,
+        winnerScore: effectiveRules.winnerScore,
+    };
+};
 
 export const numberOrZero = (value: string | number | undefined): number => {
     const parsed = Number(value);

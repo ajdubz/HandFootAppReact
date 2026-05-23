@@ -11,12 +11,14 @@ import PlayerFriends from "./player/playerFriends";
 import PlayerService from "./services/PlayerService";
 import TeamResults from "./team/teamResults";
 import { clearAuthState } from "./utils/auth";
+import RulesPage from "./rules/rulesPage";
 
 const NewHeader: React.FC<{ onSignOut: () => void }> = ({ onSignOut }) => {
     return (
         <nav>
             <Link to="/playersList">Players</Link>
             <Link to="/teams">Teams</Link>
+            <Link to="/rules">Rules</Link>
             <Link to="/login" onClick={onSignOut}>Sign out</Link>
         </nav>
     );
@@ -28,6 +30,7 @@ const NewRoutes: React.FC = () => {
             <Route path="/playersList" element={<PlayerListTable />} />
             <Route path="/teams" element={<TeamListTable />} />
             <Route path="/team/:id" element={<TeamResults />} />
+            <Route path="/rules" element={<RulesPage />} />
 
             <Route path="/player/account" element={<PlayerAccount />} />
             <Route path="/player/:id" element={<PlayerDetails />} />

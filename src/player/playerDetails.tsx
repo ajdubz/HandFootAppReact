@@ -14,6 +14,7 @@ interface RouteParams {
 function PlayerDetails() {
     const { id = "" } = useParams<RouteParams>();
     const location = useLocation();
+    const rulesMessage = (location.state as { rulesMessage?: string } | null)?.rulesMessage ?? "";
     const currentPlayerId = Number(localStorage.getItem("currentPlayerId") ?? localStorage.getItem("mockPlayerId") ?? 0);
     const [player, setPlayer] = useState<PlayerFullDetailsDTO | undefined>();
     const [nickname, setNickname] = useState<string>(player?.nickName || "");
@@ -86,6 +87,7 @@ function PlayerDetails() {
     return (
         <div>
             <h2>Player Details</h2>
+            {rulesMessage && <div className="rules-save-message">{rulesMessage}</div>}
             <div>
                 <label>
                     Nickname:

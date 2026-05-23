@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import "./startGame.css";
@@ -12,6 +13,7 @@ import { ListTeams, performPlayerTeamSearch } from "../team/teamList";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
 import { performRowValidation, CustomRow, setNewPlayer, setNewPlayerTeam, handlePlayerSelection, setNewGame, addTeamToGame, getDefaultTeamName, getCurrentPlayer } from "./startGameUtils";
+import { loadRuleDefaults } from "../rules/rulesDefaults";
 
 // Interface for component props
 interface StartGameProps {
@@ -115,7 +117,7 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
                 row.teamSearch = teamName;
             }
 
-            let newGame = await setNewGame(() => {return;});
+            let newGame = await setNewGame(() => {return;}, loadRuleDefaults());
 
             if (!newGame || !newGame.id || newGame.id === 0) {
                 throw new Error("Error creating game, " + (newGame?.id ?? "undefined id"));
@@ -268,7 +270,12 @@ function StartGame({ id, isOpen, onCancel, onConfirm }: StartGameProps) {
                     {renderPlayerRadioSelection()}
                     {startGameError && <div className="start-game-error">{startGameError}</div>}
                     <br />
-                    <h5>Enter team details:</h5>
+                    <div className="start-game-details-header">
+                        <h5>Enter team details:</h5>
+                        <Link className="start-game-rules-link" to="/rules">
+                            Edit rules defaults
+                        </Link>
+                    </div>
                     <table className="tableClass">
                         <thead>
                             <tr>

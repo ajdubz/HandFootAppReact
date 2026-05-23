@@ -12,6 +12,7 @@ import PlayerTeamCreateDTO from "../models/DTOs/Team/PlayerTeamCreateDTO";
 import TeamCreateDTO from "../models/DTOs/Team/TeamCreateDTO";
 import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
 import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
+import { normalizeRules } from "../rules/rulesDefaults";
 import { isGuestSession } from "../utils/auth";
 
 type MockState = {
@@ -125,9 +126,12 @@ class MockApi {
     }
 
     public static async createGuest(player: PlayerAccountDTO): Promise<PlayerAccountDTO> {
+        const state = this.getState();
+        const nextGuestId = this.nextId(state.players);
+
         return this.createPlayer({
             ...player,
-            email: player.email || `guest${Date.now()}@mock.local`,
+            email: player.email || `guest${nextGuestId}@mock.local`,
             password: player.password || "guest",
         });
     }
@@ -286,6 +290,7 @@ class MockApi {
         const newGame = new GameWithRulesDTO();
         newGame.id = this.nextId(state.games);
         newGame.date = game.date ?? new Date();
+        newGame.rules = normalizeRules(game.rules);
         state.games.push(newGame);
         this.saveState(state);
         return newGame;
