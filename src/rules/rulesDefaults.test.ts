@@ -43,6 +43,12 @@ describe("rules defaults", () => {
             winnerScore: 150,
             cardsToStart: 13,
             cardsToDraw: 3,
+            roundOneBookThreshold: 55,
+            roundTwoBookThreshold: 95,
+            roundThreeBookThreshold: 125,
+            roundFourBookThreshold: 155,
+            cleanBooksRequiredToGoOut: 3,
+            dirtyBooksRequiredToGoOut: 1,
         });
 
         expect(loadRuleDefaults()).toEqual({
@@ -54,6 +60,12 @@ describe("rules defaults", () => {
             winnerScore: 150,
             cardsToStart: 13,
             cardsToDraw: 3,
+            roundOneBookThreshold: 55,
+            roundTwoBookThreshold: 95,
+            roundThreeBookThreshold: 125,
+            roundFourBookThreshold: 155,
+            cleanBooksRequiredToGoOut: 3,
+            dirtyBooksRequiredToGoOut: 1,
         });
 
         expect(resetRuleDefaults()).toEqual(buildDefaultRules());
@@ -70,6 +82,12 @@ describe("rules defaults", () => {
             winnerScore: 90,
             cardsToStart: 15,
             cardsToDraw: 4,
+            roundOneBookThreshold: 60,
+            roundTwoBookThreshold: 100,
+            roundThreeBookThreshold: 130,
+            roundFourBookThreshold: 160,
+            cleanBooksRequiredToGoOut: 3,
+            dirtyBooksRequiredToGoOut: 1,
         });
 
         const createdGame = await MockApi.addGame(game);
@@ -83,6 +101,12 @@ describe("rules defaults", () => {
             winnerScore: 90,
             cardsToStart: 15,
             cardsToDraw: 4,
+            roundOneBookThreshold: 60,
+            roundTwoBookThreshold: 100,
+            roundThreeBookThreshold: 130,
+            roundFourBookThreshold: 160,
+            cleanBooksRequiredToGoOut: 3,
+            dirtyBooksRequiredToGoOut: 1,
         });
     });
 

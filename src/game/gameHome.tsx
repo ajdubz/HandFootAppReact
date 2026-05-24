@@ -18,6 +18,7 @@ import {
     numberOrZero,
 } from "./gameHomeUtils";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import NumericStepper from "../components/NumericStepper";
 
 interface RouteParams {
     [id: string]: string | undefined;
@@ -35,10 +36,10 @@ type RoundEntry = {
 const MAX_DISPLAY_ROUND = 4;
 
 const emptyRoundEntry = (): RoundEntry => ({
-    cardPoints: "0",
-    cleanBooks: "0",
-    dirtyBooks: "0",
-    redThrees: "0",
+    cardPoints: "",
+    cleanBooks: "",
+    dirtyBooks: "",
+    redThrees: "",
     pulledCorrect: [],
     isWinner: false,
 });
@@ -60,7 +61,7 @@ function GamePage() {
     const nextRoundNumber = useMemo(() => getNextRoundNumber(rounds), [rounds]);
     const gameComplete = useMemo(() => isGameComplete(rounds), [rounds]);
     const displayRoundNumber = Math.min(nextRoundNumber, MAX_DISPLAY_ROUND);
-    const bookThreshold = getBookThreshold(displayRoundNumber);
+    const bookThreshold = getBookThreshold(displayRoundNumber, scoringRules);
     const rankedTeams = useMemo(() => [...teams].sort((a, b) => {
         const aScore = teamStats[a.id ?? 0]?.totalScore ?? 0;
         const bScore = teamStats[b.id ?? 0]?.totalScore ?? 0;
@@ -75,6 +76,25 @@ function GamePage() {
 
         return (a.gameTeam?.team?.name ?? "").localeCompare(b.gameTeam?.team?.name ?? "");
     }), [rounds]);
+    const getRoundEntryBookTotals = (team: GameTeamDTO) => {
+        const gameTeamId = team.id ?? 0;
+        const entry = roundEntries[gameTeamId] ?? emptyRoundEntry();
+
+        return {
+            cleanBooks: numberOrZero(entry.cleanBooks),
+            dirtyBooks: numberOrZero(entry.dirtyBooks),
+        };
+    };
+    const canTeamGoOut = (team: GameTeamDTO) => {
+        const totals = getRoundEntryBookTotals(team);
+
+        return totals.cleanBooks >= scoringRules.cleanBooksRequiredToGoOut &&
+            totals.dirtyBooks >= scoringRules.dirtyBooksRequiredToGoOut;
+    };
+    const hasWentOutSelection = teams.some((team) => {
+        const gameTeamId = team.id ?? 0;
+        return (roundEntries[gameTeamId]?.isWinner ?? false) && canTeamGoOut(team);
+    });
 
     const fetchData = useCallback(async () => {
         setRoundError("");
@@ -191,10 +211,25 @@ function GamePage() {
     const updateRoundEntry = (gameTeamId: number, field: keyof RoundEntry, value: string | boolean) => {
         setRoundEntries((currentEntries) => ({
             ...currentEntries,
-            [gameTeamId]: {
-                ...(currentEntries[gameTeamId] ?? emptyRoundEntry()),
-                [field]: value,
-            },
+            [gameTeamId]: (() => {
+                const nextEntry = {
+                    ...(currentEntries[gameTeamId] ?? emptyRoundEntry()),
+                    [field]: value,
+                };
+
+                if (field === "cleanBooks" || field === "dirtyBooks") {
+                    const cleanBooks = numberOrZero(nextEntry.cleanBooks);
+                    const dirtyBooks = numberOrZero(nextEntry.dirtyBooks);
+                    if (
+                        cleanBooks < scoringRules.cleanBooksRequiredToGoOut ||
+                        dirtyBooks < scoringRules.dirtyBooksRequiredToGoOut
+                    ) {
+                        nextEntry.isWinner = false;
+                    }
+                }
+
+                return nextEntry;
+            })(),
         }));
     };
 
@@ -215,6 +250,11 @@ function GamePage() {
     };
 
     const handleWinnerChange = (selectedGameTeamId: number, isWinner: boolean) => {
+        const selectedTeam = teams.find((team) => (team.id ?? 0) === selectedGameTeamId);
+        if (isWinner && selectedTeam && !canTeamGoOut(selectedTeam)) {
+            return;
+        }
+
         setRoundEntries((currentEntries) => {
             const nextEntries: Record<number, RoundEntry> = {};
 
@@ -243,7 +283,7 @@ function GamePage() {
         round.dirtyBooks = numberOrZero(entry.dirtyBooks);
         round.redThrees = Math.max(0, numberOrZero(entry.redThrees));
         round.pulledCorrect = entry.pulledCorrect.filter(Boolean).length;
-        round.isWinner = entry.isWinner;
+        round.isWinner = entry.isWinner && canTeamGoOut(team);
         round.handScore = calculateRoundScore(round, scoringRules);
 
         return round;
@@ -265,6 +305,10 @@ function GamePage() {
 
         try {
             const roundPayloads = teams.map(buildRoundPayload);
+            if (!roundPayloads.some((round) => round.isWinner)) {
+                return;
+            }
+
             await Promise.all(roundPayloads.map((round) => GameService.saveGameRound(Number(gameId), round)));
             resetRoundEntries();
             await fetchData();
@@ -276,25 +320,23 @@ function GamePage() {
         }
     };
 
-    const renderScoreInput = (team: GameTeamDTO, field: "cardPoints" | "cleanBooks" | "dirtyBooks" | "redThrees", label: string, labelPrefix = "") => {
+    const renderScoreInput = (team: GameTeamDTO, field: "cardPoints" | "cleanBooks" | "dirtyBooks" | "redThrees", label: string, labelPrefix = "", showSteppers = false) => {
         const gameTeamId = team.id ?? 0;
         const entry = roundEntries[gameTeamId] ?? emptyRoundEntry();
         const handleChange = (value: string) => {
-            const nextValue = field === "redThrees"
-                ? String(Math.max(0, numberOrZero(value)))
-                : value;
-            updateRoundEntry(gameTeamId, field, nextValue);
+            updateRoundEntry(gameTeamId, field, value);
         };
+        const ariaLabel = `${labelPrefix}${team.team?.name} ${label}`;
 
         return (
-            <Form.Control
-                aria-label={`${labelPrefix}${team.team?.name} ${label}`}
-                className="score-input"
-                min={field === "redThrees" ? 0 : undefined}
-                step="1"
-                type="number"
+            <NumericStepper
+                ariaLabel={ariaLabel}
+                controlClassName="score-input"
+                min={0}
+                onChange={handleChange}
+                placeholder="0"
+                showSteppers={showSteppers}
                 value={entry[field]}
-                onChange={(event) => handleChange(event.target.value)}
             />
         );
     };
@@ -316,10 +358,10 @@ function GamePage() {
     };
 
     const renderMobileScoreField = (team: GameTeamDTO, field: "cardPoints" | "cleanBooks" | "dirtyBooks" | "redThrees", label: string) => (
-        <label className="mobile-score-field">
+        <div className="mobile-score-field">
             <span>{label}</span>
-            {renderScoreInput(team, field, label, "Mobile ")}
-        </label>
+            {renderScoreInput(team, field, label, "Mobile ", true)}
+        </div>
     );
 
     return (
@@ -330,7 +372,7 @@ function GamePage() {
                     <p className="round-context">
                         {gameComplete
                             ? `Game complete. Winner: ${rankedTeams[0]?.team?.name ?? "No winner yet"}`
-                            : `Round ${nextRoundNumber} entry - Book threshold: ${bookThreshold}`}
+                            : `Round ${nextRoundNumber} entry - Book threshold: ${bookThreshold} - Go out: ${scoringRules.cleanBooksRequiredToGoOut} clean / ${scoringRules.dirtyBooksRequiredToGoOut} dirty`}
                     </p>
                 </div>
                 <div>
@@ -424,7 +466,7 @@ function GamePage() {
             <section className="game-section score-round-section">
                 <div className="section-heading-row">
                     <h2>{gameComplete ? "Game Complete" : `Score Round ${nextRoundNumber}`}</h2>
-                    <Button className="round-save-button" variant="primary" onClick={handleSaveRound} disabled={!teams.length || isSavingRound || gameComplete}>
+                    <Button className="round-save-button" variant="primary" onClick={handleSaveRound} disabled={!teams.length || isSavingRound || gameComplete || !hasWentOutSelection}>
                         {isSavingRound ? "Saving..." : "Save Round"}
                     </Button>
                 </div>
@@ -458,7 +500,8 @@ function GamePage() {
                                         <td className="went-out-cell">
                                             <Form.Check
                                                 aria-label={`${team.team?.name} Went Out`}
-                                                checked={entry.isWinner}
+                                                checked={entry.isWinner && canTeamGoOut(team)}
+                                                disabled={!canTeamGoOut(team)}
                                                 onChange={(event) => handleWinnerChange(gameTeamId, event.target.checked)}
                                             />
                                         </td>
@@ -479,6 +522,7 @@ function GamePage() {
                     {teams.length ? teams.map((team) => {
                         const gameTeamId = team.id ?? 0;
                         const entry = roundEntries[gameTeamId] ?? emptyRoundEntry();
+                        const canGoOut = canTeamGoOut(team);
 
                         return (
                             <article className="round-entry-card" key={gameTeamId}>
@@ -502,8 +546,9 @@ function GamePage() {
                                     </div>
                                     <Form.Check
                                         aria-label={`Mobile ${team.team?.name} Went Out`}
-                                        checked={entry.isWinner}
+                                        checked={entry.isWinner && canGoOut}
                                         className="mobile-went-out"
+                                        disabled={!canGoOut}
                                         label="Went Out"
                                         onChange={(event) => handleWinnerChange(gameTeamId, event.target.checked)}
                                     />

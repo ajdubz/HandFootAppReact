@@ -56,7 +56,7 @@
     vertical-align: middle;
 }
 
-.score-input {
+.round-entry-table .score-input {
     min-width: 96px;
 }
 
@@ -250,10 +250,20 @@
 
     .mobile-score-field .score-input {
         font-size: 1.05rem;
-        min-height: 46px;
+        min-height: 48px;
         min-width: 0;
-        margin-top: 5px;
         text-align: center;
+    }
+
+    .mobile-score-field .numeric-stepper {
+        margin-top: 5px;
+        max-width: 220px;
+    }
+
+    .mobile-score-field .numeric-stepper-button {
+        flex-basis: 40px;
+        min-height: 48px;
+        min-width: 40px;
     }
 
     .mobile-check-row {

@@ -17,6 +17,8 @@ const PlayerDetailsStub = () => {
 };
 
 describe("RulesPage", () => {
+    const getRuleInput = (name: string | RegExp) => screen.getByRole("spinbutton", { name });
+
     const renderRulesPage = () => {
         render(
             <MemoryRouter initialEntries={["/rules"]}>
@@ -43,23 +45,37 @@ describe("RulesPage", () => {
             winnerScore: 90,
             cardsToStart: 15,
             cardsToDraw: 4,
+            roundOneBookThreshold: 60,
+            roundTwoBookThreshold: 100,
+            roundThreeBookThreshold: 130,
+            roundFourBookThreshold: 160,
+            cleanBooksRequiredToGoOut: 3,
+            dirtyBooksRequiredToGoOut: 1,
         });
 
         renderRulesPage();
 
-        expect(screen.getByLabelText(/clean book/i)).toHaveValue(650);
-        expect(screen.getByLabelText(/dirty book/i)).toHaveValue(350);
-        expect(screen.getByLabelText(/red 3 penalty/i)).toHaveValue(-125);
-        expect(screen.getByLabelText(/cards to start/i)).toHaveValue(15);
-        expect(screen.getByLabelText(/cards to draw/i)).toHaveValue(4);
+        expect(getRuleInput("Clean book")).toHaveValue(650);
+        expect(getRuleInput("Dirty book")).toHaveValue(350);
+        expect(getRuleInput("Red 3 penalty")).toHaveValue(-125);
+        expect(getRuleInput("Cards to start")).toHaveValue(15);
+        expect(getRuleInput("Cards to draw")).toHaveValue(4);
+        expect(getRuleInput("Round 1 book threshold")).toHaveValue(60);
+        expect(getRuleInput("Round 4 book threshold")).toHaveValue(160);
+        expect(getRuleInput("Clean books to go out")).toHaveValue(3);
+        expect(getRuleInput("Dirty books to go out")).toHaveValue(1);
     });
 
     test("saves edited defaults", () => {
         renderRulesPage();
 
-        fireEvent.change(screen.getByLabelText(/clean book/i), { target: { value: "800" } });
-        fireEvent.change(screen.getByLabelText(/red 3 penalty/i), { target: { value: "150" } });
-        fireEvent.change(screen.getByLabelText(/cards to draw/i), { target: { value: "3" } });
+        fireEvent.change(getRuleInput("Clean book"), { target: { value: "0800" } });
+        fireEvent.change(getRuleInput("Red 3 penalty"), { target: { value: "150" } });
+        fireEvent.change(getRuleInput("Cards to draw"), { target: { value: "3" } });
+        fireEvent.change(getRuleInput("Round 2 book threshold"), { target: { value: "95" } });
+        fireEvent.change(getRuleInput("Clean books to go out"), { target: { value: "3" } });
+        fireEvent.change(getRuleInput("Dirty books to go out"), { target: { value: "1" } });
+        expect(getRuleInput("Clean book")).toHaveValue(800);
         fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
 
         expect(screen.getByRole("heading", { name: /player details/i })).toBeInTheDocument();
@@ -69,6 +85,9 @@ describe("RulesPage", () => {
             cleanBookScore: 800,
             redThreeScore: -150,
             cardsToDraw: 3,
+            roundTwoBookThreshold: 95,
+            cleanBooksRequiredToGoOut: 3,
+            dirtyBooksRequiredToGoOut: 1,
         });
     });
 
@@ -80,15 +99,68 @@ describe("RulesPage", () => {
         fireEvent.click(screen.getByRole("button", { name: /reset to defaults/i }));
 
         expect(screen.getByText(/rule defaults reset/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/clean book/i)).toHaveValue(500);
-        expect(screen.getByLabelText(/red 3 penalty/i)).toHaveValue(-300);
+        expect(getRuleInput("Clean book")).toHaveValue(500);
+        expect(getRuleInput("Red 3 penalty")).toHaveValue(-300);
+        expect(getRuleInput("Round 1 book threshold")).toHaveValue(50);
+        expect(getRuleInput("Clean books to go out")).toHaveValue(2);
         expect(loadRuleDefaults()).toEqual(buildDefaultRules());
+    });
+
+    test("shows explicit rule steppers for touch screens", () => {
+        renderRulesPage();
+
+        fireEvent.click(screen.getByRole("button", { name: "Increase Clean book" }));
+        expect(getRuleInput("Clean book")).toHaveValue(525);
+
+        fireEvent.click(screen.getByRole("button", { name: "Decrease Clean book" }));
+        expect(getRuleInput("Clean book")).toHaveValue(500);
+
+        fireEvent.click(screen.getByRole("button", { name: "Increase Pulled correct" }));
+        expect(getRuleInput("Pulled correct")).toHaveValue(60);
+
+        fireEvent.click(screen.getByRole("button", { name: "Increase Went out" }));
+        expect(getRuleInput("Went out")).toHaveValue(110);
+
+        fireEvent.click(screen.getByRole("button", { name: "Increase Round 1 book threshold" }));
+        expect(getRuleInput("Round 1 book threshold")).toHaveValue(60);
+
+        fireEvent.click(screen.getByRole("button", { name: "Increase Cards to draw" }));
+        expect(getRuleInput("Cards to draw")).toHaveValue(3);
+    });
+
+    test("keeps non-red rule values non-negative", () => {
+        renderRulesPage();
+
+        fireEvent.change(getRuleInput("Clean book"), { target: { value: "-5" } });
+        expect(getRuleInput("Clean book")).toHaveValue(0);
+
+        fireEvent.click(screen.getByRole("button", { name: "Decrease Clean book" }));
+        expect(getRuleInput("Clean book")).toHaveValue(0);
+
+        fireEvent.change(getRuleInput("Round 1 book threshold"), { target: { value: "-10" } });
+        expect(getRuleInput("Round 1 book threshold")).toHaveValue(0);
+    });
+
+    test("keeps red 3 penalty inverse while stopping increases at zero", () => {
+        renderRulesPage();
+
+        fireEvent.change(getRuleInput("Red 3 penalty"), { target: { value: "25" } });
+        expect(getRuleInput("Red 3 penalty")).toHaveValue(-25);
+
+        fireEvent.click(screen.getByRole("button", { name: "Increase Red 3 penalty" }));
+        expect(getRuleInput("Red 3 penalty")).toHaveValue(0);
+
+        fireEvent.click(screen.getByRole("button", { name: "Increase Red 3 penalty" }));
+        expect(getRuleInput("Red 3 penalty")).toHaveValue(0);
+
+        fireEvent.click(screen.getByRole("button", { name: "Decrease Red 3 penalty" }));
+        expect(getRuleInput("Red 3 penalty")).toHaveValue(-25);
     });
 
     test("back leaves without saving edits", () => {
         renderRulesPage();
 
-        fireEvent.change(screen.getByLabelText(/clean book/i), { target: { value: "800" } });
+        fireEvent.change(getRuleInput("Clean book"), { target: { value: "800" } });
         fireEvent.click(screen.getByRole("button", { name: /back/i }));
 
         expect(screen.getByRole("heading", { name: /player details/i })).toBeInTheDocument();

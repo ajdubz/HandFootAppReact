@@ -39,6 +39,12 @@ test("uses default rules when persisted rule values are empty", () => {
         redThreeScore: -300,
         pulledScore: 50,
         winnerScore: 100,
+        roundOneBookThreshold: 50,
+        roundTwoBookThreshold: 90,
+        roundThreeBookThreshold: 120,
+        roundFourBookThreshold: 150,
+        cleanBooksRequiredToGoOut: 2,
+        dirtyBooksRequiredToGoOut: 2,
     });
 });
 
@@ -77,8 +83,16 @@ test("finds the next round number", () => {
     expect(getNextRoundNumber([round])).toBe(4);
 });
 
-test("uses fixed four-round book thresholds", () => {
-    expect([1, 2, 3, 4].map(getBookThreshold)).toEqual([50, 90, 120, 150]);
+test("uses configured four-round book thresholds", () => {
+    const rules = getEffectiveRules(Object.assign(new Rules(), {
+        roundOneBookThreshold: 55,
+        roundTwoBookThreshold: 95,
+        roundThreeBookThreshold: 125,
+        roundFourBookThreshold: 155,
+    }));
+
+    expect([1, 2, 3, 4].map((roundNumber) => getBookThreshold(roundNumber, rules))).toEqual([55, 95, 125, 155]);
+    expect(getBookThreshold(5, rules)).toBe(155);
 });
 
 test("marks the game complete after four rounds", () => {

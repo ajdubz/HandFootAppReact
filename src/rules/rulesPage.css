@@ -44,6 +44,11 @@
     font-weight: 700;
 }
 
+.rules-field .numeric-stepper {
+    margin-top: 8px;
+    width: min(100%, 240px);
+}
+
 .rules-defaults-summary {
     background: #ffffff;
     border: 1px solid #1f1f1f;
@@ -111,4 +116,3 @@
         width: 100%;
     }
 }
-

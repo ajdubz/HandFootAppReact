@@ -1,0 +1,84 @@
+.numeric-stepper {
+    align-items: stretch;
+    display: flex;
+    min-height: 40px;
+    max-width: 260px;
+    width: 100%;
+}
+
+.numeric-stepper .numeric-stepper-control {
+    appearance: textfield;
+    border-color: #adb5bd;
+    border-radius: 0;
+    border-width: 1px;
+    box-shadow: none;
+    caret-color: transparent;
+    flex: 1 1 auto;
+    min-width: 0;
+    outline: 0;
+    text-align: center;
+}
+
+.numeric-stepper .numeric-stepper-control::-webkit-inner-spin-button,
+.numeric-stepper .numeric-stepper-control::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.numeric-stepper .numeric-stepper-control::selection {
+    background: rgba(13, 110, 253, 0.28);
+}
+
+.numeric-stepper:not(.numeric-stepper-plain) .numeric-stepper-control {
+    border-left: 0;
+    border-right: 0;
+}
+
+.numeric-stepper.numeric-stepper-plain .numeric-stepper-control {
+    border-radius: var(--bs-border-radius);
+}
+
+.numeric-stepper.numeric-stepper-plain {
+    max-width: 100%;
+}
+
+.numeric-stepper-button {
+    background: #f4f6f8;
+    border-color: #adb5bd;
+    color: #3d454d;
+    flex: 0 0 38px;
+    font-weight: 700;
+    min-height: 40px;
+    min-width: 38px;
+    padding: 0;
+}
+
+.numeric-stepper-button:hover,
+.numeric-stepper-button:active {
+    background: #e8ecef;
+    border-color: #8f9aa3;
+    color: #24292f;
+}
+
+.numeric-stepper-button:focus:not(:focus-visible) {
+    box-shadow: none;
+    outline: 0;
+}
+
+.numeric-stepper-button:focus-visible,
+.numeric-stepper .numeric-stepper-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.18);
+    position: relative;
+    z-index: 1;
+}
+
+.numeric-stepper-button:first-child {
+    border-bottom-right-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.numeric-stepper-button:last-child {
+    border-bottom-left-radius: 0;
+    border-top-left-radius: 0;
+}

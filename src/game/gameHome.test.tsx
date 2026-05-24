@@ -11,6 +11,7 @@ import GameAddDTO from "../models/DTOs/Game/GameAddDTO";
 import GameRoundDTO from "../models/DTOs/Game/GameRoundDTO";
 import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import PlayerTeamCreateDTO from "../models/DTOs/Team/PlayerTeamCreateDTO";
+import Rules from "../models/Rules";
 
 const LocationDisplay = () => {
     const location = useLocation();
@@ -34,6 +35,17 @@ const renderGamePageWithPlayerDetailsRoute = (initialEntry: string) => {
             <Routes>
                 <Route path="/player/:id/game/:gameId" element={<GamePage />} />
                 <Route path="/player/:id" element={<PlayerDetails />} />
+            </Routes>
+            <LocationDisplay />
+        </MemoryRouter>
+    );
+};
+
+const renderGamePageForGame = (gameId: number) => {
+    render(
+        <MemoryRouter initialEntries={[`/player/1/game/${gameId}`]}>
+            <Routes>
+                <Route path="/player/:id/game/:gameId" element={<GamePage />} />
             </Routes>
             <LocationDisplay />
         </MemoryRouter>
@@ -67,6 +79,8 @@ describe("GamePage round entry", () => {
         expect(screen.getByLabelText("Alex and Sam Pulled Correct 1")).toBeInTheDocument();
         expect(screen.getByLabelText("Alex and Sam Pulled Correct 2")).toBeInTheDocument();
         expect(screen.getAllByRole("button", { name: /save round/i })).toHaveLength(1);
+        expect(screen.getByRole("button", { name: /save round/i })).toBeDisabled();
+        expect(screen.getByLabelText("Alex and Sam Went Out")).toBeDisabled();
         expect(screen.getByRole("button", { name: /new game/i })).toBeInTheDocument();
     });
 
@@ -77,6 +91,25 @@ describe("GamePage round entry", () => {
 
         expect(await screen.findByText("Start Game")).toBeInTheDocument();
         expect(screen.getByRole("button", { name: /continue/i })).toBeInTheDocument();
+    });
+
+    test("shows saved book threshold and going-out requirements for the game", async () => {
+        const customGame = new GameAddDTO();
+        customGame.rules = Object.assign(new Rules(), {
+            roundOneBookThreshold: 55,
+            cleanBooksRequiredToGoOut: 3,
+            dirtyBooksRequiredToGoOut: 1,
+        });
+        const newGame = await GameService.addGame(customGame);
+        const newGameId = newGame?.id ?? 0;
+        expect(newGameId).toBeGreaterThan(0);
+        await GameService.addTeamToGame(newGameId, 1);
+        await GameService.addTeamToGame(newGameId, 2);
+
+        renderGamePageForGame(newGameId);
+
+        expect(await screen.findByText(/book threshold: 55/i)).toBeInTheDocument();
+        expect(screen.getByText(/go out: 3 clean \/ 1 dirty/i)).toBeInTheDocument();
     });
 
     test("starts a new game from Game Center and navigates to it", async () => {
@@ -146,6 +179,8 @@ describe("GamePage round entry", () => {
         renderGamePage();
 
         expect(await screen.findByLabelText("Mobile Alex and Sam Card Points")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Decrease Mobile Alex and Sam Card Points" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Increase Mobile Alex and Sam Card Points" })).toBeInTheDocument();
         expect(screen.getByLabelText("Mobile Alex and Sam Clean Books")).toBeInTheDocument();
         expect(screen.getByLabelText("Mobile Alex and Sam Dirty Books")).toBeInTheDocument();
         expect(screen.getByLabelText("Mobile Alex and Sam Red 3s")).toBeInTheDocument();
@@ -156,22 +191,94 @@ describe("GamePage round entry", () => {
         expect(screen.getByLabelText("Mobile previous rounds")).toBeInTheDocument();
     });
 
+    test("normalizes leading zeroes in round score inputs", async () => {
+        renderGamePage();
+
+        const cardPoints = await screen.findByLabelText("Alex and Sam Card Points");
+        const cleanBooks = screen.getByLabelText("Alex and Sam Clean Books");
+        const redThrees = screen.getByLabelText("Alex and Sam Red 3s");
+
+        fireEvent.change(cardPoints, { target: { value: "01" } });
+        fireEvent.change(cleanBooks, { target: { value: "02" } });
+        fireEvent.change(redThrees, { target: { value: "03" } });
+
+        expect(cardPoints).toHaveValue(1);
+        expect(cleanBooks).toHaveValue(2);
+        expect(redThrees).toHaveValue(3);
+    });
+
+    test("steps mobile score inputs without native browser spinners", async () => {
+        renderGamePage();
+
+        const cardPoints = await screen.findByLabelText("Mobile Alex and Sam Card Points");
+
+        fireEvent.click(screen.getByRole("button", { name: "Increase Mobile Alex and Sam Card Points" }));
+        expect(cardPoints).toHaveValue(1);
+
+        fireEvent.click(screen.getByRole("button", { name: "Decrease Mobile Alex and Sam Card Points" }));
+        expect(cardPoints).toHaveValue(0);
+    });
+
     test("saves a mock round and refreshes the scoreboard", async () => {
         renderGamePage();
 
         await screen.findByLabelText("Alex and Sam Card Points");
 
         fireEvent.change(screen.getByLabelText("Alex and Sam Card Points"), { target: { value: "100" } });
-        fireEvent.change(screen.getByLabelText("Alex and Sam Clean Books"), { target: { value: "1" } });
+        fireEvent.change(screen.getByLabelText("Alex and Sam Clean Books"), { target: { value: "2" } });
+        fireEvent.change(screen.getByLabelText("Alex and Sam Dirty Books"), { target: { value: "2" } });
         fireEvent.change(screen.getByLabelText("Alex and Sam Red 3s"), { target: { value: "1" } });
         fireEvent.click(screen.getByLabelText("Alex and Sam Pulled Correct 1"));
         fireEvent.click(screen.getByLabelText("Alex and Sam Pulled Correct 2"));
+        expect(screen.getByLabelText("Alex and Sam Went Out")).toBeEnabled();
+        fireEvent.click(screen.getByLabelText("Alex and Sam Went Out"));
+        expect(screen.getByRole("button", { name: /save round/i })).toBeEnabled();
+        clickSaveRound();
+
+        expect(await screen.findByRole("heading", { name: /score round 2/i })).toBeInTheDocument();
+        await waitFor(() => expect(screen.getAllByText("1600").length).toBeGreaterThan(0));
+        expect(screen.getByText("No")).toBeInTheDocument();
+    });
+
+    test("enables went out only after required clean and dirty books are met", async () => {
+        renderGamePage();
+
+        await screen.findByLabelText("Alex and Sam Card Points");
+
+        expect(screen.getByLabelText("Alex and Sam Went Out")).toBeDisabled();
+        expect(screen.getByRole("button", { name: /save round/i })).toBeDisabled();
+
+        fireEvent.change(screen.getByLabelText("Alex and Sam Clean Books"), { target: { value: "2" } });
+        fireEvent.change(screen.getByLabelText("Alex and Sam Dirty Books"), { target: { value: "1" } });
+
+        expect(screen.getByLabelText("Alex and Sam Went Out")).toBeDisabled();
+
+        fireEvent.change(screen.getByLabelText("Alex and Sam Dirty Books"), { target: { value: "2" } });
+
+        expect(screen.getByLabelText("Alex and Sam Went Out")).toBeEnabled();
+        fireEvent.click(screen.getByLabelText("Alex and Sam Went Out"));
+        expect(screen.getByRole("button", { name: /save round/i })).toBeEnabled();
+
+        fireEvent.change(screen.getByLabelText("Alex and Sam Dirty Books"), { target: { value: "1" } });
+
+        expect(screen.getByLabelText("Alex and Sam Went Out")).toBeDisabled();
+        expect(screen.getByLabelText("Alex and Sam Went Out")).not.toBeChecked();
+        expect(screen.getByRole("button", { name: /save round/i })).toBeDisabled();
+    });
+
+    test("does not carry previous round books into the going-out requirement", async () => {
+        renderGamePage();
+
+        await screen.findByLabelText("Alex and Sam Card Points");
+
+        fireEvent.change(screen.getByLabelText("Alex and Sam Clean Books"), { target: { value: "2" } });
+        fireEvent.change(screen.getByLabelText("Alex and Sam Dirty Books"), { target: { value: "2" } });
         fireEvent.click(screen.getByLabelText("Alex and Sam Went Out"));
         clickSaveRound();
 
         expect(await screen.findByRole("heading", { name: /score round 2/i })).toBeInTheDocument();
-        await waitFor(() => expect(screen.getAllByText("500").length).toBeGreaterThan(0));
-        expect(screen.getByText("No")).toBeInTheDocument();
+        expect(screen.getByLabelText("Alex and Sam Went Out")).toBeDisabled();
+        expect(screen.getByRole("button", { name: /save round/i })).toBeDisabled();
     });
 
     test("lets pulled-correct checkboxes work independently", async () => {
@@ -187,13 +294,19 @@ describe("GamePage round entry", () => {
         expect(screen.getAllByText("50").length).toBeGreaterThan(0);
     });
 
-    test("clamps red threes to positive counts", async () => {
+    test("clamps score inputs to non-negative values", async () => {
         renderGamePage();
 
+        const cardPoints = await screen.findByLabelText("Alex and Sam Card Points");
+        const cleanBooks = screen.getByLabelText("Alex and Sam Clean Books");
         const redThrees = await screen.findByLabelText("Alex and Sam Red 3s");
 
+        fireEvent.change(cardPoints, { target: { value: "-10" } });
+        fireEvent.change(cleanBooks, { target: { value: "-1" } });
         fireEvent.change(redThrees, { target: { value: "-2" } });
 
+        expect(cardPoints).toHaveValue(0);
+        expect(cleanBooks).toHaveValue(0);
         expect(redThrees).toHaveValue(0);
     });
 
@@ -203,6 +316,9 @@ describe("GamePage round entry", () => {
         await screen.findByLabelText("Alex and Sam Card Points");
 
         for (const roundNumber of [1, 2, 3, 4]) {
+            fireEvent.change(screen.getByLabelText("Alex and Sam Clean Books"), { target: { value: "2" } });
+            fireEvent.change(screen.getByLabelText("Alex and Sam Dirty Books"), { target: { value: "2" } });
+            fireEvent.click(screen.getByLabelText("Alex and Sam Went Out"));
             clickSaveRound();
 
             const nextHeading = roundNumber === 4

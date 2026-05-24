@@ -10,11 +10,31 @@ export const DEFAULT_RULE_VALUES = {
     winnerScore: 100,
     cardsToStart: 11,
     cardsToDraw: 2,
+    roundOneBookThreshold: 50,
+    roundTwoBookThreshold: 90,
+    roundThreeBookThreshold: 120,
+    roundFourBookThreshold: 150,
+    cleanBooksRequiredToGoOut: 2,
+    dirtyBooksRequiredToGoOut: 2,
 };
 
 type RuleNumberKey = keyof typeof DEFAULT_RULE_VALUES;
 
 const ruleKeys = Object.keys(DEFAULT_RULE_VALUES) as RuleNumberKey[];
+const nonNegativeRuleKeys = new Set<RuleNumberKey>([
+    "cleanBookScore",
+    "dirtyBookScore",
+    "pulledScore",
+    "winnerScore",
+    "cardsToStart",
+    "cardsToDraw",
+    "roundOneBookThreshold",
+    "roundTwoBookThreshold",
+    "roundThreeBookThreshold",
+    "roundFourBookThreshold",
+    "cleanBooksRequiredToGoOut",
+    "dirtyBooksRequiredToGoOut",
+]);
 
 const toFiniteNumber = (value: unknown): number | undefined => {
     const parsed = Number(value);
@@ -44,7 +64,11 @@ export const normalizeRules = (rules?: Partial<Rules>): Rules => {
     ruleKeys.forEach((key) => {
         const value = toFiniteNumber(rules?.[key]);
         if (value !== undefined) {
-            baseRules[key] = key === "redThreeScore" ? -Math.abs(value) : value;
+            if (key === "redThreeScore") {
+                baseRules[key] = -Math.abs(value);
+            } else {
+                baseRules[key] = nonNegativeRuleKeys.has(key) ? Math.max(0, value) : value;
+            }
         }
     });
 

@@ -139,6 +139,12 @@ describe("StartGame modal", () => {
             winnerScore: 90,
             cardsToStart: 15,
             cardsToDraw: 4,
+            roundOneBookThreshold: 60,
+            roundTwoBookThreshold: 100,
+            roundThreeBookThreshold: 130,
+            roundFourBookThreshold: 160,
+            cleanBooksRequiredToGoOut: 3,
+            dirtyBooksRequiredToGoOut: 1,
         });
 
         expect(await screen.findByDisplayValue("Alex")).toBeInTheDocument();
@@ -160,6 +166,12 @@ describe("StartGame modal", () => {
             winnerScore: 90,
             cardsToStart: 15,
             cardsToDraw: 4,
+            roundOneBookThreshold: 60,
+            roundTwoBookThreshold: 100,
+            roundThreeBookThreshold: 130,
+            roundFourBookThreshold: 160,
+            cleanBooksRequiredToGoOut: 3,
+            dirtyBooksRequiredToGoOut: 1,
         });
     });
 });

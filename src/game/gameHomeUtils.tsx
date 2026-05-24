@@ -9,6 +9,12 @@ export type ScoringRules = {
     redThreeScore: number;
     pulledScore: number;
     winnerScore: number;
+    roundOneBookThreshold: number;
+    roundTwoBookThreshold: number;
+    roundThreeBookThreshold: number;
+    roundFourBookThreshold: number;
+    cleanBooksRequiredToGoOut: number;
+    dirtyBooksRequiredToGoOut: number;
 };
 
 export type TeamStats = {
@@ -24,9 +30,14 @@ export const DEFAULT_SCORING_RULES: ScoringRules = {
     redThreeScore: DEFAULT_RULE_VALUES.redThreeScore,
     pulledScore: DEFAULT_RULE_VALUES.pulledScore,
     winnerScore: DEFAULT_RULE_VALUES.winnerScore,
+    roundOneBookThreshold: DEFAULT_RULE_VALUES.roundOneBookThreshold,
+    roundTwoBookThreshold: DEFAULT_RULE_VALUES.roundTwoBookThreshold,
+    roundThreeBookThreshold: DEFAULT_RULE_VALUES.roundThreeBookThreshold,
+    roundFourBookThreshold: DEFAULT_RULE_VALUES.roundFourBookThreshold,
+    cleanBooksRequiredToGoOut: DEFAULT_RULE_VALUES.cleanBooksRequiredToGoOut,
+    dirtyBooksRequiredToGoOut: DEFAULT_RULE_VALUES.dirtyBooksRequiredToGoOut,
 };
 
-export const BOOK_THRESHOLDS = [50, 90, 120, 150];
 export const MAX_ROUNDS = 4;
 
 export const getEffectiveRules = (rules?: Rules): ScoringRules => {
@@ -38,6 +49,12 @@ export const getEffectiveRules = (rules?: Rules): ScoringRules => {
         redThreeScore: effectiveRules.redThreeScore,
         pulledScore: effectiveRules.pulledScore,
         winnerScore: effectiveRules.winnerScore,
+        roundOneBookThreshold: effectiveRules.roundOneBookThreshold,
+        roundTwoBookThreshold: effectiveRules.roundTwoBookThreshold,
+        roundThreeBookThreshold: effectiveRules.roundThreeBookThreshold,
+        roundFourBookThreshold: effectiveRules.roundFourBookThreshold,
+        cleanBooksRequiredToGoOut: effectiveRules.cleanBooksRequiredToGoOut,
+        dirtyBooksRequiredToGoOut: effectiveRules.dirtyBooksRequiredToGoOut,
     };
 };
 
@@ -64,8 +81,15 @@ export const isGameComplete = (rounds: GameRoundDTO[]): boolean => {
     return getNextRoundNumber(rounds) > MAX_ROUNDS;
 };
 
-export const getBookThreshold = (roundNumber: number): number => {
-    return BOOK_THRESHOLDS[Math.min(roundNumber - 1, BOOK_THRESHOLDS.length - 1)] ?? 0;
+export const getBookThreshold = (roundNumber: number, rules: ScoringRules = DEFAULT_SCORING_RULES): number => {
+    const thresholds = [
+        rules.roundOneBookThreshold,
+        rules.roundTwoBookThreshold,
+        rules.roundThreeBookThreshold,
+        rules.roundFourBookThreshold,
+    ];
+
+    return thresholds[Math.min(Math.max(roundNumber, 1) - 1, thresholds.length - 1)] ?? 0;
 };
 
 export const groupRoundsByGameTeamId = (rounds: GameRoundDTO[]): Record<number, GameRoundDTO[]> => {
