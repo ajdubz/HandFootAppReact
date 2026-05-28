@@ -82,6 +82,7 @@ describe("GamePage round entry", () => {
         expect(screen.getByRole("button", { name: /save round/i })).toBeDisabled();
         expect(screen.getByLabelText("Alex and Sam Went Out")).toBeDisabled();
         expect(screen.getByRole("button", { name: /new game/i })).toBeInTheDocument();
+        expect(localStorage.getItem("activeGameRoute")).toBe("/player/1/game/1");
     });
 
     test("opens the start game modal from New Game", async () => {
@@ -91,6 +92,16 @@ describe("GamePage round entry", () => {
 
         expect(await screen.findByText("Start Game")).toBeInTheDocument();
         expect(screen.getByRole("button", { name: /continue/i })).toBeInTheDocument();
+    });
+
+    test("back returns to player details without reopening the start game modal", async () => {
+        renderGamePageWithPlayerDetailsRoute("/player/1/game/1");
+
+        fireEvent.click(await screen.findByRole("button", { name: /^back$/i }));
+
+        expect(await screen.findByRole("heading", { name: /player details/i })).toBeInTheDocument();
+        expect(screen.getByTestId("location")).toHaveTextContent("/player/1");
+        expect(screen.queryByRole("button", { name: /continue/i })).not.toBeInTheDocument();
     });
 
     test("shows saved book threshold and going-out requirements for the game", async () => {
@@ -173,6 +184,7 @@ describe("GamePage round entry", () => {
         expect(await screen.findByDisplayValue("Wild Bill")).toBeInTheDocument();
         expect(await PlayerService.getPlayerAccountById(guestId)).toMatchObject({ nickName: "Wild Bill" });
         expect(await PlayerService.getPlayerAccountById(temporaryGuestAccount.id ?? 0)).toBeUndefined();
+        expect(localStorage.getItem("activeGameRoute")).toBeNull();
     });
 
     test("renders mobile scoring cards with touch-friendly controls", async () => {

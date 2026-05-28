@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Button, Form } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Rules from "../models/Rules";
 import NumericStepper from "../components/NumericStepper";
 import { buildDefaultRules, loadRuleDefaults, normalizeRules, resetRuleDefaults, saveRuleDefaults } from "./rulesDefaults";
+import { getActiveGameRoute, isActiveGameRoute } from "../utils/activeGame";
 import "./rulesPage.css";
 
 type RuleField = {
@@ -53,6 +54,13 @@ const getPlayerDetailsRoute = () => {
 
 function RulesPage() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const state = location.state as { returnToGame?: string } | null;
+    const returnToGame = state?.returnToGame;
+    const currentPlayerId = Number(localStorage.getItem("currentPlayerId") ?? localStorage.getItem("mockPlayerId") ?? 0);
+    const activeGameRoute = isActiveGameRoute(returnToGame)
+        ? returnToGame
+        : getActiveGameRoute(currentPlayerId);
     const [rules, setRules] = useState<Rules>(() => loadRuleDefaults());
     const [savedMessage, setSavedMessage] = useState("");
 
@@ -82,7 +90,11 @@ function RulesPage() {
     };
 
     const handleBack = () => {
-        navigate(getPlayerDetailsRoute());
+        navigate(activeGameRoute || getPlayerDetailsRoute());
+    };
+
+    const handleBackToActiveGame = () => {
+        navigate(activeGameRoute);
     };
 
     const renderField = (field: RuleField) => (
@@ -111,6 +123,11 @@ function RulesPage() {
                     <h1>Rules Defaults</h1>
                     <p>These values apply to newly created games. Existing games keep their saved rules.</p>
                 </div>
+                {activeGameRoute && (
+                    <Button type="button" variant="success" onClick={handleBackToActiveGame}>
+                        Back to Active Game
+                    </Button>
+                )}
             </div>
 
             {savedMessage && <div className="rules-save-message">{savedMessage}</div>}
@@ -166,7 +183,9 @@ function RulesPage() {
                 <div className="rules-actions">
                     <Button type="submit" variant="primary">Save</Button>
                     <Button type="button" variant="secondary" onClick={handleReset}>Reset to Defaults</Button>
-                    <Button type="button" variant="outline-secondary" onClick={handleBack}>Back</Button>
+                    <Button type="button" variant="outline-secondary" onClick={handleBack}>
+                        {activeGameRoute ? "Back to Active Game" : "Back"}
+                    </Button>
                 </div>
             </Form>
         </main>

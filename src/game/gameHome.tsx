@@ -19,6 +19,7 @@ import {
 } from "./gameHomeUtils";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import NumericStepper from "../components/NumericStepper";
+import { clearActiveGameRoute, saveActiveGameRoute } from "../utils/activeGame";
 
 interface RouteParams {
     [id: string]: string | undefined;
@@ -119,8 +120,9 @@ function GamePage() {
     }, [gameId]);
 
     useEffect(() => {
+        saveActiveGameRoute(id, gameId);
         fetchData();
-    }, [fetchData]);
+    }, [fetchData, gameId, id]);
 
     useEffect(() => {
         setRoundEntries((currentEntries) => {
@@ -185,7 +187,7 @@ function GamePage() {
     };
 
     const handleBack = () => {
-        navigate(`/player/${id}?startGame=true`);
+        navigate(`/player/${id}`);
     };
 
     const handleNewGameConfirm = (newGameId: number) => {
@@ -205,6 +207,7 @@ function GamePage() {
             console.error("Error removing guest accounts:", error);
         }
 
+        clearActiveGameRoute();
         navigate(`/player/${id}`);
     };
 

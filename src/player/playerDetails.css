@@ -1,0 +1,19 @@
+.player-detail-actions {
+    align-items: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 24px;
+    max-width: 280px;
+}
+
+.player-detail-actions .btn {
+    width: 100%;
+}
+
+@media (max-width: 640px) {
+    .player-detail-actions {
+        max-width: none;
+        width: 100%;
+    }
+}

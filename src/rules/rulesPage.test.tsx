@@ -19,12 +19,13 @@ const PlayerDetailsStub = () => {
 describe("RulesPage", () => {
     const getRuleInput = (name: string | RegExp) => screen.getByRole("spinbutton", { name });
 
-    const renderRulesPage = () => {
+    const renderRulesPage = (initialEntries: Parameters<typeof MemoryRouter>[0]["initialEntries"] = ["/rules"]) => {
         render(
-            <MemoryRouter initialEntries={["/rules"]}>
+            <MemoryRouter initialEntries={initialEntries}>
                 <Routes>
                     <Route path="/rules" element={<RulesPage />} />
                     <Route path="/player/:id" element={<PlayerDetailsStub />} />
+                    <Route path="/player/:id/game/:gameId" element={<h1>Game Center</h1>} />
                     <Route path="/playersList" element={<h1>Players</h1>} />
                 </Routes>
             </MemoryRouter>
@@ -165,5 +166,25 @@ describe("RulesPage", () => {
 
         expect(screen.getByRole("heading", { name: /player details/i })).toBeInTheDocument();
         expect(loadRuleDefaults()).toEqual(buildDefaultRules());
+    });
+
+    test("returns to the active game when one is available", () => {
+        localStorage.setItem("activeGameRoute", "/player/5/game/8");
+
+        renderRulesPage();
+
+        fireEvent.click(screen.getAllByRole("button", { name: /back to active game/i })[0]);
+
+        expect(screen.getByRole("heading", { name: /game center/i })).toBeInTheDocument();
+    });
+
+    test("prefers the game route that opened rules", () => {
+        localStorage.setItem("activeGameRoute", "/player/5/game/8");
+
+        renderRulesPage([{ pathname: "/rules", state: { returnToGame: "/player/5/game/9" } }]);
+
+        fireEvent.click(screen.getAllByRole("button", { name: /back to active game/i })[0]);
+
+        expect(screen.getByRole("heading", { name: /game center/i })).toBeInTheDocument();
     });
 });

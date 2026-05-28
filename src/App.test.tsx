@@ -67,3 +67,32 @@ test('sign out clears auth and returns to login', async () => {
   expect(localStorage.getItem('currentPlayerId')).toBeNull();
   expect(localStorage.getItem('isGuestSession')).toBeNull();
 });
+
+test('top menu includes current player home, account, and friends links', () => {
+  localStorage.setItem('token', 'test-token');
+  localStorage.setItem('currentPlayerId', '123');
+  window.history.pushState({}, '', '/rules');
+
+  render(<App />);
+
+  expect(screen.getByRole('link', { name: /home/i })).toHaveAttribute('href', '/player/123');
+  expect(screen.getByRole('link', { name: /account/i })).toHaveAttribute('href', '/player/123/account');
+  expect(screen.getByRole('link', { name: /friends/i })).toHaveAttribute('href', '/player/123/friends');
+});
+
+test('top menu closes when clicking outside it', () => {
+  localStorage.setItem('token', 'test-token');
+  localStorage.setItem('currentPlayerId', '123');
+  window.history.pushState({}, '', '/rules');
+
+  render(<App />);
+
+  const menuButton = screen.getByRole('button', { name: /open navigation menu/i });
+  fireEvent.click(menuButton);
+
+  expect(menuButton).toHaveAttribute('aria-expanded', 'true');
+
+  fireEvent.mouseDown(document.body);
+
+  expect(menuButton).toHaveAttribute('aria-expanded', 'false');
+});

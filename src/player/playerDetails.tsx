@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import PlayerService from "../services/PlayerService";
-import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import Button from "react-bootstrap/Button";
 import StartGame from "../modals/startGame";
 import { isGuestSession } from "../utils/auth";
+import { getActiveGameRoute } from "../utils/activeGame";
+import "./playerDetails.css";
 
 interface RouteParams {
     [id: string]: string | undefined;
@@ -16,6 +18,7 @@ function PlayerDetails() {
     const location = useLocation();
     const rulesMessage = (location.state as { rulesMessage?: string } | null)?.rulesMessage ?? "";
     const currentPlayerId = Number(localStorage.getItem("currentPlayerId") ?? localStorage.getItem("mockPlayerId") ?? 0);
+    const activeGameRoute = getActiveGameRoute(currentPlayerId);
     const [player, setPlayer] = useState<PlayerFullDetailsDTO | undefined>();
     const [nickname, setNickname] = useState<string>(player?.nickName || "");
     // const [showModalSave, setShowModalSave] = useState(false);
@@ -107,16 +110,16 @@ function PlayerDetails() {
                 </label>
                 <br />
             </div>
-            <br />
-            <br />
-            <Link to={`/player/${id}/account`}>Account </Link>
-            <br />
-            <Link to={`/player/${id}/friends`}> See Friends</Link>
-            <br />
-            <br />
-            <Button variant="primary" onClick={handleStartGame}>
-                Start Game
-            </Button>
+            <div className="player-detail-actions" aria-label="Player actions">
+                {activeGameRoute && (
+                    <Button variant="success" onClick={() => navigate(activeGameRoute)}>
+                        Back to Active Game
+                    </Button>
+                )}
+                <Button variant="primary" onClick={handleStartGame}>
+                    Start Game
+                </Button>
+            </div>
 
             <StartGame id={Number(id)} isOpen={showModalStart} onCancel={() => setShowModalStart(false)} onConfirm={(newGameId) => handleConfirm(newGameId)} />
             {/* <ConfirmChanges isOpen={showModalSave} onConfirm={onSubmitFunc} onCancel={() => setShowModalSave(false)} /> */}
