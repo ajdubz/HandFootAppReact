@@ -64,15 +64,25 @@ const NewHeader: React.FC<{ onSignOut: () => void }> = ({ onSignOut }) => {
         onSignOut();
     };
 
+    const menuButtonAriaProps: React.AriaAttributes = isMenuOpen
+        ? {
+            "aria-controls": "primary-menu",
+            "aria-expanded": "true",
+            "aria-label": "Close navigation menu",
+        }
+        : {
+            "aria-controls": "primary-menu",
+            "aria-expanded": "false",
+            "aria-label": "Open navigation menu",
+        };
+
     return (
         <header className="app-header">
             <button
                 type="button"
                 ref={menuButtonRef}
                 className={`hamburger-button${isMenuOpen ? " is-open" : ""}`}
-                aria-expanded={isMenuOpen}
-                aria-controls="primary-menu"
-                aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+                {...menuButtonAriaProps}
                 onClick={() => setIsMenuOpen((current) => !current)}
             >
                 <span />

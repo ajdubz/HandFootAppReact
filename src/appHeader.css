@@ -8,6 +8,7 @@
     gap: 14px;
     min-height: 58px;
     padding: 8px 18px;
+    position: -webkit-sticky;
     position: sticky;
     top: 0;
     z-index: 1000;
