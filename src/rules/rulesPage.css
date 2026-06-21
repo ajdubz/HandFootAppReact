@@ -1,7 +1,3 @@
-.rules-page {
-    padding: 24px;
-}
-
 .rules-header {
     align-items: center;
     display: flex;
@@ -37,6 +33,7 @@
     background: #ffffff;
     border: 1px solid #1f1f1f;
     border-radius: 8px;
+    color: #212529;
     padding: 14px;
 }
 
@@ -53,6 +50,7 @@
     background: #ffffff;
     border: 1px solid #1f1f1f;
     border-radius: 8px;
+    color: #212529;
     padding: 14px;
 }
 
@@ -98,10 +96,6 @@
 }
 
 @media (max-width: 767px) {
-    .rules-page {
-        padding: 16px 12px 24px;
-    }
-
     .rules-grid,
     .rules-defaults-summary dl {
         grid-template-columns: 1fr;

@@ -2,6 +2,10 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Product Direction
+
+See [ROADMAP.md](./ROADMAP.md) for the current direction: keep this as a React website first, evolve toward a PWA-ready local-first scorekeeper, then add a backend.
+
 ## Available Scripts
 
 In the project directory, you can run:

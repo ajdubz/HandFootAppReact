@@ -11,6 +11,7 @@ import PlayerService from "./services/PlayerService";
 import TeamResults from "./team/teamResults";
 import { clearAuthState } from "./utils/auth";
 import RulesPage from "./rules/rulesPage";
+import "./App.css";
 import "./appHeader.css";
 
 const gameRoutePattern = /^\/player\/\d+\/game\/\d+$/;
@@ -135,13 +136,15 @@ const App: React.FC = () => {
             <Routes>
                 <Route path="/" element={<Login onLogin={handleLogin} />} />
                 <Route path="/login" element={<Login onLogin={handleLogin} />} />
-                <Route path="/register" element={<PlayerAccount isRegistration />} />
-                <Route path="/player/account" element={<PlayerAccount />} />
+                <Route path="/register" element={<div className="app-main app-main-public"><PlayerAccount isRegistration /></div>} />
+                <Route path="/player/account" element={<div className="app-main app-main-public"><PlayerAccount /></div>} />
                 <Route
                     path="/*"
                     element={<ProtectedRoutes isAuthenticated={isAuthenticated}>
                                 <NewHeader onSignOut={handleSignOut} />
-                                <NewRoutes />
+                                <div className="app-main">
+                                    <NewRoutes />
+                                </div>
                             </ProtectedRoutes> }
                 />
             </Routes>
