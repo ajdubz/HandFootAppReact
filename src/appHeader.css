@@ -1,9 +1,9 @@
 .app-header {
     align-items: center;
-    background: #161a1d;
-    border-bottom: 3px solid #2a9d8f;
+    background: #171311;
+    border-bottom: 3px solid #b84632;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-    color: #ffffff;
+    color: #f8f3ea;
     display: flex;
     gap: 14px;
     min-height: 58px;
@@ -21,7 +21,7 @@
 
 .hamburger-button {
     align-items: center;
-    background: #ffffff;
+    background: #fffaf2;
     border: 0;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
@@ -38,8 +38,8 @@
 
 .hamburger-button:hover,
 .hamburger-button:focus-visible {
-    background: #f4d35e;
-    outline: 3px solid rgba(244, 211, 94, 0.35);
+    background: #d8a64a;
+    outline: 3px solid rgba(216, 166, 74, 0.35);
     outline-offset: 3px;
 }
 
@@ -48,7 +48,7 @@
 }
 
 .hamburger-button span {
-    background: #161a1d;
+    background: #171311;
     border-radius: 999px;
     display: block;
     height: 3px;
@@ -70,8 +70,8 @@
 
 .top-drawer-menu {
     align-items: center;
-    background: linear-gradient(135deg, #1d3557, #2a9d8f);
-    border-bottom: 3px solid #f4d35e;
+    background: linear-gradient(135deg, #171311, #2a201a 58%, #4f7765);
+    border-bottom: 3px solid #d8a64a;
     box-shadow: 0 16px 24px rgba(0, 0, 0, 0.24);
     display: flex;
     gap: 18px;
@@ -110,9 +110,9 @@
 
 .top-drawer-menu a:hover,
 .top-drawer-menu a:focus-visible {
-    background: #f4d35e;
-    border-color: #f4d35e;
-    color: #161a1d;
+    background: #d8a64a;
+    border-color: #d8a64a;
+    color: #171311;
     outline: 0;
     transform: translateY(-2px);
 }

@@ -1,124 +1,155 @@
 .login-stage {
-    min-height: 100vh;
-    display: flex;
     align-items: center;
-    justify-content: center;
-    background: #120a06;
-    padding: 8px;
+    background:
+        linear-gradient(90deg, rgba(23, 19, 17, 0.96) 0%, rgba(23, 19, 17, 0.82) 40%, rgba(23, 19, 17, 0.48) 72%),
+        linear-gradient(180deg, rgba(42, 32, 26, 0.35), rgba(23, 19, 17, 0.92)),
+        var(--login-background-image) center / cover no-repeat;
+    box-sizing: border-box;
+    color: #f8f3ea;
+    display: flex;
+    justify-content: flex-start;
+    min-height: 100vh;
+    padding: clamp(18px, 4vw, 48px);
 }
 
-.login-artwork {
-    position: relative;
-    width: min(100vw, calc(100vh * 0.5714));
-    aspect-ratio: 1024 / 1792;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+.login-panel {
+    background: rgba(31, 25, 21, 0.88);
+    border: 1px solid rgba(216, 166, 74, 0.28);
+    border-radius: 8px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+    max-width: 440px;
+    padding: clamp(22px, 3.2vw, 34px);
+    width: min(100%, 440px);
 }
 
-.overlay-input {
-    position: absolute;
-    left: 22.65%;
-    width: 54.8%;
-    height: 4.35%;
-    border: 0;
-    outline: none;
-    border-radius: 4px;
-    background: rgba(0, 0, 0, 0.08);
-    color: rgba(235, 200, 145, 0.95);
-    font-size: clamp(12px, 1.26vw, 20px);
+.login-kicker {
+    color: #d8a64a;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    margin: 0 0 10px;
+    text-transform: uppercase;
+}
+
+.login-panel h1 {
+    color: #f8f3ea;
+    font-size: clamp(2rem, 6vw, 3.2rem);
     line-height: 1;
-    padding: 0 2.5%;
+    margin: 0;
 }
 
-.overlay-input::placeholder {
-    color: rgba(197, 154, 98, 0.85);
+.login-subtitle {
+    color: #cfc2b0;
+    font-size: 1rem;
+    line-height: 1.55;
+    margin: 12px 0 20px;
 }
 
-.overlay-user {
-    top: 40.22%;
-    transform: translate(30px, 26px);
+.login-fields {
+    display: grid;
+    gap: 8px;
 }
 
-.overlay-password {
-    top: 50.36%;
-    transform: translate(30px, 32px);
-}
-
-.overlay-login-btn {
-    position: absolute;
-    top: 61.2%;
-    left: 28.4%;
-    width: 43.2%;
-    height: 5.35%;
-    border: 0;
-    background: transparent;
-    color: transparent;
-    cursor: pointer;
-}
-
-.overlay-guest-btn {
-    position: absolute;
-    top: 69.5%;
-    left: 28.4%;
-    width: 43.2%;
-    height: 3.9%;
-    border: 1px solid rgba(235, 200, 145, 0.75);
-    border-radius: 4px;
-    background: rgba(18, 10, 6, 0.82);
-    color: rgba(248, 220, 170, 0.96);
-    cursor: pointer;
-    font-size: clamp(11px, 1.1vw, 16px);
+.login-fields label {
+    color: #f8f3ea;
     font-weight: 700;
 }
 
-.overlay-guest-btn:hover,
-.overlay-guest-btn:focus-visible {
-    background: rgba(54, 30, 16, 0.92);
-    outline: 2px solid rgba(248, 220, 170, 0.55);
-    outline-offset: 2px;
+.login-fields input {
+    background: #fffaf2;
+    border: 1px solid rgba(216, 166, 74, 0.4);
+    border-radius: 6px;
+    color: #211a16;
+    font: inherit;
+    min-height: 46px;
+    padding: 10px 12px;
 }
 
-.overlay-register-btn {
-    position: absolute;
-    top: 74.2%;
-    left: 35%;
-    width: 30%;
-    height: 3.5%;
-    border: 0;
-    background: transparent;
-    color: transparent;
-    cursor: pointer;
+.login-fields input + label {
+    margin-top: 8px;
 }
 
-.overlay-dealer-input {
-    position: absolute;
-    top: 87.7%;
-    left: 12.5%;
-    width: 20.5%;
-    height: 5.8%;
-    border: 0;
-    outline: none;
-    border-radius: 999px;
-    background: rgba(0, 0, 0, 0.08);
-    color: rgba(235, 200, 145, 0.95);
-    font-size: clamp(10px, 0.95vw, 14px);
-    text-align: center;
-    cursor: pointer;
+.login-fields input::placeholder {
+    color: #806f60;
 }
 
-.overlay-dealer-input::placeholder {
-    color: rgba(235, 200, 145, 0.95);
+.login-fields input:focus-visible,
+.login-button:focus-visible {
+    outline: 3px solid rgba(216, 166, 74, 0.45);
+    outline-offset: 3px;
 }
 
-.overlay-error {
-    position: absolute;
-    top: 56.4%;
-    left: 22.8%;
-    width: 54.4%;
-    text-align: center;
-    color: #ffd7cb;
-    font-size: clamp(10px, 1vw, 15px);
+.login-error {
+    background: rgba(184, 70, 50, 0.2);
+    border: 1px solid rgba(212, 95, 69, 0.58);
+    border-radius: 6px;
+    color: #ffd9d0;
     font-weight: 700;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    margin-top: 16px;
+    padding: 10px 12px;
+}
+
+.login-actions {
+    display: grid;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.login-button {
+    border-radius: 6px;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 800;
+    min-height: 46px;
+    padding: 10px 14px;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.login-button:active {
+    transform: translateY(1px);
+}
+
+.login-button-primary {
+    background: #b84632;
+    border: 1px solid #b84632;
+    color: #fffaf2;
+}
+
+.login-button-primary:hover,
+.login-button-primary:focus-visible {
+    background: #d45f45;
+    border-color: #d45f45;
+}
+
+.login-button-secondary {
+    background: rgba(216, 166, 74, 0.12);
+    border: 1px solid rgba(216, 166, 74, 0.72);
+    color: #f8f3ea;
+}
+
+.login-button-secondary:hover,
+.login-button-secondary:focus-visible {
+    background: #d8a64a;
+    color: #211a16;
+}
+
+.login-button-guest {
+    background: rgba(79, 119, 101, 0.24);
+    border: 1px solid rgba(79, 119, 101, 0.8);
+    color: #f8f3ea;
+}
+
+.login-button-guest:hover,
+.login-button-guest:focus-visible {
+    background: #4f7765;
+}
+
+@media (max-width: 760px) {
+    .login-stage {
+        background:
+            linear-gradient(180deg, rgba(23, 19, 17, 0.88), rgba(23, 19, 17, 0.96)),
+            var(--login-background-image) center / cover no-repeat;
+        justify-content: center;
+        padding: 18px;
+    }
 }

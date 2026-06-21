@@ -5,15 +5,70 @@
 }
 
 body {
-    background-color: gray !important;
+    background:
+        radial-gradient(circle at top left, rgba(216, 166, 74, 0.14), transparent 30rem),
+        linear-gradient(135deg, #171311 0%, #2a201a 52%, #3a2a20 100%) !important;
+}
+
+.app-main {
+    background:
+        radial-gradient(circle at top right, rgba(184, 70, 50, 0.12), transparent 28rem),
+        linear-gradient(135deg, #171311 0%, #2a201a 55%, #3a2a20 100%);
+    color: #f8f3ea;
+    min-height: calc(100vh - 58px);
+    padding: 24px;
+}
+
+.app-main-public {
+    min-height: 100vh;
+}
+
+.app-main table {
+    background: #ffffff;
+    color: #212529;
+    margin-top: 12px;
+}
+
+.app-main th,
+.app-main td {
+    border-color: #000000;
+}
+
+.app-main .form-text,
+.app-main .text-muted {
+    color: #cfc2b0 !important;
+}
+
+.app-main .form-control,
+.app-main .form-select {
+    background-color: #ffffff;
+    color: #212529;
+}
+
+.app-main a,
+.app-main .link-button {
+    color: #f0c46b;
+}
+
+.app-main table a,
+.app-main table .link-button,
+.app-main .rules-section a,
+.app-main .rules-section .link-button {
+    color: #0d6efd;
 }
 
 .link-button {
     background: none;
     border: 0;
-    color: #0d6efd;
+    color: #b84632;
     cursor: pointer;
     font: inherit;
     padding: 0;
     text-decoration: underline;
+}
+
+@media (max-width: 767px) {
+    .app-main {
+        padding: 16px 12px 24px;
+    }
 }

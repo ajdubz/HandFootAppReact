@@ -4,6 +4,7 @@ import PlayerService from '../services/PlayerService';
 import PlayerAccountDTO from '../models/DTOs/Player/PlayerAccountDTO';
 import './login.css';
 import { clearAuthState, setAuthState } from '../utils/auth';
+import gameNightLogin from '../assets/game-night-login.jpg';
 
 const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     const navigate = useNavigate();
@@ -68,45 +69,56 @@ const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     };
 
     return (
-        <div className="login-stage">
-            <div
-                className="login-artwork"
-                style={{
-                    backgroundImage: `url("${process.env.PUBLIC_URL}/new login page.png")`,
-                }}
-            >
-                <input
-                    className="overlay-input overlay-user"
-                    type="text"
-                    aria-label="Username or Email"
-                    value={emailOrName}
-                    onChange={(e) => setEmailOrName(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
-                    placeholder="Enter your username"
-                />
-                <input
-                    className="overlay-input overlay-password"
-                    type="password"
-                    aria-label="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
-                    placeholder="Enter your password"
-                />
-                <button className="overlay-login-btn" type="button" onClick={handleLogin}>Login</button>
-                <button className="overlay-guest-btn" type="button" onClick={handleGuestLogin}>Play as Guest</button>
-                <button className="overlay-register-btn" type="button" onClick={handleRegistration}>Registration</button>
-                <input
-                    className="overlay-dealer-input"
-                    type="text"
-                    readOnly
-                    value=""
-                    aria-label="Registration"
-                    onClick={handleRegistration}
-                />
-                {error && <div className="overlay-error">{error}</div>}
-            </div>
-        </div>
+        <main
+            className="login-stage"
+            style={{ "--login-background-image": `url(${gameNightLogin})` } as React.CSSProperties}
+        >
+            <section className="login-panel" aria-labelledby="login-title">
+                <p className="login-kicker">Family game night</p>
+                <h1 id="login-title">Hand &amp; Foot Scorekeeper</h1>
+                <p className="login-subtitle">
+                    Keep the table moving with quick scoring, guest play, and easy account access.
+                </p>
+
+                <div className="login-fields">
+                    <label htmlFor="emailOrName">Username or Email</label>
+                    <input
+                        id="emailOrName"
+                        type="text"
+                        aria-label="Username or Email"
+                        value={emailOrName}
+                        onChange={(e) => setEmailOrName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
+                        placeholder="Enter your username"
+                    />
+
+                    <label htmlFor="password">Password</label>
+                    <input
+                        id="password"
+                        type="password"
+                        aria-label="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
+                        placeholder="Enter your password"
+                    />
+                </div>
+
+                {error && <div className="login-error" role="alert">{error}</div>}
+
+                <div className="login-actions">
+                    <button className="login-button login-button-primary" type="button" onClick={handleLogin}>
+                        Login
+                    </button>
+                    <button className="login-button login-button-secondary" type="button" onClick={handleRegistration}>
+                        Create New Account
+                    </button>
+                    <button className="login-button login-button-guest" type="button" onClick={handleGuestLogin}>
+                        Play as Guest
+                    </button>
+                </div>
+            </section>
+        </main>
     );
 };
 
