@@ -181,12 +181,13 @@ class TeamService {
                 throw new Error("No token found");
             }
 
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Team/Players/${getTeamsByPlayers}`, {
-                method: "GET",
+            const url = await fetch(`${process.env.REACT_APP_API_URL}/Team/Players`, {
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${myToken}`,
                 },
+                body: JSON.stringify(getTeamsByPlayers),
             });
             if (!url.ok) {
                 throw new Error("Error in getTeamsByPlayers");
