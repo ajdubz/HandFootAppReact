@@ -17,7 +17,7 @@ import {
     isGameComplete,
     numberOrZero,
 } from "./gameHomeUtils";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import NumericStepper from "../components/NumericStepper";
 import { clearActiveGameRoute, saveActiveGameRoute } from "../utils/activeGame";
 
@@ -584,19 +584,33 @@ function GamePage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {sortedRounds.length ? sortedRounds.map((round) => (
-                                <tr key={round.id ?? `${round.gameTeam?.id}-${round.roundNumber}`}>
-                                    <td>{round.roundNumber}</td>
-                                    <td>{round.gameTeam?.team?.name}</td>
-                                    <td>{round.cardPoints ?? 0}</td>
-                                    <td>{round.cleanBooks ?? 0}</td>
-                                    <td>{round.dirtyBooks ?? 0}</td>
-                                    <td>{round.redThrees ?? 0}</td>
-                                    <td>{round.pulledCorrect ?? 0}</td>
-                                    <td>{round.isWinner ? "Yes" : "No"}</td>
-                                    <td>{round.handScore ?? 0}</td>
-                                </tr>
-                            )) : (
+                            {sortedRounds.length ? sortedRounds.map((round, index) => {
+                                const roundNumber = numberOrZero(round.roundNumber);
+                                const previousRoundNumber = index > 0 ? numberOrZero(sortedRounds[index - 1].roundNumber) : undefined;
+                                const startsNewRound = index === 0 || roundNumber !== previousRoundNumber;
+                                const rowKey = round.id ?? `${round.gameTeam?.id}-${round.roundNumber}`;
+
+                                return (
+                                    <Fragment key={rowKey}>
+                                        {startsNewRound && (
+                                            <tr className="round-history-group-row">
+                                                <th colSpan={9}>Round {roundNumber}</th>
+                                            </tr>
+                                        )}
+                                        <tr className={round.isWinner ? "round-history-row is-winner" : "round-history-row"}>
+                                            <td>{round.roundNumber}</td>
+                                            <td>{round.gameTeam?.team?.name}</td>
+                                            <td>{round.cardPoints ?? 0}</td>
+                                            <td>{round.cleanBooks ?? 0}</td>
+                                            <td>{round.dirtyBooks ?? 0}</td>
+                                            <td>{round.redThrees ?? 0}</td>
+                                            <td>{round.pulledCorrect ?? 0}</td>
+                                            <td>{round.isWinner ? "Yes" : "No"}</td>
+                                            <td>{round.handScore ?? 0}</td>
+                                        </tr>
+                                    </Fragment>
+                                );
+                            }) : (
                                 <tr>
                                     <td colSpan={9} className="empty-rounds">
                                         No rounds saved yet.

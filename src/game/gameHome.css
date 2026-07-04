@@ -48,6 +48,25 @@
     margin-top: 12px;
 }
 
+.round-history-table .round-history-group-row th {
+    background: #e9f2ff;
+    border-color: #5f85b7;
+    color: #163b66;
+    font-size: 0.95rem;
+    font-weight: 800;
+    padding: 0.7rem 0.85rem;
+    text-align: left;
+}
+
+.round-history-table .round-history-row td {
+    background: #ffffff;
+}
+
+.round-history-table .round-history-row.is-winner td {
+    background: #f2f8ec;
+    font-weight: 600;
+}
+
 #gameTable.table td,
 #gameTable.table th,
 .round-entry-table td,
@@ -305,9 +324,14 @@
     }
 
     .round-history-card-header span {
-        color: #505a63;
+        background: #e9f2ff;
+        border: 1px solid #b7cff0;
+        border-radius: 999px;
+        color: #163b66;
+        display: inline-flex;
         font-size: 0.85rem;
         font-weight: 700;
+        padding: 3px 9px;
     }
 
     .round-history-grid {
