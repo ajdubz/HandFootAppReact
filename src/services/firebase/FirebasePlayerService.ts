@@ -232,6 +232,10 @@ class FirebasePlayerService {
     }
 
     private static async saveLoginAlias(player: FirebasePlayerDocument): Promise<void> {
+        if (player.isGuest) {
+            return;
+        }
+
         const nicknameAlias = aliasDocId(player.nickName);
         if (!nicknameAlias || !player.email) {
             return;
