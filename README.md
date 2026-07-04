@@ -45,8 +45,11 @@ Before deploying Firebase mode, run through this path against the Firebase emula
 6. Create a game and add both teams.
 7. Save rounds 1 through 4.
 8. Refresh the browser and confirm the game, teams, and rounds reload.
-9. Send and accept a friend request between two local Firebase players.
-10. Confirm `npm.cmd test -- --watchAll=false --cacheDirectory=.jest-cache` and `npm.cmd run build` still pass.
+9. Start a two-player-per-team game and confirm typed-in guest teammates are saved.
+10. Confirm `Delete My Previous Games` is hidden in Firebase mode.
+11. Confirm `npm.cmd test -- --watchAll=false --cacheDirectory=.jest-cache`, `npm.cmd run build`, and dependency vulnerability checks pass.
+
+Friend-request smoke testing is deferred until the Friends screen supports friend search and clearer add/manage workflows.
 
 ### `npm start`
 

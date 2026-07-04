@@ -32,7 +32,7 @@ npm.cmd run start:firebase:emulators
 
 Open `http://localhost:3000`.
 
-## Manual Path
+## Core Manual Path
 
 1. Register a new player with email/password.
 2. Log out and log back in with that player.
@@ -42,18 +42,28 @@ Open `http://localhost:3000`.
 6. Create a game and add both teams.
 7. Save rounds 1 through 4.
 8. Refresh the browser and confirm the game, teams, and rounds reload.
-9. Open the player list and send a friend request.
-10. Open the recipient player's friends page and accept the request.
-11. Confirm both players show as friends.
-12. Confirm the team list does not show `Delete My Previous Games` in Firebase mode.
+9. Start a two-player-per-team game and confirm typed-in guest teammates are saved.
+10. Confirm the team list does not show `Delete My Previous Games` in Firebase mode.
+
+## Deferred Friend Path
+
+Friend-request smoke testing is intentionally deferred until the Friends screen supports friend search and clearer add/manage workflows.
+
+Before enabling Firebase friend requests publicly:
+
+1. Search for a player who has not already played on a team with the current player.
+2. Send a friend request.
+3. Open the recipient player's friends page and accept the request.
+4. Confirm both players show as friends.
 
 ## Validation Gate
 
-After the manual path:
+After the core manual path:
 
 ```powershell
 npm.cmd test -- --watchAll=false --cacheDirectory=.jest-cache
 npm.cmd run build
+npm.cmd audit --audit-level=low
 ```
 
-Do not deploy Firebase mode until the manual path and both commands pass.
+Do not deploy Firebase mode publicly until the core manual path, automated validation, Firestore rules review, and dependency vulnerability cleanup pass.
