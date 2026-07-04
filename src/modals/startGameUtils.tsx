@@ -9,6 +9,7 @@ import TeamService from "../services/TeamService";
 import GameService from "../services/GameService";
 import GameWithRulesDTO from "../models/DTOs/Game/GameWithRulesDTO";
 import Rules from "../models/Rules";
+import { isApiErrorCode } from "../services/apiClient";
 
 /**
  * Interface representing a custom row in the form.
@@ -69,7 +70,8 @@ const resolveExistingPlayer = async (playerName: string): Promise<PlayerGetBasic
 };
 
 const isDuplicateAccountError = (error: unknown) => {
-    return error instanceof Error && error.message.toLowerCase().includes("already exists");
+    return isApiErrorCode(error, "duplicate_player") ||
+        (error instanceof Error && error.message.toLowerCase().includes("already exists"));
 };
 
 const buildGuestEmail = (playerName: string) => {

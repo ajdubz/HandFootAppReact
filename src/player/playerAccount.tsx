@@ -6,6 +6,7 @@ import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import ConfirmChanges from "../modals/confirmChanges";
 import Button from "react-bootstrap/Button";
 import { Row, Col } from "react-bootstrap";
+import { isApiErrorCode } from "../services/apiClient";
 
 interface RouteParams {
     [id: string]: string | undefined;
@@ -14,6 +15,11 @@ interface RouteParams {
 interface PlayerAccountProps {
     isRegistration?: boolean;
 }
+
+const isDuplicateAccountError = (error: unknown) => (
+    isApiErrorCode(error, "duplicate_player") ||
+    (error instanceof Error && error.message.toLowerCase().includes("already exists"))
+);
 
 function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.ReactElement {
     const { id = "" } = useParams<RouteParams>();
@@ -62,8 +68,8 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
 
         await PlayerService.createPlayer(playerData)
             .then(() => { navigate(isRegistrationPage ? "/login" : "/playersList"); })
-            .catch((error: Error) => {
-                if (error.message.toLowerCase().includes("already exists")) {
+            .catch((error: unknown) => {
+                if (isDuplicateAccountError(error)) {
                     setErrors({ accountExists: "Account already exists. Please use a different username or email." });
                     return;
                 }
@@ -87,8 +93,8 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
 
         await PlayerService.updatePlayerAccount(Number(id), playerData)
             .then(() => { navigate(`/player/${id}`); })
-            .catch((error: Error) => {
-                if (error.message.toLowerCase().includes("already exists")) {
+            .catch((error: unknown) => {
+                if (isDuplicateAccountError(error)) {
                     setErrors({ accountExists: "Account already exists. Please use a different username or email." });
                     return;
                 }

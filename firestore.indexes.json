@@ -46,6 +46,74 @@
   //     ]
   //   },
   // ]
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "teams",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUid", "mode": "ASCENDING" },
+        { "fieldPath": "id", "mode": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUid", "mode": "ASCENDING" },
+        { "fieldPath": "id", "mode": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "gameTeams",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUid", "mode": "ASCENDING" },
+        { "fieldPath": "id", "mode": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "gameTeams",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUid", "mode": "ASCENDING" },
+        { "fieldPath": "gameId", "mode": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "gameTeams",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUid", "mode": "ASCENDING" },
+        { "fieldPath": "gameId", "mode": "ASCENDING" },
+        { "fieldPath": "teamId", "mode": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "rounds",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUid", "mode": "ASCENDING" },
+        { "fieldPath": "gameId", "mode": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "rounds",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUid", "mode": "ASCENDING" },
+        { "fieldPath": "gameTeamId", "mode": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "rounds",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUid", "mode": "ASCENDING" },
+        { "fieldPath": "gameId", "mode": "ASCENDING" },
+        { "fieldPath": "gameTeamId", "mode": "ASCENDING" },
+        { "fieldPath": "roundNumber", "mode": "ASCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

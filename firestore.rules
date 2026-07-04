@@ -2,8 +2,59 @@ rules_version='2'
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(data) {
+      return isSignedIn() && data.ownerUid == request.auth.uid;
+    }
+
+    function isMember(data) {
+      return isSignedIn() &&
+        data.memberUids is list &&
+        data.memberUids.hasAny([request.auth.uid]);
+    }
+
+    function canAccessOwnedScorekeepingDoc(data) {
+      return isOwner(data) || isMember(data);
+    }
+
+    match /players/{playerId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(request.resource.data);
+      allow update, delete: if isOwner(resource.data);
+    }
+
+    match /teams/{teamId} {
+      allow read: if canAccessOwnedScorekeepingDoc(resource.data);
+      allow create: if isOwner(request.resource.data);
+      allow update, delete: if canAccessOwnedScorekeepingDoc(resource.data);
+    }
+
+    match /games/{gameId} {
+      allow read: if canAccessOwnedScorekeepingDoc(resource.data);
+      allow create: if isOwner(request.resource.data);
+      allow update, delete: if canAccessOwnedScorekeepingDoc(resource.data);
+    }
+
+    match /gameTeams/{gameTeamId} {
+      allow read: if canAccessOwnedScorekeepingDoc(resource.data);
+      allow create: if isOwner(request.resource.data);
+      allow update, delete: if canAccessOwnedScorekeepingDoc(resource.data);
+    }
+
+    match /rounds/{roundId} {
+      allow read: if canAccessOwnedScorekeepingDoc(resource.data);
+      allow create: if isOwner(request.resource.data);
+      allow update, delete: if canAccessOwnedScorekeepingDoc(resource.data);
+    }
+
+    match /metadata/{document} {
+      allow read, write: if isSignedIn() && document.matches('counter_.*');
+    }
+
     match /{document=**} {
-      // Keep Firestore closed until app-specific ownership rules are added.
       allow read, write: if false;
     }
   }

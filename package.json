@@ -24,6 +24,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "start:mock": "set \"REACT_APP_DATA_BACKEND=mock\" && set \"REACT_APP_API_URL=mock\" && react-scripts start",
+    "start:api": "set \"REACT_APP_DATA_BACKEND=api\" && set \"REACT_APP_API_URL=http://127.0.0.1:8000\" && react-scripts start",
+    "start:firebase": "set \"REACT_APP_DATA_BACKEND=firebase\" && react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

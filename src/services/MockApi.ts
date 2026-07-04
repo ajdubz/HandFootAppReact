@@ -13,7 +13,7 @@ import TeamCreateDTO from "../models/DTOs/Team/TeamCreateDTO";
 import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
 import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
 import { normalizeRules } from "../rules/rulesDefaults";
-import { isGuestSession } from "../utils/auth";
+import { isMockApiConfigured } from "./apiConfig";
 
 type MockState = {
     stateVersion?: number;
@@ -31,7 +31,7 @@ const MOCK_STATE_VERSION = 2;
 
 class MockApi {
     public static isEnabled() {
-        return process.env.REACT_APP_API_URL === "mock" || isGuestSession();
+        return isMockApiConfigured();
     }
 
     public static reset() {

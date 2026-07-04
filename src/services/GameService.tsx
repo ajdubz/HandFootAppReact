@@ -2,8 +2,10 @@ import GameAddDTO from "../models/DTOs/Game/GameAddDTO";
 import GameRoundDTO from "../models/DTOs/Game/GameRoundDTO";
 import GameTeamDTO from "../models/DTOs/Game/GameTeamDTO";
 import GameWithRulesDTO from "../models/DTOs/Game/GameWithRulesDTO";
+import { apiRequest } from "./apiClient";
+import { isFirebaseBackend } from "./apiConfig";
+import FirebaseGameService from "./firebase/FirebaseGameService";
 import MockApi from "./MockApi";
-
 
 class GameService {
     public static async getGames(): Promise<GameWithRulesDTO[] | undefined> {
@@ -11,29 +13,15 @@ class GameService {
             return MockApi.getGames();
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseGameService.getGames();
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Game`, {
+            return await apiRequest<GameWithRulesDTO[]>("/Game", {
                 method: "GET",
-                headers: {
-                    "content-type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in getGames",
             });
-
-            if (!url.ok) {
-                throw new Error("Error in getGames");
-            }
-
-            const text = await url.text();
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
-
         } catch (error) {
             console.error("Error in getGames FE:", error);
             throw error;
@@ -45,29 +33,15 @@ class GameService {
             return MockApi.getGameById(id);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseGameService.getGameById(id);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Game/${id}`, {
+            return await apiRequest<GameWithRulesDTO>(`/Game/${id}`, {
                 method: "GET",
-                headers: {
-                    "content-type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in getGameById",
             });
-
-            if (!url.ok) {
-                throw new Error("Error in getGameById");
-            }
-
-            const text = await url.text();
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
-
         } catch (error) {
             console.error("Error in getGameById FE:", error);
             throw error;
@@ -79,30 +53,16 @@ class GameService {
             return MockApi.addGame(game);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseGameService.addGame(game);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Game`, {
+            return await apiRequest<GameWithRulesDTO>("/Game", {
                 method: "POST",
-                headers: {
-                    "content-type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
-                body: JSON.stringify(game),
+                body: game,
+                fallbackErrorMessage: "Error in addGame",
             });
-
-            if (!url.ok) {
-                throw new Error("Error in addGame");
-            }
-
-            const text = await url.text();
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
-
         } catch (error) {
             console.error("Error in addGame FE:", error);
             throw error;
@@ -114,29 +74,15 @@ class GameService {
             return MockApi.addTeamToGame(gameId, teamId);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseGameService.addTeamToGame(gameId, teamId);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Game/${gameId}/team/${teamId}`, {
+            await apiRequest<void>(`/Game/${gameId}/team/${teamId}`, {
                 method: "POST",
-                headers: {
-                    "content-type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in addTeamToGame",
             });
-
-            if (!url.ok) {
-                throw new Error("Error in addTeamToGame");
-            }
-
-            // const text = await url.text();
-            // // Parse the response body
-            // const data = JSON.parse(text);
-            // return data;
-
         } catch (error) {
             console.error("Error in addTeamToGame FE:", error);
             throw error;
@@ -148,29 +94,15 @@ class GameService {
             return MockApi.getTeamsByGameId(gameId);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseGameService.getTeamsByGameId(gameId);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Game/${gameId}/team`, {
+            return await apiRequest<GameTeamDTO[]>(`/Game/${gameId}/team`, {
                 method: "GET",
-                headers: {
-                    "content-type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in getTeamsByGameId",
             });
-
-            if (!url.ok) {
-                throw new Error("Error in getTeamsByGameId");
-            }
-
-            const text = await url.text();
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
-
         } catch (error) {
             console.error("Error in getTeamsByGameId FE:", error);
             throw error;
@@ -182,29 +114,15 @@ class GameService {
             return MockApi.getRoundsByGameId(gameId);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseGameService.getRoundsByGameId(gameId);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Game/${gameId}/round`, {
+            return await apiRequest<GameRoundDTO[]>(`/Game/${gameId}/round`, {
                 method: "GET",
-                headers: {
-                    "content-type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in getRoundsByGameId",
             });
-
-            if (!url.ok) {
-                throw new Error("Error in getRoundsByGameId");
-            }
-
-            const text = await url.text();
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
-
         } catch (error) {
             console.error("Error in getRoundsByGameId FE:", error);
             throw error;
@@ -216,35 +134,21 @@ class GameService {
             return MockApi.saveGameRound(gameId, round);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseGameService.saveGameRound(gameId, round);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Game/${gameId}/round`, {
+            return await apiRequest<GameRoundDTO>(`/Game/${gameId}/round`, {
                 method: "POST",
-                headers: {
-                    "content-type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
-                body: JSON.stringify(round),
+                body: round,
+                fallbackErrorMessage: "Error in saveGameRound",
             });
-
-            if (!url.ok) {
-                throw new Error("Error in saveGameRound");
-            }
-
-            const text = await url.text();
-            return text ? JSON.parse(text) : round;
-
         } catch (error) {
             console.error("Error in saveGameRound FE:", error);
             throw error;
         }
     }
-
-
 }
 
 export default GameService;

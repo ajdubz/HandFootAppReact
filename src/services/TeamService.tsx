@@ -4,6 +4,9 @@ import PlayerTeamCreateDTO from "../models/DTOs/Team/PlayerTeamCreateDTO";
 import TeamCreateDTO from "../models/DTOs/Team/TeamCreateDTO";
 import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
 import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
+import { apiRequest } from "./apiClient";
+import { isFirebaseBackend } from "./apiConfig";
+import FirebaseTeamService from "./firebase/FirebaseTeamService";
 import MockApi from "./MockApi";
 
 class TeamService {
@@ -13,27 +16,15 @@ class TeamService {
             return MockApi.getTeamsWithPlayerNames();
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseTeamService.getTeamsWithPlayerNames();
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Team/Names`, {
+            return await apiRequest<TeamGetWithPlayerNamesDTO[]>("/Team/Names", {
                 method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in getTeams",
             });
-            if (!url.ok) {
-                throw new Error("Error in getTeams");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
         } catch (error) {
             console.error("Error in getTeams FE:", error);
             throw error;
@@ -45,61 +36,36 @@ class TeamService {
             return MockApi.getTeamById(id);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseTeamService.getTeamById(id);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Team/${id}`, {
+            return await apiRequest<TeamGetBasicDTO>(`/Team/${id}`, {
                 method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in getTeamById",
             });
-            if (!url.ok) {
-                throw new Error("Error in getTeamById");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
         } catch (error) {
             console.error("Error in getTeamById FE:", error);
             throw error;
         }
     }
 
-    public static async createTeam(Team: TeamCreateDTO): Promise<TeamCreateDTO> {
+    public static async createTeam(team: TeamCreateDTO): Promise<TeamCreateDTO> {
         if (MockApi.isEnabled()) {
-            return MockApi.createTeam(Team);
+            return MockApi.createTeam(team);
+        }
+
+        if (isFirebaseBackend()) {
+            return FirebaseTeamService.createTeam(team);
         }
 
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Team`, {
+            return await apiRequest<TeamCreateDTO>("/Team", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
-                body: JSON.stringify(Team),
+                body: team,
+                fallbackErrorMessage: "Error in createTeam",
             });
-            if (!url.ok) {
-                throw new Error("Error in createTeam");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
-
         } catch (error) {
             console.error("Error in createTeam FE:", error);
             throw error;
@@ -111,27 +77,15 @@ class TeamService {
             return MockApi.searchTeams(searchText);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseTeamService.searchTeams(searchText);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Team/search/${searchText}`, {
+            return await apiRequest<TeamGetBasicDTO[]>(`/Team/search/${searchText}`, {
                 method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in searchTeams",
             });
-            if (!url.ok) {
-                throw new Error("Error in searchTeams");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
         } catch (error) {
             console.error("Error in searchTeams FE:", error);
             throw error;
@@ -143,27 +97,15 @@ class TeamService {
             return MockApi.searchPlayerTeams(inId, searchText);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseTeamService.searchPlayerTeams(inId, searchText);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Team/search/${inId}-${searchText}`, {
+            return await apiRequest<TeamGetWithPlayerNamesDTO[]>(`/Team/search/${inId}-${searchText}`, {
                 method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in searchPlayerTeams",
             });
-            if (!url.ok) {
-                throw new Error("Error in searchPlayerTeams");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
         } catch (error) {
             console.error("Error in searchPlayerTeams FE:", error);
             throw error;
@@ -175,62 +117,37 @@ class TeamService {
             return MockApi.getTeamsByPlayers(getTeamsByPlayers);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseTeamService.getTeamsByPlayers(getTeamsByPlayers);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Team/Players`, {
+            return await apiRequest<TeamGetWithPlayerNamesDTO[]>("/Team/Players", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
-                body: JSON.stringify(getTeamsByPlayers),
+                body: getTeamsByPlayers,
+                fallbackErrorMessage: "Error in getTeamsByPlayers",
             });
-            if (!url.ok) {
-                throw new Error("Error in getTeamsByPlayers");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
         } catch (error) {
             console.error("Error in getTeamsByPlayers FE:", error);
             throw error;
         }
     }
 
-    public static async addPlayersToNewTeam(playerTeamCreate: PlayerTeamCreateDTO) {
+    public static async addPlayersToNewTeam(playerTeamCreate: PlayerTeamCreateDTO): Promise<TeamGetWithPlayerNamesDTO | undefined> {
         if (MockApi.isEnabled()) {
             return MockApi.addPlayersToNewTeam(playerTeamCreate);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseTeamService.addPlayersToNewTeam(playerTeamCreate);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Team/Player`, {
+            return await apiRequest<TeamGetWithPlayerNamesDTO>("/Team/Player", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
-                body: JSON.stringify(playerTeamCreate),
+                body: playerTeamCreate,
+                fallbackErrorMessage: "Error in addPlayersToTeam",
             });
-            if (!url.ok) {
-                throw new Error("Error in addPlayersToTeam");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
-
         } catch (error) {
             console.error("Error in addPlayerToTeam FE:", error);
             throw error;
@@ -242,29 +159,15 @@ class TeamService {
             return MockApi.getRoundsByTeamId(gameTeamId);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseTeamService.getRoundsByTeamId(gameTeamId);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Team/${gameTeamId}/round`, {
+            return await apiRequest<GameRoundDTO[]>(`/Team/${gameTeamId}/round`, {
                 method: "GET",
-                headers: {
-                    "content-type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in getRoundsByTeamId",
             });
-
-            if (!url.ok) {
-                throw new Error("Error in getRoundsByTeamId");
-            }
-
-            const text = await url.text();
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
-
         } catch (error) {
             console.error("Error in getRoundsByTeamId FE:", error);
             throw error;
@@ -276,29 +179,20 @@ class TeamService {
             return MockApi.deletePreviousGamesForPlayerTeam(playerId, teamId);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseTeamService.deletePreviousGamesForPlayerTeam(playerId, teamId);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Team/${teamId}/Player/${playerId}/games`, {
+            await apiRequest<void>(`/Team/${teamId}/Player/${playerId}/games`, {
                 method: "DELETE",
-                headers: {
-                    "content-type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in deletePreviousGamesForPlayerTeam",
             });
-
-            if (!url.ok) {
-                throw new Error("Error in deletePreviousGamesForPlayerTeam");
-            }
         } catch (error) {
             console.error("Error in deletePreviousGamesForPlayerTeam FE:", error);
             throw error;
         }
     }
-
 
 }
 

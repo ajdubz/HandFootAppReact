@@ -1,6 +1,6 @@
 import { FirebaseApp, FirebaseOptions, getApp, getApps, initializeApp } from "firebase/app";
-import { Auth, getAuth } from "firebase/auth";
-import { Firestore, getFirestore } from "firebase/firestore";
+import { Auth, connectAuthEmulator, getAuth } from "firebase/auth";
+import { Firestore, connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 
 const firebaseConfig: FirebaseOptions = {
     apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -30,3 +30,22 @@ export const firebaseApp: FirebaseApp | null = hasFirebaseConfig
 export const firebaseAuth: Auth | null = firebaseApp ? getAuth(firebaseApp) : null;
 export const firestoreDb: Firestore | null = firebaseApp ? getFirestore(firebaseApp) : null;
 export const isFirebaseConfigured = Boolean(firebaseApp);
+
+const useEmulators = (process.env.REACT_APP_FIREBASE_USE_EMULATORS ?? "").toLowerCase() === "true";
+let emulatorsConnected = false;
+
+export const connectFirebaseEmulators = (): void => {
+    if (!useEmulators || emulatorsConnected || !firebaseAuth || !firestoreDb) {
+        return;
+    }
+
+    const authUrl = process.env.REACT_APP_FIREBASE_AUTH_EMULATOR_URL ?? "http://127.0.0.1:9099";
+    const firestoreHost = process.env.REACT_APP_FIREBASE_FIRESTORE_EMULATOR_HOST ?? "127.0.0.1";
+    const firestorePort = Number(process.env.REACT_APP_FIREBASE_FIRESTORE_EMULATOR_PORT ?? "8080");
+
+    connectAuthEmulator(firebaseAuth, authUrl, { disableWarnings: true });
+    connectFirestoreEmulator(firestoreDb, firestoreHost, firestorePort);
+    emulatorsConnected = true;
+};
+
+connectFirebaseEmulators();

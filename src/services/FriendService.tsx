@@ -1,7 +1,9 @@
 import PlayerFriendBasicDTO from "../models/DTOs/Player/PlayerFriendBasicDTO";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
+import { apiRequest } from "./apiClient";
+import { isFirebaseBackend } from "./apiConfig";
+import FirebaseFriendService from "./firebase/FirebaseFriendService";
 import MockApi from "./MockApi";
-
 
 class FriendService {
     public static async getFriends(id: number): Promise<PlayerGetBasicDTO[] | undefined> {
@@ -9,27 +11,15 @@ class FriendService {
             return MockApi.getFriends(id);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseFriendService.getFriends(id);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/friends`, {
+            return await apiRequest<PlayerGetBasicDTO[]>(`/Player/${id}/friends`, {
                 method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in getFriends FE",
             });
-            if (!url.ok) {
-                throw new Error("Error in getFriends FE");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
         } catch (error) {
             console.error("Error in getFriends FE:", error);
             throw error;
@@ -41,27 +31,15 @@ class FriendService {
             return MockApi.getFriendRequests(id);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseFriendService.getFriendRequests(id);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/friendRequests`, {
+            return await apiRequest<PlayerGetBasicDTO[]>(`/Player/${id}/friendRequests`, {
                 method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in getFriendRequests FE",
             });
-            if (!url.ok) {
-                throw new Error("Error in getFriendRequests FE");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
         } catch (error) {
             console.error("Error in getFriendRequests FE:", error);
             throw error;
@@ -73,27 +51,15 @@ class FriendService {
             return MockApi.getSentFriendRequests(id);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseFriendService.getSentFriendRequests(id);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/requestsSent`, {
+            return await apiRequest<PlayerGetBasicDTO[]>(`/Player/${id}/requestsSent`, {
                 method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in getSentFriendRequests FE",
             });
-            if (!url.ok) {
-                throw new Error("Error in getSentFriendRequests FE");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
         } catch (error) {
             console.error("Error in getSentFriendRequests FE:", error);
             throw error;
@@ -105,23 +71,16 @@ class FriendService {
             return MockApi.sendFriendRequest(id, playerFriend);
         }
 
-        try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
+        if (isFirebaseBackend()) {
+            return FirebaseFriendService.sendFriendRequest(id, playerFriend);
+        }
 
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/requestAdd`, {
+        try {
+            await apiRequest<void>(`/Player/${id}/requestAdd`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
-                body: JSON.stringify(playerFriend),
+                body: playerFriend,
+                fallbackErrorMessage: "Error in sendFriendRequest FE",
             });
-            if (!url.ok) {
-                throw new Error("Error in sendFriendRequest FE");
-            }
         } catch (error) {
             console.error("Error in sendFriendRequest FE:", error);
             throw error;
@@ -133,23 +92,16 @@ class FriendService {
             return MockApi.acceptFriendRequest(id, playerFriend);
         }
 
-        try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
+        if (isFirebaseBackend()) {
+            return FirebaseFriendService.acceptFriendRequest(id, playerFriend);
+        }
 
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/requestAccept`, {
+        try {
+            await apiRequest<void>(`/Player/${id}/requestAccept`, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
-                body: JSON.stringify(playerFriend),
+                body: playerFriend,
+                fallbackErrorMessage: "Error in acceptFriendRequest FE",
             });
-            if (!url.ok) {
-                throw new Error("Error in acceptFriendRequest FE");
-            }
         } catch (error) {
             console.error("Error in acceptFriendRequest FE:", error);
             throw error;
@@ -161,22 +113,15 @@ class FriendService {
             return MockApi.removeFriend(id, playerFriend);
         }
 
-        try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
+        if (isFirebaseBackend()) {
+            return FirebaseFriendService.removeFriend(id, playerFriend);
+        }
 
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/friends/${playerFriend.friendId}`, {
+        try {
+            await apiRequest<void>(`/Player/${id}/friends/${playerFriend.friendId}`, {
                 method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in removeFriend FE",
             });
-            if (!url.ok) {
-                throw new Error("Error in removeFriend FE");
-            }
         } catch (error) {
             console.error("Error in removeFriend FE:", error);
             throw error;
@@ -188,27 +133,15 @@ class FriendService {
             return MockApi.searchNewFriends(playerId, search);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebaseFriendService.searchNewFriends(playerId, search);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${playerId}/newFriendSearch/${search}`, {
+            return await apiRequest<PlayerGetBasicDTO[]>(`/Player/${playerId}/newFriendSearch/${search}`, {
                 method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in searchNewFriends",
             });
-            if (!url.ok) {
-                throw new Error("Error in searchNewFriends");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
         } catch (error) {
             console.error("Error in searchNewFriends FE:", error);
             throw error;
@@ -220,27 +153,15 @@ class FriendService {
             return MockApi.searchCurrentFriends(playerId, search);
         }
 
-        try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-            
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${playerId}/currFriendSearch/${search}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
-            });
-            if (!url.ok) {
-                throw new Error("Error in searchCurrentFriends");
-            }
-            const text = await url.text();
+        if (isFirebaseBackend()) {
+            return FirebaseFriendService.searchCurrentFriends(playerId, search);
+        }
 
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
+        try {
+            return await apiRequest<PlayerGetBasicDTO[]>(`/Player/${playerId}/currFriendSearch/${search}`, {
+                method: "GET",
+                fallbackErrorMessage: "Error in searchCurrentFriends",
+            });
         } catch (error) {
             console.error("Error in searchCurrentFriends FE:", error);
             throw error;

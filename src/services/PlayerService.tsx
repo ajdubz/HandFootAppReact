@@ -2,7 +2,10 @@ import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
 import PlayerLoginDTO from "../models/DTOs/Player/PlayerLoginDTO";
-import { setAuthState, setGuestAuthState } from "../utils/auth";
+import { getAuthToken, hasAuthToken, setAuthState, setGuestAuthState } from "../utils/auth";
+import { apiRequest } from "./apiClient";
+import { isFirebaseBackend } from "./apiConfig";
+import FirebasePlayerService from "./firebase/FirebasePlayerService";
 import MockApi from "./MockApi";
 
 class PlayerService {
@@ -12,29 +15,21 @@ class PlayerService {
             return MockApi.login(playerAccountDTO);
         }
 
+        if (isFirebaseBackend()) {
+            const data = await FirebasePlayerService.LoginPlayer(playerAccountDTO);
+            setAuthState(data?.id, data?.token ?? "");
+            return data;
+        }
+
         try {
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/auth/login`, {
+            const data = await apiRequest<PlayerLoginDTO>("/auth/login", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(playerAccountDTO),
+                authenticated: false,
+                body: playerAccountDTO,
+                fallbackErrorMessage: "Error in LoginPlayer FE",
             });
 
-            if (!url.ok) {
-                throw new Error("Error in LoginPlayer FE");
-            } 
-
-
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-
-            //data should be a PlayerLoginDTO
             setAuthState(data?.id, data?.token ?? "");
-
-
             return data;
         } catch (error) {
             console.error("Error in LoginPlayer FE:", error);
@@ -43,9 +38,31 @@ class PlayerService {
     }
 
     public static async startGuestSession(): Promise<PlayerLoginDTO> {
-        const login = await MockApi.startGuestSession();
-        setGuestAuthState(login.id, login.token ?? "");
-        return login;
+        if (MockApi.isEnabled()) {
+            const login = await MockApi.startGuestSession();
+            setGuestAuthState(login.id, login.token ?? "");
+            return login;
+        }
+
+        if (isFirebaseBackend()) {
+            const login = await FirebasePlayerService.startGuestSession();
+            setGuestAuthState(login.id, login.token ?? "");
+            return login;
+        }
+
+        try {
+            const login = await apiRequest<PlayerLoginDTO>("/auth/guest", {
+                method: "POST",
+                authenticated: false,
+                fallbackErrorMessage: "Error in startGuestSession FE",
+            });
+
+            setAuthState(login.id, login.token ?? "");
+            return login;
+        } catch (error) {
+            console.error("Error in startGuestSession FE:", error);
+            throw error;
+        }
     }
 
     public static async getPlayers(): Promise<PlayerGetBasicDTO[] | undefined> {
@@ -53,27 +70,15 @@ class PlayerService {
             return MockApi.getPlayers();
         }
 
+        if (isFirebaseBackend()) {
+            return FirebasePlayerService.getPlayers();
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player`, {
+            return await apiRequest<PlayerGetBasicDTO[]>("/Player", {
                 method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in getPlayers",
             });
-            if (!url.ok) {
-                throw new Error("Error in updatePlayerAccount");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
         } catch (error) {
             console.error("Error in getPlayers FE:", error);
             throw error;
@@ -85,27 +90,15 @@ class PlayerService {
             return MockApi.getPlayerAccountById(id);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebasePlayerService.getPlayerAccountById(id);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}/account`, {
+            return await apiRequest<PlayerAccountDTO>(`/Player/${id}/account`, {
                 method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                }
+                fallbackErrorMessage: "Error in getPlayerAccountById",
             });
-            if (!url.ok) {
-                throw new Error("Error in getPlayerAccountById");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
         } catch (error) {
             console.error("Error in getPlayerAccountById FE:", error);
             throw error;
@@ -117,28 +110,20 @@ class PlayerService {
             return MockApi.getPlayerFullDetailsById(id);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebasePlayerService.getPlayerFullDetailsById(id);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                //    throw new Error("No token found");
+            if (!getAuthToken()) {
                 window.location.href = "/login";
+                throw new Error("No token found");
             }
 
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${id}`, {
+            return await apiRequest<PlayerFullDetailsDTO>(`/Player/${id}`, {
                 method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in getPlayerFullDetailsById",
             });
-            if (!url.ok) {
-                throw new Error("Error in getPlayerFullDetailsById");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
         } catch (error) {
             console.error("Error in getPlayerFullDetailsById FE:", error);
             throw error;
@@ -150,29 +135,17 @@ class PlayerService {
             return MockApi.createPlayer(player);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebasePlayerService.createPlayer(player);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/account`, {
+            return await apiRequest<PlayerAccountDTO>("/Player/account", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
-                body: JSON.stringify(player),
+                authenticated: false,
+                body: player,
+                fallbackErrorMessage: "Error in createPlayer",
             });
-            if (!url.ok) {
-                throw new Error("Error in createPlayer");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
-
         } catch (error) {
             console.log(player);
             console.error("Error in createPlayer FE:", error);
@@ -185,32 +158,19 @@ class PlayerService {
             return MockApi.createGuest(player);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebasePlayerService.createGuest(player);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/guest`, {
+            return await apiRequest<PlayerAccountDTO>("/Player/guest", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
-                body: JSON.stringify(player),
+                body: player,
+                fallbackErrorMessage: "Error in createGuest",
             });
-            if (!url.ok) {
-                throw new Error("Error in createPlayer");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
-            
         } catch (error) {
             console.log(player);
-            console.error("Error in createPlayer FE:", error);
+            console.error("Error in createGuest FE:", error);
             throw error;
         }
     }
@@ -220,23 +180,16 @@ class PlayerService {
             return MockApi.updatePlayerAccount(playerId, player);
         }
 
-        try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
+        if (isFirebaseBackend()) {
+            return FirebasePlayerService.updatePlayerAccount(playerId, player);
+        }
 
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${playerId}/account`, {
+        try {
+            await apiRequest<void>(`/Player/${playerId}/account`, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
-                body: JSON.stringify(player),
+                body: player,
+                fallbackErrorMessage: "Error in updatePlayerAccount",
             });
-            if (!url.ok) {
-                throw new Error("Error in updatePlayerAccount");
-            }
         } catch (error) {
             console.error("Error in updatePlayer FE:", error);
             throw error;
@@ -248,22 +201,15 @@ class PlayerService {
             return MockApi.deletePlayer(playerId);
         }
 
-        try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
+        if (isFirebaseBackend()) {
+            return FirebasePlayerService.deletePlayer(playerId);
+        }
 
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/${playerId}/account`, {
+        try {
+            await apiRequest<void>(`/Player/${playerId}/account`, {
                 method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in deletePlayer",
             });
-            if (!url.ok) {
-                throw new Error("Error in deletePlayer");
-            }
         } catch (error) {
             console.error("Error in deletePlayer FE:", error);
             throw error;
@@ -275,27 +221,15 @@ class PlayerService {
             return MockApi.searchPlayers(search);
         }
 
+        if (isFirebaseBackend()) {
+            return FirebasePlayerService.searchPlayers(search);
+        }
+
         try {
-            const myToken = localStorage.getItem("token");
-            if (!myToken) {
-                throw new Error("No token found");
-            }
-
-            const url = await fetch(`${process.env.REACT_APP_API_URL}/Player/search/${search}`, {
+            return await apiRequest<PlayerGetBasicDTO[]>(`/Player/search/${search}`, {
                 method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${myToken}`,
-                },
+                fallbackErrorMessage: "Error in searchPlayers",
             });
-            if (!url.ok) {
-                throw new Error("Error in searchPlayers");
-            }
-            const text = await url.text();
-
-            // Parse the response body
-            const data = JSON.parse(text);
-            return data;
         } catch (error) {
             console.error("Error in searchPlayers FE:", error);
             throw error;
@@ -303,7 +237,7 @@ class PlayerService {
     }
 
     public static getIsAuthenticated() {
-        return localStorage.getItem("token") ? true : false;
+        return hasAuthToken();
     }
 
 }

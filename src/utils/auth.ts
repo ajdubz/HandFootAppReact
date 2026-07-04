@@ -24,6 +24,12 @@ export const setGuestAuthState = (playerId: number | string | undefined, token: 
 
 export const isGuestSession = (): boolean => localStorage.getItem(GUEST_SESSION_KEY) === "true";
 
+export const getAuthToken = (): string => localStorage.getItem(TOKEN_KEY) ?? "";
+
+export const hasAuthToken = (): boolean => !!getAuthToken();
+
+export const getCurrentPlayerId = (): string => localStorage.getItem(CURRENT_PLAYER_ID_KEY) ?? localStorage.getItem(MOCK_PLAYER_ID_KEY) ?? "";
+
 export const clearAuthState = (): void => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(MOCK_PLAYER_ID_KEY);
