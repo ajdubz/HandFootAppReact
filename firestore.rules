@@ -50,6 +50,18 @@ service cloud.firestore {
       allow update, delete: if canAccessOwnedScorekeepingDoc(resource.data);
     }
 
+    match /friendRequests/{friendRequestId} {
+      allow read: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data);
+      allow update, delete: if isOwner(resource.data);
+    }
+
+    match /friendships/{friendshipId} {
+      allow read: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data);
+      allow update, delete: if isOwner(resource.data);
+    }
+
     match /metadata/{document} {
       allow read, write: if isSignedIn() && document.matches('counter_.*');
     }

@@ -13,7 +13,7 @@ import {
 } from "firebase/firestore";
 import { firebaseAuth, firestoreDb, isFirebaseConfigured } from "../../firebase";
 
-export type FirebaseCollectionName = "players" | "teams" | "games" | "gameTeams" | "rounds";
+export type FirebaseCollectionName = "players" | "teams" | "games" | "gameTeams" | "rounds" | "friendships" | "friendRequests";
 
 export const getRequiredFirebase = (): { db: Firestore } => {
     if (!isFirebaseConfigured || !firestoreDb) {

@@ -10,6 +10,44 @@ See [ROADMAP.md](./ROADMAP.md) for the current direction: keep this as a React w
 
 In the project directory, you can run:
 
+### `npm run start:mock`
+
+Runs the app against the local in-browser mock data backend.
+
+### `npm run start:api`
+
+Runs the app against the sibling FastAPI backend at `http://127.0.0.1:8000`.
+
+### `npm run start:firebase`
+
+Runs the app in Firebase data mode. Create a local `.env.local` from `.env.example`, set `REACT_APP_DATA_BACKEND=firebase`, and fill in the `REACT_APP_FIREBASE_*` values from the Firebase web app config.
+
+For local Firebase emulator testing, set:
+
+```text
+REACT_APP_FIREBASE_USE_EMULATORS=true
+REACT_APP_FIREBASE_AUTH_EMULATOR_URL=http://127.0.0.1:9099
+REACT_APP_FIREBASE_FIRESTORE_EMULATOR_HOST=127.0.0.1
+REACT_APP_FIREBASE_FIRESTORE_EMULATOR_PORT=8080
+```
+
+Firebase mode still uses the same React service layer as mock and API mode. React components should not call Firebase directly.
+
+### Firebase smoke test checklist
+
+Before deploying Firebase mode, run through this path against the Firebase emulators:
+
+1. Register a player with email/password.
+2. Log out and log back in.
+3. Start a guest session.
+4. Create temporary guest players from the start-game flow.
+5. Create two teams.
+6. Create a game and add both teams.
+7. Save rounds 1 through 4.
+8. Refresh the browser and confirm the game, teams, and rounds reload.
+9. Send and accept a friend request between two local Firebase players.
+10. Confirm `npm.cmd test -- --watchAll=false --cacheDirectory=.jest-cache` and `npm.cmd run build` still pass.
+
 ### `npm start`
 
 Runs the app in the development mode.\

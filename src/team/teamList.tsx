@@ -4,11 +4,13 @@ import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
 import { useNavigate } from "react-router-dom";
 import GetTeamsByPlayerIdsDTO from "../models/DTOs/Team/GetTeamsByPlayerIdsDTO";
 import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
+import { isFirebaseBackend } from "../services/apiConfig";
 
 const TeamListTable = () => {
     const [teams, setTeams] = useState<TeamGetWithPlayerNamesDTO[] | undefined>([]);
     const navigateTo = useNavigate();
     const currentPlayerId = Number(localStorage.getItem("currentPlayerId") ?? localStorage.getItem("mockPlayerId") ?? 0);
+    const canDeletePreviousGames = !isFirebaseBackend();
 
     const fetchData = useCallback(async () => {
         await TeamService.getTeamsWithPlayerNames()
@@ -63,7 +65,7 @@ const TeamListTable = () => {
                             {teams && ListTeams(
                                 teams,
                                 (team) => { navigateTo(`/team/${team?.id}`)},
-                                (team) => { handleDeletePreviousGames(team); }
+                                canDeletePreviousGames ? (team) => { handleDeletePreviousGames(team); } : undefined
                             )}
                         </div>
                     </td>

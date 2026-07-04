@@ -49,3 +49,10 @@ export interface FirebaseGameRoundDocument {
     pulledCorrect?: number;
     isWinner?: boolean;
 }
+
+export interface FirebaseFriendDocument {
+    id: number;
+    ownerUid: string;
+    playerId: number;
+    friendId: number;
+}
