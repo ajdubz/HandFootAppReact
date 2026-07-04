@@ -1,6 +1,7 @@
 import GameTeamDTO from "../../models/DTOs/Game/GameTeamDTO";
 import TeamGetWithPlayerNamesDTO from "../../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
-import { toGameRoundDTO, toGameTeamDTO, toPlayerAccountDTO, toTeamWithPlayersDTO } from "./firebaseMappers";
+import Rules from "../../models/Rules";
+import { toFirestoreRules, toGameRoundDTO, toGameTeamDTO, toPlayerAccountDTO, toTeamWithPlayersDTO } from "./firebaseMappers";
 import { FirebaseGameDocument, FirebaseGameRoundDocument, FirebaseGameTeamDocument, FirebasePlayerDocument, FirebaseTeamDocument } from "./firebaseTypes";
 
 describe("Firebase DTO mappers", () => {
@@ -75,5 +76,20 @@ describe("Firebase DTO mappers", () => {
             handScore: 1445,
             isWinner: true,
         });
+    });
+
+    test("maps rules to a plain object that Firestore can serialize", () => {
+        const rules = new Rules();
+        rules.cleanBookScore = 600;
+
+        const firestoreRules = toFirestoreRules(rules);
+
+        expect(firestoreRules).toMatchObject({
+            cleanBookScore: 600,
+            dirtyBookScore: 0,
+            cleanBooksRequiredToGoOut: 0,
+        });
+        expect(firestoreRules).not.toBeInstanceOf(Rules);
+        expect(Object.getPrototypeOf(firestoreRules)).toBe(Object.prototype);
     });
 });

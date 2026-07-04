@@ -3,8 +3,7 @@ import GameAddDTO from "../../models/DTOs/Game/GameAddDTO";
 import GameRoundDTO from "../../models/DTOs/Game/GameRoundDTO";
 import GameTeamDTO from "../../models/DTOs/Game/GameTeamDTO";
 import GameWithRulesDTO from "../../models/DTOs/Game/GameWithRulesDTO";
-import { normalizeRules } from "../../rules/rulesDefaults";
-import { toGameRoundDTO, toGameTeamDTO, toGameWithRulesDTO } from "./firebaseMappers";
+import { toFirestoreRules, toGameRoundDTO, toGameTeamDTO, toGameWithRulesDTO } from "./firebaseMappers";
 import { getCollection, getFirebaseUser, getOwnedByNumericId, getRequiredFirebase, nextNumericId } from "./firebaseRepository";
 import { FirebaseGameDocument, FirebaseGameRoundDocument, FirebaseGameTeamDocument } from "./firebaseTypes";
 import FirebaseTeamService from "./FirebaseTeamService";
@@ -29,7 +28,7 @@ class FirebaseGameService {
             id: gameId,
             ownerUid: user.uid,
             date: (game.date ?? new Date()).toISOString(),
-            rules: normalizeRules(game.rules),
+            rules: toFirestoreRules(game.rules),
             teamIds: [],
             memberPlayerIds: [],
         };

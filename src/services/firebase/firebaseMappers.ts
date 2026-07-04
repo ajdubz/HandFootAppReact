@@ -7,6 +7,7 @@ import PlayerGetBasicDTO from "../../models/DTOs/Player/PlayerGetBasicDTO";
 import TeamGetBasicDTO from "../../models/DTOs/Team/TeamGetBasicDTO";
 import TeamGetWithPlayerNamesDTO from "../../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
 import { normalizeRules } from "../../rules/rulesDefaults";
+import Rules from "../../models/Rules";
 import {
     FirebaseGameDocument,
     FirebaseGameRoundDocument,
@@ -32,6 +33,26 @@ const toDate = (value: unknown): Date => {
     }
 
     return new Date();
+};
+
+export const toFirestoreRules = (rules?: Partial<Rules>): Partial<Rules> => {
+    const normalizedRules = normalizeRules(rules);
+    return {
+        id: normalizedRules.id,
+        cleanBookScore: normalizedRules.cleanBookScore,
+        dirtyBookScore: normalizedRules.dirtyBookScore,
+        redThreeScore: normalizedRules.redThreeScore,
+        pulledScore: normalizedRules.pulledScore,
+        winnerScore: normalizedRules.winnerScore,
+        cardsToDraw: normalizedRules.cardsToDraw,
+        cardsToStart: normalizedRules.cardsToStart,
+        roundOneBookThreshold: normalizedRules.roundOneBookThreshold,
+        roundTwoBookThreshold: normalizedRules.roundTwoBookThreshold,
+        roundThreeBookThreshold: normalizedRules.roundThreeBookThreshold,
+        roundFourBookThreshold: normalizedRules.roundFourBookThreshold,
+        cleanBooksRequiredToGoOut: normalizedRules.cleanBooksRequiredToGoOut,
+        dirtyBooksRequiredToGoOut: normalizedRules.dirtyBooksRequiredToGoOut,
+    };
 };
 
 export const toPlayerAccountDTO = (player: FirebasePlayerDocument): PlayerAccountDTO => Object.assign(new PlayerAccountDTO(), {
