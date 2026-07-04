@@ -24,6 +24,8 @@ yarn-error.log*
 dev-server*.log
 vite-dev*.log
 start-test.log
+firebase-debug.log
+firestore-debug.log
 
 # Firebase local cache
 .firebase/

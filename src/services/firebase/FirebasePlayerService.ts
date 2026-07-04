@@ -7,6 +7,7 @@ import {
 import {
     deleteDoc,
     doc,
+    getDoc,
     getDocs,
     query,
     setDoc,
@@ -27,10 +28,11 @@ import {
     getRequiredFirebase,
     nextNumericId,
 } from "./firebaseRepository";
-import { FirebasePlayerDocument } from "./firebaseTypes";
+import { FirebaseLoginAliasDocument, FirebasePlayerDocument } from "./firebaseTypes";
 import { firebaseAuth } from "../../firebase";
 
 const normalizeText = (value?: string): string => (value ?? "").trim().toLowerCase();
+const aliasDocId = (value?: string): string => encodeURIComponent(normalizeText(value));
 
 const toLoginDTO = async (user: User, player: FirebasePlayerDocument): Promise<PlayerLoginDTO> => Object.assign(new PlayerLoginDTO(), {
     id: player.id,
@@ -45,7 +47,7 @@ class FirebasePlayerService {
             throw new Error("Firebase Auth is not configured.");
         }
 
-        const email = playerAccountDTO.email ?? "";
+        const email = await this.resolveLoginEmail(playerAccountDTO);
         const password = playerAccountDTO.password ?? "";
         const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
         const profile = await this.getOrCreateAuthPlayer(credential.user, {
@@ -98,6 +100,7 @@ class FirebasePlayerService {
             throw new Error("Firebase Auth is not configured.");
         }
 
+        await this.assertNoDuplicateLoginAlias(player);
         await this.assertNoDuplicateOwnedPlayer(player);
 
         try {
@@ -208,7 +211,54 @@ class FirebasePlayerService {
         };
 
         await setDoc(doc(db, "players", docId), playerDocument);
+        await this.saveLoginAlias(playerDocument);
         return playerDocument;
+    }
+
+    private static async resolveLoginEmail(player: PlayerAccountDTO): Promise<string> {
+        if (player.email) {
+            return player.email;
+        }
+
+        const nicknameAlias = aliasDocId(player.nickName);
+        if (!nicknameAlias) {
+            return "";
+        }
+
+        const { db } = getRequiredFirebase();
+        const aliasSnapshot = await getDoc(doc(db, "loginAliases", nicknameAlias));
+        const aliasData = aliasSnapshot.data() as FirebaseLoginAliasDocument | undefined;
+        return aliasData?.email ?? "";
+    }
+
+    private static async saveLoginAlias(player: FirebasePlayerDocument): Promise<void> {
+        const nicknameAlias = aliasDocId(player.nickName);
+        if (!nicknameAlias || !player.email) {
+            return;
+        }
+
+        const { db } = getRequiredFirebase();
+        const aliasDocument: FirebaseLoginAliasDocument = {
+            ownerUid: player.ownerUid,
+            playerId: player.id,
+            email: player.email,
+            nickName: player.nickName,
+        };
+
+        await setDoc(doc(db, "loginAliases", nicknameAlias), aliasDocument);
+    }
+
+    private static async assertNoDuplicateLoginAlias(player: PlayerAccountDTO): Promise<void> {
+        const nicknameAlias = aliasDocId(player.nickName);
+        if (!nicknameAlias) {
+            return;
+        }
+
+        const { db } = getRequiredFirebase();
+        const aliasSnapshot = await getDoc(doc(db, "loginAliases", nicknameAlias));
+        if (aliasSnapshot.exists()) {
+            throw new ApiError("An account with that username or email already exists.", 409, "duplicate_player");
+        }
     }
 
     private static async assertNoDuplicateOwnedPlayer(player: PlayerAccountDTO, ignoredPlayerId?: number): Promise<void> {

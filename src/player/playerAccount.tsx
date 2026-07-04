@@ -7,6 +7,7 @@ import ConfirmChanges from "../modals/confirmChanges";
 import Button from "react-bootstrap/Button";
 import { Row, Col } from "react-bootstrap";
 import { isApiErrorCode } from "../services/apiClient";
+import { isFirebaseBackend } from "../services/apiConfig";
 
 interface RouteParams {
     [id: string]: string | undefined;
@@ -117,14 +118,17 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
             newErrors.email = "Email is required";
         }
 
-        // Uncomment if password validation is needed
-        // if (!password.trim()) {
-        //   newErrors.password = "Password is required";
-        // }
+        if (!id) {
+            if (!password.trim()) {
+                newErrors.password = "Password is required";
+            } else if (password.length < 6) {
+                newErrors.password = "Password must be at least 6 characters";
+            }
 
-        // if (password !== confirmPassword) {
-        //   newErrors.confirmPassword = "Passwords do not match";
-        // }
+            if (password !== confirmPassword) {
+                newErrors.confirmPassword = "Passwords do not match";
+            }
+        }
 
         return newErrors;
     };
@@ -168,10 +172,12 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
         setErrors({});
 
         try {
-            const duplicateError = await checkDuplicateUser();
-            if (duplicateError) {
-                setErrors({ accountExists: duplicateError });
-                return;
+            if (!(isRegistrationPage && isFirebaseBackend() && !id)) {
+                const duplicateError = await checkDuplicateUser();
+                if (duplicateError) {
+                    setErrors({ accountExists: duplicateError });
+                    return;
+                }
             }
         } catch (error) {
             // If fetching existing users fails (for example unauthenticated register mode),
@@ -231,10 +237,12 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
                         <Form.Group className="mb-3">
                             <Form.Label htmlFor="password">Password</Form.Label>
                             <Form.Control type="password" id="password" name="password" defaultValue={password} onChange={(e) => setPassword(e.target.value)} />
+                            {errors.password && <div className="text-danger">{errors.password}</div>}
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label htmlFor="confirmPassword">Confirm Password</Form.Label>
                             <Form.Control type="password" id="confirmPassword" name="confirmPassword" defaultValue={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                            {errors.confirmPassword && <div className="text-danger">{errors.confirmPassword}</div>}
                         </Form.Group>
                     </Col>
                 </Row>
