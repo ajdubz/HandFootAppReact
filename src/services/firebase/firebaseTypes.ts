@@ -56,10 +56,3 @@ export interface FirebaseFriendDocument {
     playerId: number;
     friendId: number;
 }
-
-export interface FirebaseLoginAliasDocument {
-    ownerUid: string;
-    playerId: number;
-    email: string;
-    nickName?: string;
-}

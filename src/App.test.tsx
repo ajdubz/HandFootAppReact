@@ -18,7 +18,7 @@ afterAll(() => {
 
 test('renders login screen', () => {
   render(<App />);
-  expect(screen.getByLabelText(/username or email/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /play as guest/i })).toBeInTheDocument();
 });
@@ -61,7 +61,7 @@ test('sign out clears auth and returns to login', async () => {
 
   fireEvent.click(screen.getByRole('link', { name: /sign out/i }));
 
-  expect(screen.getByLabelText(/username or email/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
   expect(localStorage.getItem('token')).toBeNull();
   expect(localStorage.getItem('mockPlayerId')).toBeNull();
   expect(localStorage.getItem('currentPlayerId')).toBeNull();

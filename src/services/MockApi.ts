@@ -41,9 +41,8 @@ class MockApi {
     public static async login(player: PlayerAccountDTO): Promise<PlayerLoginDTO | undefined> {
         const state = this.getState();
         const foundPlayer = state.players.find((p) => {
-            const identifierMatches = player.email
-                ? p.email?.toLowerCase() === player.email.toLowerCase()
-                : p.nickName?.toLowerCase() === player.nickName?.toLowerCase();
+            const identifierMatches = !!player.email &&
+                p.email?.toLowerCase() === player.email.toLowerCase();
 
             const passwordMatches = (p.password ?? "") === (player.password ?? "");
             return identifierMatches && passwordMatches;
@@ -116,7 +115,7 @@ class MockApi {
         );
 
         if (duplicatePlayer) {
-            throw new Error("An account with that username or email already exists.");
+            throw new Error("An account with that nickname or email already exists.");
         }
 
         const newPlayer = { ...player, id: this.nextId(state.players) };
@@ -149,7 +148,7 @@ class MockApi {
         );
 
         if (duplicatePlayer) {
-            throw new Error("An account with that username or email already exists.");
+            throw new Error("An account with that nickname or email already exists.");
         }
 
         const index = state.players.findIndex((p) => p.id === playerId);

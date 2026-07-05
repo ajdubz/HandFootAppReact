@@ -16,7 +16,6 @@ jest.mock("firebase/auth", () => ({
 jest.mock("firebase/firestore", () => ({
     deleteDoc: jest.fn(),
     doc: jest.fn((_db, collectionName: string, documentId: string) => ({ collectionName, documentId })),
-    getDoc: jest.fn(),
     getDocs: jest.fn(),
     query: jest.fn(),
     setDoc: jest.fn(),
@@ -42,7 +41,7 @@ describe("FirebasePlayerService", () => {
         (doc as jest.Mock).mockImplementation((_db, collectionName: string, documentId: string) => ({ collectionName, documentId }));
     });
 
-    test("does not create login aliases for guest players", async () => {
+    test("only creates the player document for guest players", async () => {
         const guest = new PlayerAccountDTO();
         guest.nickName = "Test Guest";
         guest.fullName = "Test Guest";

@@ -8,7 +8,7 @@ import gameNightLogin from '../assets/game-night-login.jpg';
 
 const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     const navigate = useNavigate();
-    const [emailOrName, setEmailOrName] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
@@ -17,27 +17,22 @@ const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     };
 
     const handleLogin = async () => {
-        if (!emailOrName.trim() || !password.trim()) {
+        if (!email.trim() || !password.trim()) {
             clearAuthState();
-            setError("User and password required");
+            setError("Email and password required");
             return;
         }
 
         setError("");
         const player = new PlayerAccountDTO();
-        if (emailOrName.includes('@')) {
-            player.email = emailOrName;
-        } else {
-            player.nickName = emailOrName;
-        }
+        player.email = email.trim();
         player.password = password;
 
         await PlayerService.LoginPlayer(player).then((data) => {
-            const enteredValue = emailOrName.trim().toLowerCase();
+            const enteredValue = email.trim().toLowerCase();
             const matchesEmail = !!data?.email && data.email.toLowerCase() === enteredValue;
-            const matchesNickname = !!data?.nickName && data.nickName.toLowerCase() === enteredValue;
 
-            if (data && (matchesEmail || matchesNickname)) {
+            if (data && matchesEmail) {
                 setAuthState(data.id, data.token ?? "");
                 onLogin();
                 navigate(`/player/${data?.id}`);
@@ -81,15 +76,15 @@ const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 </p>
 
                 <div className="login-fields">
-                    <label htmlFor="emailOrName">Username or Email</label>
+                    <label htmlFor="email">Email</label>
                     <input
-                        id="emailOrName"
-                        type="text"
-                        aria-label="Username or Email"
-                        value={emailOrName}
-                        onChange={(e) => setEmailOrName(e.target.value)}
+                        id="email"
+                        type="email"
+                        aria-label="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
-                        placeholder="Enter your username"
+                        placeholder="Enter your email"
                     />
 
                     <label htmlFor="password">Password</label>

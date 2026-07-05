@@ -99,4 +99,13 @@ describe("PlayerService backend API integration", () => {
             method: "POST",
         }));
     });
+
+    test("mock mode requires email for login", async () => {
+        process.env.REACT_APP_API_URL = "mock";
+        const player = new PlayerAccountDTO();
+        player.nickName = "Alex";
+        player.password = "password";
+
+        await expect(PlayerService.LoginPlayer(player)).resolves.toBeUndefined();
+    });
 });

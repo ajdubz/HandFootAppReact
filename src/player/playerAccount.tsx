@@ -71,7 +71,7 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
             .then(() => { navigate(isRegistrationPage ? "/login" : "/playersList"); })
             .catch((error: unknown) => {
                 if (isDuplicateAccountError(error)) {
-                    setErrors({ accountExists: "Account already exists. Please use a different username or email." });
+                    setErrors({ accountExists: "Account already exists. Please use a different nickname or email." });
                     return;
                 }
                 console.log(error);
@@ -96,7 +96,7 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
             .then(() => { navigate(`/player/${id}`); })
             .catch((error: unknown) => {
                 if (isDuplicateAccountError(error)) {
-                    setErrors({ accountExists: "Account already exists. Please use a different username or email." });
+                    setErrors({ accountExists: "Account already exists. Please use a different nickname or email." });
                     return;
                 }
                 console.log(error);
@@ -159,7 +159,7 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
             return undefined;
         }
 
-        return "Account already exists. Please use a different username or email.";
+        return "Account already exists. Please use a different nickname or email.";
     };
 
     const onSubmitFunc = async () => {
