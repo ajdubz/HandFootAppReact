@@ -48,6 +48,14 @@
   // ]
   "indexes": [
     {
+      "collectionGroup": "players",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUid", "mode": "ASCENDING" },
+        { "fieldPath": "id", "mode": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "teams",
       "queryScope": "COLLECTION",
       "fields": [

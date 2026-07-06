@@ -7,11 +7,9 @@ import {
 import {
     deleteDoc,
     doc,
-    getDocs,
-    query,
+    getDoc,
     setDoc,
     updateDoc,
-    where,
 } from "firebase/firestore";
 import PlayerAccountDTO from "../../models/DTOs/Player/PlayerAccountDTO";
 import PlayerFullDetailsDTO from "../../models/DTOs/Player/PlayerFullDetailsDTO";
@@ -21,9 +19,8 @@ import { ApiError } from "../apiClient";
 import { toPlayerAccountDTO, toPlayerBasicDTO } from "./firebaseMappers";
 import {
     getAllOwnedDocs,
-    getCollection,
     getFirebaseUser,
-    getFirstByNumericId,
+    getOwnedByNumericId,
     getRequiredFirebase,
     nextNumericId,
 } from "./firebaseRepository";
@@ -136,7 +133,8 @@ class FirebasePlayerService {
     }
 
     public static async updatePlayerAccount(playerId: number, player: PlayerAccountDTO): Promise<void> {
-        const existingPlayer = await getFirstByNumericId<FirebasePlayerDocument>("players", playerId);
+        const user = await getFirebaseUser();
+        const existingPlayer = await getOwnedByNumericId<FirebasePlayerDocument>("players", playerId, user.uid);
         if (!existingPlayer) {
             return;
         }
@@ -151,7 +149,8 @@ class FirebasePlayerService {
     }
 
     public static async deletePlayer(playerId: number): Promise<void> {
-        const existingPlayer = await getFirstByNumericId<FirebasePlayerDocument>("players", playerId);
+        const user = await getFirebaseUser();
+        const existingPlayer = await getOwnedByNumericId<FirebasePlayerDocument>("players", playerId, user.uid);
         if (!existingPlayer) {
             return;
         }
@@ -161,16 +160,26 @@ class FirebasePlayerService {
     }
 
     public static async searchPlayers(search: string): Promise<PlayerGetBasicDTO[]> {
-        const players = await this.getPlayers();
+        const players = await this.getOwnedPlayerDocuments();
         const normalizedSearch = normalizeText(search);
         return players.filter((player) =>
             normalizeText(player.nickName).includes(normalizedSearch) ||
             normalizeText(player.fullName).includes(normalizedSearch)
-        );
+        ).map(toPlayerBasicDTO);
     }
 
     public static async getPlayerDocumentById(id: number): Promise<FirebasePlayerDocument | undefined> {
-        return (await getFirstByNumericId<FirebasePlayerDocument>("players", id))?.data;
+        const user = await getFirebaseUser();
+        return (await getOwnedByNumericId<FirebasePlayerDocument>("players", id, user.uid))?.data;
+    }
+
+    public static async getReadablePlayerDocumentById(id: number): Promise<FirebasePlayerDocument | undefined> {
+        return this.getPlayerDocumentById(id);
+    }
+
+    private static async getOwnedPlayerDocuments(): Promise<FirebasePlayerDocument[]> {
+        const user = await getFirebaseUser();
+        return getAllOwnedDocs<FirebasePlayerDocument>("players", user.uid);
     }
 
     private static async getOrCreateAuthPlayer(user: User, fallback: Partial<FirebasePlayerDocument>): Promise<FirebasePlayerDocument> {
@@ -190,8 +199,10 @@ class FirebasePlayerService {
     }
 
     private static async getPlayerByUid(uid: string): Promise<FirebasePlayerDocument | undefined> {
-        const snapshot = await getDocs(query(getCollection<FirebasePlayerDocument>("players"), where("uid", "==", uid)));
-        return snapshot.docs[0]?.data();
+        const { db } = getRequiredFirebase();
+        const snapshot = await getDoc(doc(db, "players", uid));
+        const player = snapshot.data() as FirebasePlayerDocument | undefined;
+        return player?.ownerUid === uid ? player : undefined;
     }
 
     private static async createPlayerDocument(

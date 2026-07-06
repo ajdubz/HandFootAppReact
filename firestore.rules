@@ -10,60 +10,123 @@ service cloud.firestore {
       return isSignedIn() && data.ownerUid == request.auth.uid;
     }
 
-    function isMember(data) {
-      return isSignedIn() &&
-        data.memberUids is list &&
-        data.memberUids.hasAny([request.auth.uid]);
+    function isValidCounterName(document) {
+      return document.matches('counter_(players|teams|games|gameTeams|rounds|friendships|friendRequests)');
     }
 
-    function canAccessOwnedScorekeepingDoc(data) {
-      return isOwner(data) || isMember(data);
+    function hasOnlyKeys(keys) {
+      return request.resource.data.keys().hasOnly(keys);
+    }
+
+    function keepsIdAndOwner() {
+      return request.resource.data.id == resource.data.id &&
+        request.resource.data.ownerUid == resource.data.ownerUid;
+    }
+
+    function keepsFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    function keepsRoundIdentity() {
+      return keepsIdAndOwner() &&
+        request.resource.data.gameId == resource.data.gameId &&
+        request.resource.data.gameTeamId == resource.data.gameTeamId &&
+        request.resource.data.roundNumber == resource.data.roundNumber;
     }
 
     match /players/{playerId} {
-      allow read: if isSignedIn();
-      allow create: if isOwner(request.resource.data);
-      allow update, delete: if isOwner(resource.data);
+      allow read: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data) &&
+        hasOnlyKeys(['id', 'uid', 'ownerUid', 'nickName', 'fullName', 'email', 'isGuest']);
+      allow update: if isOwner(resource.data) &&
+        isOwner(request.resource.data) &&
+        keepsFieldsUnchanged(['id', 'uid', 'ownerUid', 'isGuest']) &&
+        hasOnlyKeys(['id', 'uid', 'ownerUid', 'nickName', 'fullName', 'email', 'isGuest']);
+      allow delete: if isOwner(resource.data);
     }
 
     match /teams/{teamId} {
-      allow read: if canAccessOwnedScorekeepingDoc(resource.data);
-      allow create: if isOwner(request.resource.data);
-      allow update, delete: if canAccessOwnedScorekeepingDoc(resource.data);
+      allow read: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data) &&
+        hasOnlyKeys(['id', 'ownerUid', 'name', 'memberPlayerIds']);
+      allow update: if isOwner(resource.data) &&
+        isOwner(request.resource.data) &&
+        keepsIdAndOwner() &&
+        hasOnlyKeys(['id', 'ownerUid', 'name', 'memberPlayerIds']);
+      allow delete: if isOwner(resource.data);
     }
 
     match /games/{gameId} {
-      allow read: if canAccessOwnedScorekeepingDoc(resource.data);
-      allow create: if isOwner(request.resource.data);
-      allow update, delete: if canAccessOwnedScorekeepingDoc(resource.data);
+      allow read: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data) &&
+        hasOnlyKeys(['id', 'ownerUid', 'ownerPlayerId', 'date', 'rules', 'teamIds', 'memberPlayerIds']);
+      allow update: if isOwner(resource.data) &&
+        isOwner(request.resource.data) &&
+        keepsIdAndOwner() &&
+        hasOnlyKeys(['id', 'ownerUid', 'ownerPlayerId', 'date', 'rules', 'teamIds', 'memberPlayerIds']);
+      allow delete: if isOwner(resource.data);
     }
 
     match /gameTeams/{gameTeamId} {
-      allow read: if canAccessOwnedScorekeepingDoc(resource.data);
-      allow create: if isOwner(request.resource.data);
-      allow update, delete: if canAccessOwnedScorekeepingDoc(resource.data);
+      allow read: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data) &&
+        hasOnlyKeys(['id', 'ownerUid', 'gameId', 'teamId', 'memberPlayerIds']);
+      allow update: if isOwner(resource.data) &&
+        isOwner(request.resource.data) &&
+        keepsIdAndOwner() &&
+        request.resource.data.gameId == resource.data.gameId &&
+        request.resource.data.teamId == resource.data.teamId &&
+        hasOnlyKeys(['id', 'ownerUid', 'gameId', 'teamId', 'memberPlayerIds']);
+      allow delete: if isOwner(resource.data);
     }
 
     match /rounds/{roundId} {
-      allow read: if canAccessOwnedScorekeepingDoc(resource.data);
-      allow create: if isOwner(request.resource.data);
-      allow update, delete: if canAccessOwnedScorekeepingDoc(resource.data);
+      allow read: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data) &&
+        hasOnlyKeys(['id', 'ownerUid', 'gameId', 'gameTeamId', 'roundNumber', 'cardPoints', 'handScore', 'cleanBooks', 'dirtyBooks', 'redThrees', 'pulledCorrect', 'isWinner']);
+      allow update: if isOwner(resource.data) &&
+        isOwner(request.resource.data) &&
+        keepsRoundIdentity() &&
+        hasOnlyKeys(['id', 'ownerUid', 'gameId', 'gameTeamId', 'roundNumber', 'cardPoints', 'handScore', 'cleanBooks', 'dirtyBooks', 'redThrees', 'pulledCorrect', 'isWinner']);
+      allow delete: if isOwner(resource.data);
     }
 
     match /friendRequests/{friendRequestId} {
       allow read: if isOwner(resource.data);
-      allow create: if isOwner(request.resource.data);
-      allow update, delete: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data) &&
+        hasOnlyKeys(['id', 'ownerUid', 'playerId', 'friendId']);
+      allow update: if isOwner(resource.data) &&
+        isOwner(request.resource.data) &&
+        keepsIdAndOwner() &&
+        hasOnlyKeys(['id', 'ownerUid', 'playerId', 'friendId']);
+      allow delete: if isOwner(resource.data);
     }
 
     match /friendships/{friendshipId} {
       allow read: if isOwner(resource.data);
-      allow create: if isOwner(request.resource.data);
-      allow update, delete: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data) &&
+        hasOnlyKeys(['id', 'ownerUid', 'playerId', 'friendId']);
+      allow update: if isOwner(resource.data) &&
+        isOwner(request.resource.data) &&
+        keepsIdAndOwner() &&
+        hasOnlyKeys(['id', 'ownerUid', 'playerId', 'friendId']);
+      allow delete: if isOwner(resource.data);
     }
 
     match /metadata/{document} {
-      allow read, write: if isSignedIn() && document.matches('counter_.*');
+      allow read: if isSignedIn() && isValidCounterName(document);
+      allow create: if isSignedIn() &&
+        isValidCounterName(document) &&
+        hasOnlyKeys(['nextId']) &&
+        request.resource.data.nextId is int &&
+        request.resource.data.nextId == 2;
+      allow update: if isSignedIn() &&
+        isValidCounterName(document) &&
+        hasOnlyKeys(['nextId']) &&
+        resource.data.nextId is int &&
+        request.resource.data.nextId is int &&
+        request.resource.data.nextId == resource.data.nextId + 1;
+      allow delete: if false;
     }
 
     match /{document=**} {
