@@ -57,6 +57,8 @@ function GamePage() {
     const [showStartGameModal, setShowStartGameModal] = useState(false);
 
     const navigate = useNavigate();
+    const currentPlayerId = localStorage.getItem("currentPlayerId") ?? localStorage.getItem("mockPlayerId") ?? "";
+    const playerIdForActions = id || currentPlayerId;
     const scoringRules = useMemo(() => getEffectiveRules(game?.rules), [game]);
     const teamStats = useMemo(() => calculateTeamStats(teams, rounds), [teams, rounds]);
     const nextRoundNumber = useMemo(() => getNextRoundNumber(rounds), [rounds]);
@@ -120,7 +122,9 @@ function GamePage() {
     }, [gameId]);
 
     useEffect(() => {
-        saveActiveGameRoute(id, gameId);
+        if (id) {
+            saveActiveGameRoute(id, gameId);
+        }
         fetchData();
     }, [fetchData, gameId, id]);
 
@@ -161,7 +165,7 @@ function GamePage() {
     };
 
     const removeGuestAccountsForSession = async () => {
-        const activePlayerId = Number(localStorage.getItem("currentPlayerId") ?? id);
+        const activePlayerId = Number(currentPlayerId || id);
         const teamMemberIds = new Set<number>();
         teams.forEach((team) => {
             (team.team?.teamMembers ?? []).forEach((member) => {
@@ -187,12 +191,12 @@ function GamePage() {
     };
 
     const handleBack = () => {
-        navigate(`/player/${id}`);
+        navigate(id ? `/player/${id}` : "/games");
     };
 
     const handleNewGameConfirm = (newGameId: number) => {
         setShowStartGameModal(false);
-        navigate(`/player/${id}/game/${newGameId}`);
+        navigate(playerIdForActions ? `/player/${playerIdForActions}/game/${newGameId}` : `/games/${newGameId}`);
     };
 
     const handleEndGame = async () => {
@@ -208,7 +212,7 @@ function GamePage() {
         }
 
         clearActiveGameRoute();
-        navigate(`/player/${id}`);
+        navigate(id ? `/player/${id}` : "/games");
     };
 
     const updateRoundEntry = (gameTeamId: number, field: keyof RoundEntry, value: string | boolean) => {
@@ -392,7 +396,7 @@ function GamePage() {
             </div>
 
             <StartGame
-                id={Number(id)}
+                id={Number(playerIdForActions)}
                 isOpen={showStartGameModal}
                 onCancel={() => setShowStartGameModal(false)}
                 onConfirm={handleNewGameConfirm}

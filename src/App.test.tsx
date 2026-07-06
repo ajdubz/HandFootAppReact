@@ -76,6 +76,7 @@ test('top menu includes current player home, account, and friends links', () => 
   render(<App />);
 
   expect(screen.getByRole('link', { name: /home/i })).toHaveAttribute('href', '/player/123');
+  expect(screen.getByRole('link', { name: /games/i })).toHaveAttribute('href', '/games');
   expect(screen.getByRole('link', { name: /account/i })).toHaveAttribute('href', '/player/123/account');
   expect(screen.getByRole('link', { name: /friends/i })).toHaveAttribute('href', '/player/123/friends');
 });
@@ -95,4 +96,35 @@ test('top menu closes when clicking outside it', () => {
   fireEvent.mouseDown(document.body);
 
   expect(menuButton).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('games route lists previous games directly', async () => {
+  localStorage.setItem('token', 'test-token');
+  localStorage.setItem('currentPlayerId', '1');
+  window.history.pushState({}, '', '/games');
+
+  render(<App />);
+
+  expect(await screen.findByRole('heading', { name: /games/i })).toBeInTheDocument();
+  expect(screen.getByRole('columnheader', { name: /margin/i })).toBeInTheDocument();
+  expect(screen.queryByRole('columnheader', { name: /books/i })).not.toBeInTheDocument();
+  expect((await screen.findAllByText(/game #1/i)).length).toBeGreaterThan(0);
+  expect(screen.getAllByRole('link', { name: /continue/i })[0]).toHaveAttribute('href', '/player/1/game/1');
+});
+
+test('game history detail route shows read-only rounds and returns to games list', async () => {
+  localStorage.setItem('token', 'test-token');
+  localStorage.setItem('currentPlayerId', '1');
+  window.history.pushState({}, '', '/games/1');
+
+  render(<App />);
+
+  expect(await screen.findByRole('heading', { name: /game rounds/i })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /end game/i })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /new game/i })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /save round/i })).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('link', { name: /back/i }));
+
+  await waitFor(() => expect(window.location.pathname).toBe('/games'));
 });

@@ -11,10 +11,12 @@ import PlayerService from "./services/PlayerService";
 import TeamResults from "./team/teamResults";
 import { clearAuthState } from "./utils/auth";
 import RulesPage from "./rules/rulesPage";
+import GameHistory from "./game/gameHistory";
+import GameHistoryDetail from "./game/gameHistoryDetail";
 import "./App.css";
 import "./appHeader.css";
 
-const gameRoutePattern = /^\/player\/\d+\/game\/\d+$/;
+const gameRoutePattern = /^(\/player\/\d+\/game\/\d+|\/games\/\d+)$/;
 
 const NewHeader: React.FC<{ onSignOut: () => void }> = ({ onSignOut }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -97,6 +99,7 @@ const NewHeader: React.FC<{ onSignOut: () => void }> = ({ onSignOut }) => {
                 aria-label="Primary navigation"
             >
                 <Link to={homeRoute}>Home</Link>
+                <Link to="/games">Games</Link>
                 <Link to="/playersList">Players</Link>
                 <Link to="/teams">Teams</Link>
                 <Link to="/rules" state={gameRoutePattern.test(location.pathname) ? { returnToGame: location.pathname } : undefined}>Rules</Link>
@@ -112,6 +115,8 @@ const NewRoutes: React.FC = () => {
     return (
         <Routes>
             <Route path="/playersList" element={<PlayerListTable />} />
+            <Route path="/games" element={<GameHistory />} />
+            <Route path="/games/:gameId" element={<GameHistoryDetail />} />
             <Route path="/teams" element={<TeamListTable />} />
             <Route path="/team/:id" element={<TeamResults />} />
             <Route path="/rules" element={<RulesPage />} />

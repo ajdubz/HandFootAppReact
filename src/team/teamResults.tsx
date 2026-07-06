@@ -1,26 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Table } from "react-bootstrap";
-import GameService from "../services/GameService";
-import GameTeamDTO from "../models/DTOs/Game/GameTeamDTO";
-import { calculateTeamStats } from "../game/gameHomeUtils";
+import { GameHistoryResult, loadGameHistoryResults } from "../game/gameHistoryUtils";
 import "../game/gameHome.css";
 
 interface RouteParams {
     [id: string]: string | undefined;
 }
 
-type GameResult = {
-    gameId: number;
-    gameDate: Date | undefined;
-    rankedTeams: GameTeamDTO[];
-    teamStats: Record<number, { totalScore: number; cleanBooks: number; dirtyBooks: number; redThrees: number }>;
-};
-
 function TeamResults(): React.ReactElement {
     const { id = "" } = useParams<RouteParams>();
     const teamId = Number(id);
-    const [results, setResults] = useState<GameResult[]>([]);
+    const [results, setResults] = useState<GameHistoryResult[]>([]);
     const [error, setError] = useState("");
     const currentPlayerId = Number(localStorage.getItem("currentPlayerId") ?? localStorage.getItem("mockPlayerId") ?? 0);
 
@@ -28,42 +19,7 @@ function TeamResults(): React.ReactElement {
         setError("");
 
         try {
-            const games = await GameService.getGames();
-            const allGames = games ?? [];
-
-            const gamesWithDetails = await Promise.all(allGames.map(async (game) => {
-                const gameId = game.id ?? 0;
-                if (!gameId) {
-                    return undefined;
-                }
-
-                const [teams, rounds] = await Promise.all([
-                    GameService.getTeamsByGameId(gameId),
-                    GameService.getRoundsByGameId(gameId),
-                ]);
-
-                const gameTeams = teams ?? [];
-                const gameRounds = rounds ?? [];
-                const hasSelectedTeam = gameTeams.some((gameTeam) => gameTeam.team?.id === teamId);
-
-                if (!hasSelectedTeam || !gameRounds.length) {
-                    return undefined;
-                }
-
-                const teamStats = calculateTeamStats(gameTeams, gameRounds);
-                const rankedTeams = [...gameTeams].sort((a, b) =>
-                    (teamStats[b.id ?? 0]?.totalScore ?? 0) - (teamStats[a.id ?? 0]?.totalScore ?? 0)
-                );
-
-                return {
-                    gameId,
-                    gameDate: game.date ? new Date(game.date) : undefined,
-                    rankedTeams,
-                    teamStats,
-                } as GameResult;
-            }));
-
-            setResults(gamesWithDetails.filter(Boolean) as GameResult[]);
+            setResults(await loadGameHistoryResults({ teamId, requireRounds: true }));
         } catch (loadError) {
             console.error("Error loading team results:", loadError);
             setError("Unable to load team game results.");
@@ -74,10 +30,6 @@ function TeamResults(): React.ReactElement {
     useEffect(() => {
         fetchResults();
     }, [fetchResults]);
-
-    const sortedResults = useMemo(() =>
-        [...results].sort((a, b) => (b.gameDate?.getTime() ?? 0) - (a.gameDate?.getTime() ?? 0)),
-    [results]);
 
     return (
         <div className="game-page">
@@ -91,13 +43,13 @@ function TeamResults(): React.ReactElement {
 
             {error && <div className="round-error">{error}</div>}
 
-            {!sortedResults.length && !error && (
+            {!results.length && !error && (
                 <section className="game-section">
                     <p>No completed game results found for this team yet.</p>
                 </section>
             )}
 
-            {sortedResults.map((result) => (
+            {results.map((result) => (
                 <section className="game-section" key={result.gameId}>
                     <h2>
                         Game #{result.gameId}

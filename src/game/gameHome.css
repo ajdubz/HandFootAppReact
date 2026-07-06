@@ -110,6 +110,39 @@
     text-align: center;
 }
 
+.leader-badge {
+    background: #163b66;
+    border-radius: 999px;
+    color: #ffffff;
+    display: inline-flex;
+    font-size: 0.78rem;
+    font-weight: 800;
+    margin-right: 8px;
+    padding: 3px 9px;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.leader-badge.winner {
+    background: #2f6b3d;
+}
+
+.leader-name,
+.mobile-leader-name,
+.score-total {
+    font-weight: 800;
+}
+
+.app-main a.game-history-action,
+.app-main a.game-history-action:visited {
+    color: #ffffff;
+}
+
+.app-main a.game-history-action:hover,
+.app-main a.game-history-action:focus-visible {
+    color: #ffffff;
+}
+
 @media (max-width: 767px) {
     .game-header,
     .section-heading-row {
@@ -160,6 +193,7 @@
     }
 
     .scoreboard-card,
+    .game-history-card,
     .round-entry-card,
     .round-history-card {
         background: #ffffff;
@@ -170,6 +204,7 @@
     }
 
     .scoreboard-card-header,
+    .game-history-card-header,
     .round-entry-card-header,
     .round-history-card-header,
     .mobile-total-row,
@@ -181,6 +216,7 @@
     }
 
     .scoreboard-card h3,
+    .game-history-card h2,
     .round-entry-card h3 {
         font-size: 1.1rem;
         margin: 0;
@@ -211,6 +247,7 @@
     }
 
     .scoreboard-stat-grid,
+    .game-history-grid,
     .round-history-grid {
         display: grid;
         gap: 10px;
@@ -219,6 +256,7 @@
     }
 
     .scoreboard-stat-grid div,
+    .game-history-grid span,
     .round-history-grid span {
         background: #f4f6f8;
         border: 1px solid #d8dde3;
@@ -227,6 +265,7 @@
     }
 
     .scoreboard-stat-grid span,
+    .game-history-card-header span,
     .mobile-round-total span,
     .mobile-score-field span,
     .mobile-check-label,
@@ -338,6 +377,25 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .game-history-card {
+        color: #212529;
+    }
+
+    .game-history-card p {
+        margin: 12px 0 0;
+    }
+
+    .mobile-leader-name {
+        display: block;
+        font-size: 1.1rem;
+        margin-top: 10px;
+    }
+
+    .game-history-card .btn {
+        margin-top: 14px;
+        width: 100%;
+    }
+
     .mobile-empty-rounds {
         background: #ffffff;
         border: 1px solid #1f1f1f;
@@ -349,6 +407,7 @@
 @media (max-width: 420px) {
     .mobile-score-grid,
     .scoreboard-stat-grid,
+    .game-history-grid,
     .round-history-grid {
         grid-template-columns: 1fr;
     }
