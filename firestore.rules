@@ -10,6 +10,16 @@ service cloud.firestore {
       return isSignedIn() && data.ownerUid == request.auth.uid;
     }
 
+    function isRecipient(data) {
+      return isSignedIn() && data.recipientUid == request.auth.uid;
+    }
+
+    function isParticipant(data) {
+      return isSignedIn() &&
+        data.participantUids is list &&
+        request.auth.uid in data.participantUids;
+    }
+
     function isValidCounterName(document) {
       return document.matches('counter_(players|teams|games|gameTeams|rounds|friendships|friendRequests)');
     }
@@ -35,7 +45,7 @@ service cloud.firestore {
     }
 
     match /players/{playerId} {
-      allow read: if isOwner(resource.data);
+      allow read: if isSignedIn();
       allow create: if isOwner(request.resource.data) &&
         hasOnlyKeys(['id', 'uid', 'ownerUid', 'nickName', 'fullName', 'email', 'isGuest']);
       allow update: if isOwner(resource.data) &&
@@ -92,25 +102,30 @@ service cloud.firestore {
     }
 
     match /friendRequests/{friendRequestId} {
-      allow read: if isOwner(resource.data);
+      allow read: if isOwner(resource.data) || isRecipient(resource.data);
       allow create: if isOwner(request.resource.data) &&
-        hasOnlyKeys(['id', 'ownerUid', 'playerId', 'friendId']);
+        request.resource.data.recipientUid is string &&
+        request.resource.data.participantUids is list &&
+        request.auth.uid in request.resource.data.participantUids &&
+        hasOnlyKeys(['id', 'ownerUid', 'playerId', 'friendId', 'recipientUid', 'participantUids']);
       allow update: if isOwner(resource.data) &&
         isOwner(request.resource.data) &&
         keepsIdAndOwner() &&
-        hasOnlyKeys(['id', 'ownerUid', 'playerId', 'friendId']);
-      allow delete: if isOwner(resource.data);
+        hasOnlyKeys(['id', 'ownerUid', 'playerId', 'friendId', 'recipientUid', 'participantUids']);
+      allow delete: if isOwner(resource.data) || isRecipient(resource.data);
     }
 
     match /friendships/{friendshipId} {
-      allow read: if isOwner(resource.data);
+      allow read: if isOwner(resource.data) || isParticipant(resource.data);
       allow create: if isOwner(request.resource.data) &&
-        hasOnlyKeys(['id', 'ownerUid', 'playerId', 'friendId']);
+        request.resource.data.participantUids is list &&
+        request.auth.uid in request.resource.data.participantUids &&
+        hasOnlyKeys(['id', 'ownerUid', 'playerId', 'friendId', 'participantUids']);
       allow update: if isOwner(resource.data) &&
         isOwner(request.resource.data) &&
         keepsIdAndOwner() &&
-        hasOnlyKeys(['id', 'ownerUid', 'playerId', 'friendId']);
-      allow delete: if isOwner(resource.data);
+        hasOnlyKeys(['id', 'ownerUid', 'playerId', 'friendId', 'participantUids']);
+      allow delete: if isOwner(resource.data) || isParticipant(resource.data);
     }
 
     match /metadata/{document} {

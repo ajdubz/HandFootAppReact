@@ -4,6 +4,7 @@ import { apiRequest } from "./apiClient";
 import { isFirebaseBackend } from "./apiConfig";
 import FirebaseFriendService from "./firebase/FirebaseFriendService";
 import MockApi from "./MockApi";
+import PlayerService from "./PlayerService";
 
 class FriendService {
     public static async getFriends(id: number): Promise<PlayerGetBasicDTO[] | undefined> {
@@ -108,6 +109,26 @@ class FriendService {
         }
     }
 
+    public static async declineFriendRequest(id: number, playerFriend: PlayerFriendBasicDTO) {
+        if (MockApi.isEnabled()) {
+            return MockApi.declineFriendRequest(id, playerFriend);
+        }
+
+        if (isFirebaseBackend()) {
+            return FirebaseFriendService.declineFriendRequest(id, playerFriend);
+        }
+
+        try {
+            await apiRequest<void>(`/Player/${id}/friendRequests/${playerFriend.friendId}`, {
+                method: "DELETE",
+                fallbackErrorMessage: "Error in declineFriendRequest FE",
+            });
+        } catch (error) {
+            console.error("Error in declineFriendRequest FE:", error);
+            throw error;
+        }
+    }
+
     public static async removeFriend(id: number, playerFriend: PlayerFriendBasicDTO) {
         if (MockApi.isEnabled()) {
             return MockApi.removeFriend(id, playerFriend);
@@ -138,13 +159,14 @@ class FriendService {
         }
 
         try {
-            return await apiRequest<PlayerGetBasicDTO[]>(`/Player/${playerId}/newFriendSearch/${search}`, {
+            const results = await apiRequest<PlayerGetBasicDTO[]>(`/Player/${playerId}/newFriendSearch/${encodeURIComponent(search.trim())}`, {
                 method: "GET",
                 fallbackErrorMessage: "Error in searchNewFriends",
             });
-        } catch (error) {
-            console.error("Error in searchNewFriends FE:", error);
-            throw error;
+            const filteredResults = this.filterSearchMatches(results ?? [], playerId, search);
+            return filteredResults.length > 0 ? filteredResults : this.searchNewFriendsFromPlayerList(playerId, search);
+        } catch {
+            return this.searchNewFriendsFromPlayerList(playerId, search);
         }
     }
 
@@ -158,7 +180,7 @@ class FriendService {
         }
 
         try {
-            return await apiRequest<PlayerGetBasicDTO[]>(`/Player/${playerId}/currFriendSearch/${search}`, {
+            return await apiRequest<PlayerGetBasicDTO[]>(`/Player/${playerId}/currFriendSearch/${encodeURIComponent(search.trim())}`, {
                 method: "GET",
                 fallbackErrorMessage: "Error in searchCurrentFriends",
             });
@@ -166,6 +188,51 @@ class FriendService {
             console.error("Error in searchCurrentFriends FE:", error);
             throw error;
         }
+    }
+
+    private static async searchNewFriendsFromPlayerList(playerId: number, search: string): Promise<PlayerGetBasicDTO[]> {
+        const [players, friends, sentRequests, incomingRequests] = await Promise.all([
+            PlayerService.getPlayers(),
+            this.getFriends(playerId),
+            this.getSentFriendRequests(playerId),
+            this.getFriendRequests(playerId),
+        ]);
+        const friendIds = new Set((friends ?? []).map((player) => player.id ?? 0));
+        const sentRequestIds = new Set((sentRequests ?? []).map((player) => player.id ?? 0));
+        const incomingRequestIds = new Set((incomingRequests ?? []).map((player) => player.id ?? 0));
+
+        return this.filterSearchMatches(players ?? [], playerId, search).filter((player) => {
+            const candidateId = player.id ?? 0;
+            return !friendIds.has(candidateId) &&
+                !sentRequestIds.has(candidateId) &&
+                !incomingRequestIds.has(candidateId);
+        });
+    }
+
+    private static filterSearchMatches(players: PlayerGetBasicDTO[], playerId: number, search: string): PlayerGetBasicDTO[] {
+        const normalizedSearch = search.trim().toLowerCase();
+        return players.filter((player) => {
+            const candidateId = player.id ?? 0;
+            return candidateId !== playerId &&
+                !this.isGuestPlayer(player) &&
+                (
+                    (player.nickName ?? "").toLowerCase().includes(normalizedSearch) ||
+                    (player.fullName ?? "").toLowerCase().includes(normalizedSearch) ||
+                    (player.email ?? "").toLowerCase().includes(normalizedSearch)
+                );
+        });
+    }
+
+    private static isGuestPlayer(player: PlayerGetBasicDTO): boolean {
+        const email = (player.email ?? "").toLowerCase();
+        const nickName = (player.nickName ?? "").trim().toLowerCase();
+        const fullName = (player.fullName ?? "").trim().toLowerCase();
+        return player.isGuest === true ||
+            email.endsWith("@mock.local") ||
+            email.endsWith("@firebase.local") ||
+            email.includes("@guest.") ||
+            nickName === "guest player" ||
+            fullName === "guest player";
     }
 }
 

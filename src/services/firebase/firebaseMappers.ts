@@ -61,12 +61,15 @@ export const toPlayerAccountDTO = (player: FirebasePlayerDocument): PlayerAccoun
     fullName: player.fullName ?? "",
     email: player.email ?? "",
     password: "",
+    isGuest: player.isGuest ?? false,
 });
 
 export const toPlayerBasicDTO = (player: FirebasePlayerDocument): PlayerGetBasicDTO => Object.assign(new PlayerGetBasicDTO(), {
     id: player.id,
     nickName: player.nickName ?? "",
     fullName: player.fullName ?? "",
+    email: player.email ?? "",
+    isGuest: player.isGuest ?? false,
 });
 
 export const toTeamBasicDTO = (team: FirebaseTeamDocument): TeamGetBasicDTO => Object.assign(new TeamGetBasicDTO(), {

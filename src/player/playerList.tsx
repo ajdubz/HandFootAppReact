@@ -5,6 +5,18 @@ import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import FriendService from "../services/FriendService";
 import PlayerFriendBasicDTO from "../models/DTOs/Player/PlayerFriendBasicDTO";
 
+const isGuestPlayer = (player: PlayerGetBasicDTO): boolean => {
+    const email = (player.email ?? "").toLowerCase();
+    const nickName = (player.nickName ?? "").trim().toLowerCase();
+    const fullName = (player.fullName ?? "").trim().toLowerCase();
+    return player.isGuest === true ||
+        email.endsWith("@mock.local") ||
+        email.endsWith("@firebase.local") ||
+        email.includes("@guest.") ||
+        nickName === "guest player" ||
+        fullName === "guest player";
+};
+
 const PlayerListTable = () => {
     const [players, setPlayers] = useState<PlayerGetBasicDTO[] | undefined>([]);
     const [friends, setFriends] = useState<PlayerGetBasicDTO[] | undefined>([]);
@@ -68,7 +80,8 @@ const PlayerListTable = () => {
                     {(players ?? []).map((player) => {
                         const isCurrentUser = (player.id ?? 0) === currentPlayerId;
                         const playerId = player.id ?? 0;
-                        const showSendRequest = !isCurrentUser && !isAlreadyFriend(playerId) && !isPendingRequest(playerId);
+                        const isGuest = isGuestPlayer(player);
+                        const showSendRequest = !isCurrentUser && !isGuest && !isAlreadyFriend(playerId) && !isPendingRequest(playerId);
 
                         return (
                             <tr key={player.id}>
@@ -90,10 +103,13 @@ const PlayerListTable = () => {
                                             Send Friend Request
                                         </button>
                                     )}
-                                    {!showSendRequest && !isCurrentUser && isPendingRequest(playerId) && (
+                                    {!showSendRequest && !isCurrentUser && isGuest && (
+                                        <span>Guest account</span>
+                                    )}
+                                    {!showSendRequest && !isCurrentUser && !isGuest && isPendingRequest(playerId) && (
                                         <span>Request Sent</span>
                                     )}
-                                    {!showSendRequest && !isCurrentUser && isAlreadyFriend(playerId) && (
+                                    {!showSendRequest && !isCurrentUser && !isGuest && isAlreadyFriend(playerId) && (
                                         <span>Already Friends</span>
                                     )}
                                 </td>

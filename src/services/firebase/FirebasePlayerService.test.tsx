@@ -1,7 +1,7 @@
 import PlayerAccountDTO from "../../models/DTOs/Player/PlayerAccountDTO";
 import FirebasePlayerService from "./FirebasePlayerService";
 import { getAllOwnedDocs, getFirebaseUser, getRequiredFirebase, nextNumericId } from "./firebaseRepository";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, getDocs, setDoc } from "firebase/firestore";
 
 jest.mock("../../firebase", () => ({
     firebaseAuth: null,
@@ -65,17 +65,19 @@ describe("FirebasePlayerService", () => {
         );
     });
 
-    test("searches owned player documents", async () => {
-        (getAllOwnedDocs as jest.Mock).mockResolvedValue([
-            { id: 1, ownerUid: "owner-uid", nickName: "Alex", fullName: "Alex Davis" },
-            { id: 9, ownerUid: "owner-uid", nickName: "Logan", fullName: "Logan Smith" },
-        ]);
+    test("searches all readable player documents instead of only owned players", async () => {
+        (getDocs as jest.Mock).mockResolvedValue({
+            docs: [
+                { data: () => ({ id: 1, ownerUid: "owner-uid", nickName: "Alex", fullName: "Alex Davis" }) },
+                { data: () => ({ id: 9, ownerUid: "other-uid", nickName: "Logan", fullName: "Logan Smith" }) },
+            ],
+        });
 
         const results = await FirebasePlayerService.searchPlayers("logan");
 
         expect(results).toEqual([
             expect.objectContaining({ id: 9, nickName: "Logan", fullName: "Logan Smith" }),
         ]);
-        expect(getAllOwnedDocs).toHaveBeenCalledWith("players", "owner-uid");
+        expect(getAllOwnedDocs).not.toHaveBeenCalled();
     });
 });

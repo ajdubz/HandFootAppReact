@@ -8,6 +8,7 @@ import {
     deleteDoc,
     doc,
     getDoc,
+    getDocs,
     setDoc,
     updateDoc,
 } from "firebase/firestore";
@@ -19,7 +20,9 @@ import { ApiError } from "../apiClient";
 import { toPlayerAccountDTO, toPlayerBasicDTO } from "./firebaseMappers";
 import {
     getAllOwnedDocs,
+    getCollection,
     getFirebaseUser,
+    getFirstByNumericId,
     getOwnedByNumericId,
     getRequiredFirebase,
     nextNumericId,
@@ -160,7 +163,8 @@ class FirebasePlayerService {
     }
 
     public static async searchPlayers(search: string): Promise<PlayerGetBasicDTO[]> {
-        const players = await this.getOwnedPlayerDocuments();
+        const snapshot = await getDocs(getCollection<FirebasePlayerDocument>("players"));
+        const players = snapshot.docs.map((player) => player.data());
         const normalizedSearch = normalizeText(search);
         return players.filter((player) =>
             normalizeText(player.nickName).includes(normalizedSearch) ||
@@ -174,7 +178,7 @@ class FirebasePlayerService {
     }
 
     public static async getReadablePlayerDocumentById(id: number): Promise<FirebasePlayerDocument | undefined> {
-        return this.getPlayerDocumentById(id);
+        return (await getFirstByNumericId<FirebasePlayerDocument>("players", id))?.data;
     }
 
     private static async getOwnedPlayerDocuments(): Promise<FirebasePlayerDocument[]> {

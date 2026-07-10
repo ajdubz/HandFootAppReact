@@ -73,6 +73,7 @@ class MockApi {
                 fullName: "Guest Player",
                 email: "guest@mock.local",
                 password: "guest",
+                isGuest: true,
             };
             state.players.push(guestPlayer);
             this.saveState(state);
@@ -132,6 +133,7 @@ class MockApi {
             ...player,
             email: player.email || `guest${nextGuestId}@mock.local`,
             password: player.password || "guest",
+            isGuest: true,
         });
     }
 
@@ -204,6 +206,13 @@ class MockApi {
         this.saveState(state);
     }
 
+    public static async declineFriendRequest(id: number, playerFriend: PlayerFriendBasicDTO) {
+        const state = this.getState();
+        const friendId = playerFriend.friendId ?? 0;
+        state.friendRequests = state.friendRequests.filter((f) => !(f.playerId === friendId && f.friendId === id));
+        this.saveState(state);
+    }
+
     public static async removeFriend(id: number, playerFriend: PlayerFriendBasicDTO) {
         const state = this.getState();
         const friendId = playerFriend.friendId ?? 0;
@@ -214,8 +223,21 @@ class MockApi {
     public static async searchNewFriends(playerId: number, search: string): Promise<PlayerGetBasicDTO[]> {
         const state = this.getState();
         const existingFriendIds = new Set(this.friendIdsFor(state, playerId));
+        const sentRequestIds = new Set(state.friendRequests
+            .filter((request) => request.playerId === playerId)
+            .map((request) => request.friendId ?? 0));
+        const incomingRequestIds = new Set(state.friendRequests
+            .filter((request) => request.friendId === playerId)
+            .map((request) => request.playerId ?? 0));
         return state.players
-            .filter((p) => p.id !== playerId && !existingFriendIds.has(p.id ?? 0) && this.matchesPlayer(p, search))
+            .filter((p) => {
+                const candidateId = p.id ?? 0;
+                return candidateId !== playerId &&
+                    !existingFriendIds.has(candidateId) &&
+                    !sentRequestIds.has(candidateId) &&
+                    !incomingRequestIds.has(candidateId) &&
+                    this.matchesPlayer(p, search);
+            })
             .map((p) => this.toBasicPlayer(p));
     }
 
@@ -395,10 +417,10 @@ class MockApi {
 
     private static seedState(clearTeams: boolean = false): MockState {
         const players = [
-            { id: 1, nickName: "Alex", fullName: "Alex Davis", email: "alex@example.com", password: "password" },
-            { id: 2, nickName: "Sam", fullName: "Sam Taylor", email: "sam@example.com", password: "password" },
-            { id: 3, nickName: "Jordan", fullName: "Jordan Lee", email: "jordan@example.com", password: "password" },
-            { id: 4, nickName: "Casey", fullName: "Casey Morgan", email: "casey@example.com", password: "password" },
+            { id: 1, nickName: "Alex", fullName: "Alex Davis", email: "alex@example.com", password: "password", isGuest: false },
+            { id: 2, nickName: "Sam", fullName: "Sam Taylor", email: "sam@example.com", password: "password", isGuest: false },
+            { id: 3, nickName: "Jordan", fullName: "Jordan Lee", email: "jordan@example.com", password: "password", isGuest: false },
+            { id: 4, nickName: "Casey", fullName: "Casey Morgan", email: "casey@example.com", password: "password", isGuest: false },
         ];
         const teams = clearTeams ? [] : [
             { id: 1, name: "Alex and Sam", teamMembers: [this.toBasicPlayer(players[0]), this.toBasicPlayer(players[1])] },
@@ -448,6 +470,8 @@ class MockApi {
             id: player.id,
             nickName: player.nickName,
             fullName: player.fullName,
+            email: player.email,
+            isGuest: player.isGuest ?? false,
         };
     }
 

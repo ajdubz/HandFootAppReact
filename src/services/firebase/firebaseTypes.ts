@@ -55,4 +55,6 @@ export interface FirebaseFriendDocument {
     ownerUid: string;
     playerId: number;
     friendId: number;
+    recipientUid?: string;
+    participantUids?: string[];
 }
