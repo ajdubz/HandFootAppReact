@@ -1,8 +1,8 @@
 import GameTeamDTO from "../../models/DTOs/Game/GameTeamDTO";
 import TeamGetWithPlayerNamesDTO from "../../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
 import Rules from "../../models/Rules";
-import { toFirestoreRules, toGameRoundDTO, toGameTeamDTO, toPlayerAccountDTO, toTeamWithPlayersDTO } from "./firebaseMappers";
-import { FirebaseGameDocument, FirebaseGameRoundDocument, FirebaseGameTeamDocument, FirebasePlayerDocument, FirebaseTeamDocument } from "./firebaseTypes";
+import { toFirestoreRules, toGameRoundDTO, toGameTeamDTO, toPlayerAccountDTO, toPlayerDirectoryBasicDTO, toTeamWithPlayersDTO } from "./firebaseMappers";
+import { FirebaseGameDocument, FirebaseGameRoundDocument, FirebaseGameTeamDocument, FirebasePlayerDirectoryDocument, FirebasePlayerDocument, FirebaseTeamDocument } from "./firebaseTypes";
 
 describe("Firebase DTO mappers", () => {
     test("keeps numeric player IDs while hiding Firebase document details", () => {
@@ -21,6 +21,27 @@ describe("Firebase DTO mappers", () => {
             fullName: "Logan Howlett",
             email: "logan@example.com",
             password: "",
+            publicTag: expect.stringMatching(/^[A-Z0-9]{7}$/),
+        });
+    });
+
+    test("maps public directory players without private profile fields", () => {
+        const directoryPlayer: FirebasePlayerDirectoryDocument = {
+            id: 17,
+            ownerUid: "firebase-uid",
+            nickName: "Logan",
+            nickNameNormalized: "logan",
+            publicTag: "A7K3XYZ",
+            publicTagNormalized: "a7k3xyz",
+        };
+
+        expect(toPlayerDirectoryBasicDTO(directoryPlayer)).toMatchObject({
+            id: 17,
+            nickName: "Logan",
+            publicTag: "A7K3XYZ",
+            fullName: "",
+            email: "",
+            isGuest: false,
         });
     });
 

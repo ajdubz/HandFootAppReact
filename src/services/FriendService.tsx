@@ -5,6 +5,7 @@ import { isFirebaseBackend } from "./apiConfig";
 import FirebaseFriendService from "./firebase/FirebaseFriendService";
 import MockApi from "./MockApi";
 import PlayerService from "./PlayerService";
+import { matchesPlayerPublicSearch } from "../player/playerPublicId";
 
 class FriendService {
     public static async getFriends(id: number): Promise<PlayerGetBasicDTO[] | undefined> {
@@ -180,13 +181,16 @@ class FriendService {
         }
 
         try {
-            return await apiRequest<PlayerGetBasicDTO[]>(`/Player/${playerId}/currFriendSearch/${encodeURIComponent(search.trim())}`, {
+            const results = await apiRequest<PlayerGetBasicDTO[]>(`/Player/${playerId}/currFriendSearch/${encodeURIComponent(search.trim())}`, {
                 method: "GET",
                 fallbackErrorMessage: "Error in searchCurrentFriends",
             });
-        } catch (error) {
-            console.error("Error in searchCurrentFriends FE:", error);
-            throw error;
+            const filteredResults = this.filterSearchMatches(results ?? [], playerId, search);
+            return filteredResults.length > 0
+                ? filteredResults
+                : this.searchCurrentFriendsFromFriendList(playerId, search);
+        } catch {
+            return this.searchCurrentFriendsFromFriendList(playerId, search);
         }
     }
 
@@ -209,17 +213,16 @@ class FriendService {
         });
     }
 
+    private static async searchCurrentFriendsFromFriendList(playerId: number, search: string): Promise<PlayerGetBasicDTO[]> {
+        return this.filterSearchMatches(await this.getFriends(playerId) ?? [], playerId, search);
+    }
+
     private static filterSearchMatches(players: PlayerGetBasicDTO[], playerId: number, search: string): PlayerGetBasicDTO[] {
-        const normalizedSearch = search.trim().toLowerCase();
         return players.filter((player) => {
             const candidateId = player.id ?? 0;
             return candidateId !== playerId &&
                 !this.isGuestPlayer(player) &&
-                (
-                    (player.nickName ?? "").toLowerCase().includes(normalizedSearch) ||
-                    (player.fullName ?? "").toLowerCase().includes(normalizedSearch) ||
-                    (player.email ?? "").toLowerCase().includes(normalizedSearch)
-                );
+                matchesPlayerPublicSearch(player, search);
         });
     }
 

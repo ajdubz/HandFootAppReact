@@ -5,6 +5,7 @@ class PlayerFullDetailsDTO {
 
     public nickName?: string = '';
     public fullName?: string = '';
+    public publicTag?: string = '';
     public gameTeams?: GameTeamDTO[] = [];
     public friends?: PlayerGetBasicDTO[] = [];
 

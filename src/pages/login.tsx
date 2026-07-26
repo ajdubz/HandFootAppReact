@@ -6,6 +6,46 @@ import './login.css';
 import { clearAuthState, setAuthState } from '../utils/auth';
 import gameNightLogin from '../assets/game-night-login.jpg';
 
+export const getLoginErrorMessage = (error: unknown): string => {
+    const code = error && typeof error === "object" && "code" in error
+        ? String(error.code).toLowerCase()
+        : "";
+    const message = error instanceof Error ? error.message.toLowerCase() : "";
+
+    if (
+        code.includes("invalid-credential") ||
+        code.includes("invalid-login-credentials") ||
+        code.includes("user-not-found") ||
+        code.includes("wrong-password") ||
+        code.includes("invalid-email")
+    ) {
+        return "Incorrect user or password";
+    }
+
+    if (code.includes("operation-not-allowed")) {
+        return "Email/password login is not enabled in Firebase.";
+    }
+
+    if (code.includes("too-many-requests")) {
+        return "Too many login attempts. Please wait a moment and try again.";
+    }
+
+    if (code.includes("network-request-failed")) {
+        return "Unable to reach Firebase. Check your connection and try again.";
+    }
+
+    if (
+        code.includes("invalid-api-key") ||
+        code.includes("app-not-authorized") ||
+        code.includes("unauthorized-domain") ||
+        message.includes("firebase auth is not configured")
+    ) {
+        return "Firebase login is not configured correctly for this deployment.";
+    }
+
+    return "Unable to sign in right now. Please try again.";
+};
+
 const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
@@ -40,10 +80,10 @@ const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             }
 
             clearAuthState();
-            setError("Incorrect user or password");
+            setError("Unable to sign in because the authenticated account did not match its player profile.");
         }).catch((loginError) => {
             clearAuthState();
-            setError("Incorrect user or password");
+            setError(getLoginErrorMessage(loginError));
             console.error("Error in LoginPlayer:", loginError);
         });
     };

@@ -33,6 +33,20 @@ REACT_APP_FIREBASE_FIRESTORE_EMULATOR_PORT=8080
 
 Firebase mode still uses the same React service layer as mock and API mode. React components should not call Firebase directly.
 
+Signed-in player discovery uses the limited `playerDirectory` collection. It contains only nickname and public player-tag fields; full names and emails remain in the owner-only `players` documents. Existing accounts create or refresh their directory entry when they next sign in or load their player profile.
+
+Friendship visibility uses scalar participant UID fields so Firestore can prove each list query is authorized. When the owner of a legacy friendship next opens Friends, the service backfills those fields without exposing the private player document.
+
+Deploy Hosting together with the Firestore rules and indexes so production uses the same access model as the tested app:
+
+```powershell
+npm.cmd run firebase:deploy
+```
+
+The deploy script runs `firebase:verify` first. That gate executes the Jest suite, authenticated Friends-query checks against the Firebase emulators, and `build:firebase`, which explicitly selects the Firebase backend and disables emulator connections even if `.env.local` is configured for local mock or emulator development.
+
+Deploying Hosting by itself can leave older Firestore rules active and cause signed-in friend search/activity reads to fail with permission errors.
+
 ### Firebase smoke test checklist
 
 Before deploying Firebase mode, run through this path against the Firebase emulators:

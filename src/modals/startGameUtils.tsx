@@ -10,6 +10,10 @@ import GameService from "../services/GameService";
 import GameWithRulesDTO from "../models/DTOs/Game/GameWithRulesDTO";
 import Rules from "../models/Rules";
 import { isApiErrorCode } from "../services/apiClient";
+import {
+    getPlayerPublicTag,
+    normalizePlayerSearchText,
+} from "../player/playerPublicId";
 
 /**
  * Interface representing a custom row in the form.
@@ -36,8 +40,16 @@ const namesMatch = (existingName: string | undefined, searchName: string) => {
 }
 
 const findMatchingPlayer = (players: PlayerGetBasicDTO[] | undefined, playerName: string) => {
+    const normalizedSearch = normalizePlayerSearchText(playerName);
+    const isTagSearch = normalizedSearch.startsWith("#");
+    const normalizedTagSearch = isTagSearch ? normalizedSearch.slice(1) : "";
     return (players ?? []).find((player) =>
-        namesMatch(player.nickName, playerName) || namesMatch(player.fullName, playerName)
+        namesMatch(player.nickName, playerName) ||
+        namesMatch(player.fullName, playerName) ||
+        (
+            isTagSearch &&
+            normalizePlayerSearchText(getPlayerPublicTag(player.id, player.publicTag)) === normalizedTagSearch
+        )
     );
 };
 
@@ -46,6 +58,7 @@ const toBasicPlayer = (player: PlayerGetBasicDTO | PlayerAccountDTO) => {
     basicPlayer.id = player.id;
     basicPlayer.nickName = player.nickName;
     basicPlayer.fullName = player.fullName;
+    basicPlayer.publicTag = player.publicTag;
     return basicPlayer;
 };
 

@@ -1,7 +1,8 @@
 import PlayerFriendBasicDTO from "../../models/DTOs/Player/PlayerFriendBasicDTO";
 import PlayerGetBasicDTO from "../../models/DTOs/Player/PlayerGetBasicDTO";
-import { deleteDoc, doc, getDocs, query, setDoc, where } from "firebase/firestore";
-import { toPlayerBasicDTO } from "./firebaseMappers";
+import { deleteDoc, doc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
+import { matchesPlayerPublicSearch } from "../../player/playerPublicId";
+import { toPlayerDirectoryBasicDTO } from "./firebaseMappers";
 import FirebasePlayerService from "./FirebasePlayerService";
 import { getAllOwnedDocs, getCollection, getFirebaseUser, getRequiredFirebase, nextNumericId } from "./firebaseRepository";
 import { FirebaseFriendDocument } from "./firebaseTypes";
@@ -13,6 +14,7 @@ const friendshipDocId = (ownerUid: string, playerId: number, friendId: number): 
 class FirebaseFriendService {
     public static async getFriends(id: number): Promise<PlayerGetBasicDTO[]> {
         const user = await getFirebaseUser();
+        await FirebasePlayerService.getPlayerDocumentById(id);
         const friendships = await this.getVisibleFriendships(user.uid);
         const friendIds = friendships
             .filter((friendship) => friendship.playerId === id || friendship.friendId === id)
@@ -48,8 +50,8 @@ class FirebaseFriendService {
         }
 
         const user = await getFirebaseUser();
-        const recipient = await FirebasePlayerService.getReadablePlayerDocumentById(friendId);
-        const recipientUid = recipient?.uid ?? recipient?.ownerUid;
+        const recipient = await FirebasePlayerService.getPublicPlayerById(friendId);
+        const recipientUid = recipient?.ownerUid;
         if (!recipientUid || recipientUid === user.uid) {
             return;
         }
@@ -75,8 +77,8 @@ class FirebaseFriendService {
         }
 
         const user = await getFirebaseUser();
-        const requester = await FirebasePlayerService.getReadablePlayerDocumentById(requesterId);
-        const requesterUid = requester?.uid ?? requester?.ownerUid;
+        const requester = await FirebasePlayerService.getPublicPlayerById(requesterId);
+        const requesterUid = requester?.ownerUid;
         if (!requesterUid) {
             return;
         }
@@ -88,11 +90,13 @@ class FirebaseFriendService {
             playerId: id,
             friendId: requesterId,
             participantUids: [user.uid, requesterUid],
+            participantUid1: user.uid,
+            participantUid2: requesterUid,
         };
 
         const { db } = getRequiredFirebase();
         await setDoc(doc(db, "friendships", friendshipDocId(user.uid, id, requesterId)), friendship, { merge: true });
-        await this.deleteFriendRequests(requesterId, id, requesterUid, user.uid);
+        await this.deleteFriendRequests(requesterId, id, user.uid);
     }
 
     public static async declineFriendRequest(id: number, playerFriend: PlayerFriendBasicDTO): Promise<void> {
@@ -102,9 +106,7 @@ class FirebaseFriendService {
         }
 
         const user = await getFirebaseUser();
-        const requester = await FirebasePlayerService.getReadablePlayerDocumentById(requesterId);
-        const requesterUid = requester?.uid ?? requester?.ownerUid;
-        await this.deleteFriendRequests(requesterId, id, requesterUid, user.uid);
+        await this.deleteFriendRequests(requesterId, id, user.uid);
     }
 
     public static async removeFriend(id: number, playerFriend: PlayerFriendBasicDTO): Promise<void> {
@@ -136,32 +138,18 @@ class FirebaseFriendService {
     }
 
     public static async searchCurrentFriends(playerId: number, search: string): Promise<PlayerGetBasicDTO[]> {
-        const normalizedSearch = search.trim().toLowerCase();
-        return (await this.getFriends(playerId)).filter((friend) =>
-            (friend.nickName ?? "").toLowerCase().includes(normalizedSearch) ||
-            (friend.fullName ?? "").toLowerCase().includes(normalizedSearch)
-        );
+        return (await this.getFriends(playerId)).filter((friend) => matchesPlayerPublicSearch(friend, search));
     }
 
     private static async areFriends(playerId: number, friendId: number): Promise<boolean> {
         return (await this.getFriends(playerId)).some((friend) => friend.id === friendId);
     }
 
-    private static async deleteFriendRequest(ownerUid: string, playerId: number, friendId: number): Promise<void> {
-        const { db } = getRequiredFirebase();
-        await deleteDoc(doc(db, "friendRequests", friendRequestDocId(ownerUid, playerId, friendId)));
-    }
-
     private static async deleteFriendRequests(
         playerId: number,
         friendId: number,
-        requesterUid?: string,
         recipientUid?: string,
     ): Promise<void> {
-        if (requesterUid) {
-            await this.deleteFriendRequest(requesterUid, playerId, friendId);
-        }
-
         const matchingRequests = await this.getRequestsForPair(playerId, friendId, recipientUid);
         await Promise.all(matchingRequests.map((request) => this.deleteFriendRequestByDocId(request.docId)));
     }
@@ -214,14 +202,49 @@ class FirebaseFriendService {
     }
 
     private static async getVisibleFriendshipDocs(ownerUid: string): Promise<Array<{ docId: string; data: FirebaseFriendDocument }>> {
-        const snapshot = await getDocs(query(
-            getCollection<FirebaseFriendDocument>("friendships"),
-            where("participantUids", "array-contains", ownerUid),
-        ));
-        return snapshot.docs.map((friendship) => ({
-            docId: friendship.id,
-            data: friendship.data(),
+        const friendships = getCollection<FirebaseFriendDocument>("friendships");
+        const [ownedSnapshot, firstParticipantSnapshot, secondParticipantSnapshot] = await Promise.all([
+            getDocs(query(friendships, where("ownerUid", "==", ownerUid))),
+            getDocs(query(friendships, where("participantUid1", "==", ownerUid))),
+            getDocs(query(friendships, where("participantUid2", "==", ownerUid))),
+        ]);
+        const visibleFriendships = new Map<string, { docId: string; data: FirebaseFriendDocument }>();
+
+        [ownedSnapshot, firstParticipantSnapshot, secondParticipantSnapshot].forEach((snapshot) => {
+            snapshot.docs.forEach((friendship) => {
+                visibleFriendships.set(friendship.id, {
+                    docId: friendship.id,
+                    data: friendship.data(),
+                });
+            });
+        });
+
+        const legacyOwnedFriendships = ownedSnapshot.docs.filter((friendship) => {
+            const data = friendship.data();
+            return !data.participantUid1 &&
+                !data.participantUid2 &&
+                data.participantUids?.length === 2;
+        });
+        await Promise.all(legacyOwnedFriendships.map(async (friendship) => {
+            const data = friendship.data();
+            const participantUid1 = data.participantUids![0];
+            const participantUid2 = data.participantUids![1];
+            const { db } = getRequiredFirebase();
+            await updateDoc(doc(db, "friendships", friendship.id), {
+                participantUid1,
+                participantUid2,
+            });
+            visibleFriendships.set(friendship.id, {
+                docId: friendship.id,
+                data: {
+                    ...data,
+                    participantUid1,
+                    participantUid2,
+                },
+            });
         }));
+
+        return Array.from(visibleFriendships.values());
     }
 
     private static isFriendship(friendship: FirebaseFriendDocument, playerId: number, friendId: number): boolean {
@@ -231,8 +254,8 @@ class FirebaseFriendService {
 
     private static async getBasicPlayers(playerIds: number[]): Promise<PlayerGetBasicDTO[]> {
         const uniquePlayerIds = Array.from(new Set(playerIds.filter(Boolean)));
-        const players = await Promise.all(uniquePlayerIds.map((playerId) => FirebasePlayerService.getReadablePlayerDocumentById(playerId)));
-        return players.filter(Boolean).map((player) => toPlayerBasicDTO(player!));
+        const players = await Promise.all(uniquePlayerIds.map((playerId) => FirebasePlayerService.getPublicPlayerById(playerId)));
+        return players.filter(Boolean).map((player) => toPlayerDirectoryBasicDTO(player!));
     }
 }
 

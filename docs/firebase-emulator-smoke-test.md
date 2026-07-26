@@ -45,16 +45,29 @@ Open `http://localhost:3000`.
 9. Start a two-player-per-team game and confirm typed-in guest teammates are saved.
 10. Confirm the team list does not show `Delete My Previous Games` in Firebase mode.
 
-## Deferred Friend Path
+## Friend Path
 
-Friend-request smoke testing is intentionally deferred until the Friends screen supports friend search and clearer add/manage workflows.
+Before deploying Firebase friend-request changes publicly:
 
-Before enabling Firebase friend requests publicly:
+1. Sign into each existing real account once so its public directory entry is created.
+2. Confirm each account shows a stable public player ID in `Nickname#TAG` form.
+3. Search for a player by nickname using different letter casing.
+4. Search for the same player by public tag, beginning with `#`, using different letter casing.
+5. Confirm searching by real name or email does not return the player.
+6. Send a friend request.
+7. Open the recipient player's friends page and accept the request.
+8. Confirm both players show as friends with their public player IDs.
+9. For a friendship created before participant UID fields were added, have the player who accepted the request open Friends once and then confirm the other participant can see it.
 
-1. Search for a player who has not already played on a team with the current player.
-2. Send a friend request.
-3. Open the recipient player's friends page and accept the request.
-4. Confirm both players show as friends.
+## Production Deployment
+
+Deploy Hosting, Firestore rules, and indexes together:
+
+```powershell
+npm.cmd run firebase:deploy
+```
+
+Deploying only Hosting can leave stale Firestore rules in production, which makes player discovery and friend activity fail even when the same flows pass against the emulators.
 
 ## Validation Gate
 
@@ -62,8 +75,10 @@ After the core manual path:
 
 ```powershell
 npm.cmd test -- --watchAll=false --cacheDirectory=.jest-cache
-npm.cmd run build
+npm.cmd run test:firebase:friends
+npm.cmd run build:firebase
+npm.cmd run test:firebase:hosting
 npm.cmd audit --audit-level=low
 ```
 
-Do not deploy Firebase mode publicly until the core manual path, automated validation, Firestore rules review, and dependency vulnerability cleanup pass.
+The Hosting smoke test confirms that the SPA shell and rewritten deep links cannot stay stale while fingerprinted JavaScript does not inherit the shell's no-cache policy. `npm.cmd run firebase:deploy` runs the automated Firebase checks before deployment. Do not deploy Firebase mode publicly until the core manual path, automated validation, Firestore rules review, and dependency vulnerability cleanup pass.

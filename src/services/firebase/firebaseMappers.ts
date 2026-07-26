@@ -8,11 +8,13 @@ import TeamGetBasicDTO from "../../models/DTOs/Team/TeamGetBasicDTO";
 import TeamGetWithPlayerNamesDTO from "../../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
 import { normalizeRules } from "../../rules/rulesDefaults";
 import Rules from "../../models/Rules";
+import { getPlayerPublicTag } from "../../player/playerPublicId";
 import {
     FirebaseGameDocument,
     FirebaseGameRoundDocument,
     FirebaseGameTeamDocument,
     FirebasePlayerDocument,
+    FirebasePlayerDirectoryDocument,
     FirebaseTeamDocument,
 } from "./firebaseTypes";
 
@@ -62,6 +64,7 @@ export const toPlayerAccountDTO = (player: FirebasePlayerDocument): PlayerAccoun
     email: player.email ?? "",
     password: "",
     isGuest: player.isGuest ?? false,
+    publicTag: getPlayerPublicTag(player.id),
 });
 
 export const toPlayerBasicDTO = (player: FirebasePlayerDocument): PlayerGetBasicDTO => Object.assign(new PlayerGetBasicDTO(), {
@@ -70,6 +73,16 @@ export const toPlayerBasicDTO = (player: FirebasePlayerDocument): PlayerGetBasic
     fullName: player.fullName ?? "",
     email: player.email ?? "",
     isGuest: player.isGuest ?? false,
+    publicTag: getPlayerPublicTag(player.id),
+});
+
+export const toPlayerDirectoryBasicDTO = (player: FirebasePlayerDirectoryDocument): PlayerGetBasicDTO => Object.assign(new PlayerGetBasicDTO(), {
+    id: player.id,
+    nickName: player.nickName,
+    fullName: "",
+    email: "",
+    isGuest: false,
+    publicTag: player.publicTag,
 });
 
 export const toTeamBasicDTO = (team: FirebaseTeamDocument): TeamGetBasicDTO => Object.assign(new TeamGetBasicDTO(), {

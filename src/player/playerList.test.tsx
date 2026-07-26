@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import FriendService from "../services/FriendService";
 import PlayerService from "../services/PlayerService";
 import { PlayerListTable } from "./playerList";
+import { getPlayerPublicId } from "./playerPublicId";
 
 jest.mock("../services/PlayerService", () => ({
     __esModule: true,
@@ -43,7 +44,7 @@ describe("PlayerListTable", () => {
             </MemoryRouter>
         );
 
-        const loganRow = (await screen.findByText(/\(Logan Smith\)/i)).closest("tr");
+        const loganRow = (await screen.findByText(getPlayerPublicId("Logan", 2))).closest("tr");
         const guestRow = (await screen.findByText(/\(Guest Player\)/i)).closest("tr");
 
         expect(loganRow).not.toBeNull();

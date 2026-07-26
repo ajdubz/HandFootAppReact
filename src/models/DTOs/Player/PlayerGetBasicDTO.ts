@@ -5,6 +5,7 @@ class PlayerGetBasicDTO {
     fullName?: string = '';
     email?: string = '';
     isGuest?: boolean = false;
+    publicTag?: string = '';
 
 }
 

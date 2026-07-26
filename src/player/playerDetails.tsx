@@ -7,6 +7,7 @@ import Button from "react-bootstrap/Button";
 import StartGame from "../modals/startGame";
 import { isGuestSession } from "../utils/auth";
 import { getActiveGameRoute } from "../utils/activeGame";
+import { getPlayerPublicId } from "./playerPublicId";
 import "./playerDetails.css";
 
 interface RouteParams {
@@ -110,6 +111,21 @@ function PlayerDetails() {
                 </label>
                 <br />
             </div>
+            {player && !isGuestSession() && (
+                <div>
+                    <label>
+                        Public player ID:
+                        <input
+                            type="text"
+                            name="publicPlayerId"
+                            value={getPlayerPublicId(player?.nickName, Number(id), player?.publicTag)}
+                            readOnly
+                        />
+                    </label>
+                    <br />
+                    <small>Share this ID so other players can find the right account.</small>
+                </div>
+            )}
             <div className="player-detail-actions" aria-label="Player actions">
                 {activeGameRoute && (
                     <Button variant="success" onClick={() => navigate(activeGameRoute)}>

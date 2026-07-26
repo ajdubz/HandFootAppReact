@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import FriendService from "../services/FriendService";
 import PlayerFriendBasicDTO from "../models/DTOs/Player/PlayerFriendBasicDTO";
+import { getPlayerPublicId } from "./playerPublicId";
 
 const isGuestPlayer = (player: PlayerGetBasicDTO): boolean => {
     const email = (player.email ?? "").toLowerCase();
@@ -82,6 +83,9 @@ const PlayerListTable = () => {
                         const playerId = player.id ?? 0;
                         const isGuest = isGuestPlayer(player);
                         const showSendRequest = !isCurrentUser && !isGuest && !isAlreadyFriend(playerId) && !isPendingRequest(playerId);
+                        const displayName = isGuest
+                            ? player.nickName
+                            : getPlayerPublicId(player.nickName, player.id, player.publicTag);
 
                         return (
                             <tr key={player.id}>
@@ -89,13 +93,13 @@ const PlayerListTable = () => {
                                     {isCurrentUser ? (
                                         <strong>
                                             <button type="button" className="link-button" onClick={() => navigateTo(`/player/${player.id}`)}>
-                                                {player.nickName}
+                                                {displayName}
                                             </button>
                                         </strong>
                                     ) : (
-                                        <strong>{player.nickName}</strong>
+                                        <strong>{displayName}</strong>
                                     )}
-                                    {` (${player.fullName})`}
+                                    {isGuest && player.fullName ? ` (${player.fullName})` : ""}
                                 </td>
                                 <td>
                                     {showSendRequest && (
@@ -133,7 +137,13 @@ const ListFriends = (friends: PlayerGetBasicDTO[] | undefined, onClickFunc: (pla
     return (
         <div>
             {friends?.map((friend) => (
-                <div key={friend.id}><strong><button type="button" className="link-button" onClick={() => onClickFunc(friend)}>{friend.nickName}</button></strong>{" (" + friend.fullName + ")"}</div>
+                <div key={friend.id}>
+                    <strong>
+                        <button type="button" className="link-button" onClick={() => onClickFunc(friend)}>
+                            {getPlayerPublicId(friend.nickName, friend.id, friend.publicTag)}
+                        </button>
+                    </strong>
+                </div>
             ))}
         </div>
     );

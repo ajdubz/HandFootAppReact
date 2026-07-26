@@ -1,4 +1,6 @@
 import PlayerFriendBasicDTO from "../models/DTOs/Player/PlayerFriendBasicDTO";
+import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
+import { getPlayerPublicTag } from "../player/playerPublicId";
 import FriendService from "./FriendService";
 import MockApi from "./MockApi";
 
@@ -63,6 +65,49 @@ describe("FriendService", () => {
         await expect(FriendService.searchNewFriends(1, "Casey")).resolves.toEqual([
             expect.objectContaining({ id: 4, nickName: "Casey" }),
         ]);
+    });
+
+    test("mock friend search matches nickname and public tag without case sensitivity, but not private fields", async () => {
+        process.env.REACT_APP_API_URL = "mock";
+        delete process.env.REACT_APP_DATA_BACKEND;
+        MockApi.reset();
+
+        const playerFriend = new PlayerFriendBasicDTO();
+        playerFriend.playerId = 1;
+        playerFriend.friendId = 4;
+        await FriendService.declineFriendRequest(1, playerFriend);
+
+        await expect(FriendService.searchNewFriends(1, "CaSeY")).resolves.toEqual([
+            expect.objectContaining({ id: 4, nickName: "Casey" }),
+        ]);
+        const casey = (await MockApi.getPlayerAccountById(4))!;
+        await expect(FriendService.searchNewFriends(1, casey.publicTag!.toLowerCase())).resolves.toEqual([]);
+        await expect(FriendService.searchNewFriends(1, `#${casey.publicTag!.toLowerCase()}`)).resolves.toEqual([
+            expect.objectContaining({ id: 4, publicTag: casey.publicTag }),
+        ]);
+        await expect(FriendService.searchNewFriends(1, "Morgan")).resolves.toEqual([]);
+        await expect(FriendService.searchNewFriends(1, "casey@example.com")).resolves.toEqual([]);
+    });
+
+    test("allows duplicate nicknames and gives each account a different public tag", async () => {
+        process.env.REACT_APP_API_URL = "mock";
+        delete process.env.REACT_APP_DATA_BACKEND;
+        MockApi.reset();
+
+        const duplicateCasey = Object.assign(new PlayerAccountDTO(), {
+            nickName: "Casey",
+            fullName: "Another Private Name",
+            email: "another-casey@example.com",
+            password: "password",
+        });
+        const createdPlayer = await MockApi.createPlayer(duplicateCasey);
+        const matches = await MockApi.searchPlayers("casey");
+
+        expect(matches).toEqual(expect.arrayContaining([
+            expect.objectContaining({ id: 4, nickName: "Casey" }),
+            expect.objectContaining({ id: createdPlayer.id, nickName: "Casey" }),
+        ]));
+        expect(new Set(matches.map((player) => player.publicTag)).size).toBe(2);
     });
 
     test("falls back to player list search when the backend search route is unavailable", async () => {
@@ -159,5 +204,35 @@ describe("FriendService", () => {
         await expect(FriendService.searchNewFriends(1, "Logan")).resolves.toEqual([
             expect.objectContaining({ id: 5, nickName: "Logan" }),
         ]);
+    });
+
+    test("filters API current-friend search to nicknames and hash-prefixed public tags", async () => {
+        process.env.REACT_APP_API_URL = "http://localhost:8000";
+        delete process.env.REACT_APP_DATA_BACKEND;
+        localStorage.setItem("token", "backend-token");
+        const logan = { id: 5, nickName: "Logan", fullName: "Private Smith" };
+        const loganTag = getPlayerPublicTag(logan.id);
+
+        global.fetch = jest.fn((url: RequestInfo | URL) => {
+            const requestUrl = String(url);
+            const isCurrentFriendSearch = requestUrl.includes("/Player/1/currFriendSearch/");
+            const responseBody = isCurrentFriendSearch
+                ? [logan]
+                : requestUrl.endsWith("/Player/1/friends")
+                    ? [logan]
+                    : [];
+
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                text: jest.fn().mockResolvedValue(JSON.stringify(responseBody)),
+            } as unknown as Response);
+        });
+
+        await expect(FriendService.searchCurrentFriends(1, "Smith")).resolves.toEqual([]);
+        await expect(FriendService.searchCurrentFriends(1, `#${loganTag.toLowerCase()}`)).resolves.toEqual([
+            expect.objectContaining({ id: 5, nickName: "Logan" }),
+        ]);
+        await expect(FriendService.searchCurrentFriends(1, loganTag)).resolves.toEqual([]);
     });
 });

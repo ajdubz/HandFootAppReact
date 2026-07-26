@@ -20,6 +20,22 @@ service cloud.firestore {
         request.auth.uid in data.participantUids;
     }
 
+    function hasValidFriendshipParticipants(data) {
+      return data.participantUids is list &&
+        data.participantUids.size() == 2 &&
+        data.participantUid1 is string &&
+        data.participantUid2 is string &&
+        data.participantUid1 == data.participantUids[0] &&
+        data.participantUid2 == data.participantUids[1] &&
+        data.participantUid1 != data.participantUid2;
+    }
+
+    function isFriendshipMember(data) {
+      return isSignedIn() &&
+        (data.participantUid1 == request.auth.uid ||
+          data.participantUid2 == request.auth.uid);
+    }
+
     function isValidCounterName(document) {
       return document.matches('counter_(players|teams|games|gameTeams|rounds|friendships|friendRequests)');
     }
@@ -45,13 +61,40 @@ service cloud.firestore {
     }
 
     match /players/{playerId} {
-      allow read: if isSignedIn();
+      allow read: if isOwner(resource.data);
       allow create: if isOwner(request.resource.data) &&
         hasOnlyKeys(['id', 'uid', 'ownerUid', 'nickName', 'fullName', 'email', 'isGuest']);
       allow update: if isOwner(resource.data) &&
         isOwner(request.resource.data) &&
         keepsFieldsUnchanged(['id', 'uid', 'ownerUid', 'isGuest']) &&
         hasOnlyKeys(['id', 'uid', 'ownerUid', 'nickName', 'fullName', 'email', 'isGuest']);
+      allow delete: if isOwner(resource.data);
+    }
+
+    match /playerDirectory/{directoryId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() &&
+        request.query.limit != null &&
+        request.query.limit <= 20;
+      allow create: if isSignedIn() &&
+        directoryId == request.auth.uid &&
+        isOwner(request.resource.data) &&
+        get(/databases/$(database)/documents/players/$(request.auth.uid)).data.id == request.resource.data.id &&
+        request.resource.data.id is int &&
+        request.resource.data.nickName is string &&
+        request.resource.data.nickNameNormalized is string &&
+        request.resource.data.publicTag is string &&
+        request.resource.data.publicTagNormalized is string &&
+        hasOnlyKeys(['id', 'ownerUid', 'nickName', 'nickNameNormalized', 'publicTag', 'publicTagNormalized']);
+      allow update: if isSignedIn() &&
+        directoryId == request.auth.uid &&
+        isOwner(resource.data) &&
+        isOwner(request.resource.data) &&
+        keepsIdAndOwner() &&
+        keepsFieldsUnchanged(['publicTag', 'publicTagNormalized']) &&
+        request.resource.data.nickName is string &&
+        request.resource.data.nickNameNormalized is string &&
+        hasOnlyKeys(['id', 'ownerUid', 'nickName', 'nickNameNormalized', 'publicTag', 'publicTagNormalized']);
       allow delete: if isOwner(resource.data);
     }
 
@@ -116,16 +159,22 @@ service cloud.firestore {
     }
 
     match /friendships/{friendshipId} {
-      allow read: if isOwner(resource.data) || isParticipant(resource.data);
+      allow get: if isOwner(resource.data) ||
+        isParticipant(resource.data) ||
+        isFriendshipMember(resource.data);
+      allow list: if isOwner(resource.data) || isFriendshipMember(resource.data);
       allow create: if isOwner(request.resource.data) &&
-        request.resource.data.participantUids is list &&
+        hasValidFriendshipParticipants(request.resource.data) &&
         request.auth.uid in request.resource.data.participantUids &&
-        hasOnlyKeys(['id', 'ownerUid', 'playerId', 'friendId', 'participantUids']);
+        hasOnlyKeys(['id', 'ownerUid', 'playerId', 'friendId', 'participantUids', 'participantUid1', 'participantUid2']);
       allow update: if isOwner(resource.data) &&
         isOwner(request.resource.data) &&
-        keepsIdAndOwner() &&
-        hasOnlyKeys(['id', 'ownerUid', 'playerId', 'friendId', 'participantUids']);
-      allow delete: if isOwner(resource.data) || isParticipant(resource.data);
+        keepsFieldsUnchanged(['id', 'ownerUid', 'playerId', 'friendId', 'participantUids']) &&
+        hasValidFriendshipParticipants(request.resource.data) &&
+        hasOnlyKeys(['id', 'ownerUid', 'playerId', 'friendId', 'participantUids', 'participantUid1', 'participantUid2']);
+      allow delete: if isOwner(resource.data) ||
+        isParticipant(resource.data) ||
+        isFriendshipMember(resource.data);
     }
 
     match /metadata/{document} {

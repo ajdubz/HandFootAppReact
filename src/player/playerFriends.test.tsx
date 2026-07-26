@@ -21,16 +21,16 @@ describe("PlayerFriends workflow", () => {
     beforeEach(() => {
         jest.clearAllMocks();
         (FriendService.getFriends as jest.Mock).mockResolvedValue([
-            { id: 2, nickName: "Sam", fullName: "Sam Taylor" },
+            { id: 2, nickName: "Sam", publicTag: "SAM1234" },
         ]);
         (FriendService.getFriendRequests as jest.Mock).mockResolvedValue([
-            { id: 4, nickName: "Casey", fullName: "Casey Morgan" },
+            { id: 4, nickName: "Casey", publicTag: "CAS1234" },
         ]);
         (FriendService.getSentFriendRequests as jest.Mock).mockResolvedValue([
-            { id: 3, nickName: "Jordan", fullName: "Jordan Lee" },
+            { id: 3, nickName: "Jordan", publicTag: "JOR1234" },
         ]);
         (FriendService.searchNewFriends as jest.Mock).mockResolvedValue([
-            { id: 5, nickName: "Logan", fullName: "Logan Smith" },
+            { id: 5, nickName: "Logan", publicTag: "LOG1234" },
         ]);
         (FriendService.sendFriendRequest as jest.Mock).mockResolvedValue(undefined);
         (FriendService.acceptFriendRequest as jest.Mock).mockResolvedValue(undefined);
@@ -40,20 +40,22 @@ describe("PlayerFriends workflow", () => {
     test("shows friends, incoming requests, sent requests, and searchable players", async () => {
         renderFriendsPage();
 
-        expect(await screen.findByText("Sam")).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: /casey \(casey morgan\)/i })).toBeInTheDocument();
-        expect(screen.getByText("Jordan")).toBeInTheDocument();
+        expect(screen.getByText(/search by nickname or #tag/i)).toBeInTheDocument();
+        expect(screen.getByPlaceholderText(/type a nickname or #tag/i)).toBeInTheDocument();
+        expect(await screen.findByText("Sam#SAM1234")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /casey#cas1234/i })).toBeInTheDocument();
+        expect(screen.getByText("Jordan#JOR1234")).toBeInTheDocument();
 
         fireEvent.change(screen.getByLabelText(/^search players$/i), { target: { value: "log" } });
 
-        expect(await screen.findByText("Logan")).toBeInTheDocument();
+        expect(await screen.findByText("Logan#LOG1234")).toBeInTheDocument();
         expect(FriendService.searchNewFriends).toHaveBeenCalledWith(1, "log");
     });
 
     test("sends, accepts, and declines requests through FriendService", async () => {
         renderFriendsPage();
 
-        expect(await screen.findByRole("button", { name: /casey \(casey morgan\)/i })).toBeInTheDocument();
+        expect(await screen.findByRole("button", { name: /casey#cas1234/i })).toBeInTheDocument();
 
         fireEvent.change(screen.getByLabelText(/^search players$/i), { target: { value: "log" } });
         fireEvent.click(await screen.findByRole("button", { name: /send request/i }));

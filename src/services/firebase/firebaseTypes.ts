@@ -10,6 +10,15 @@ export interface FirebasePlayerDocument {
     isGuest?: boolean;
 }
 
+export interface FirebasePlayerDirectoryDocument {
+    id: number;
+    ownerUid: string;
+    nickName: string;
+    nickNameNormalized: string;
+    publicTag: string;
+    publicTagNormalized: string;
+}
+
 export interface FirebaseTeamDocument {
     id: number;
     ownerUid: string;
@@ -57,4 +66,6 @@ export interface FirebaseFriendDocument {
     friendId: number;
     recipientUid?: string;
     participantUids?: string[];
+    participantUid1?: string;
+    participantUid2?: string;
 }

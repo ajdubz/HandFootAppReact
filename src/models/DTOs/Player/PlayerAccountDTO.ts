@@ -8,6 +8,7 @@ class PlayerAccountDTO {
     public email?: string = '';
     public password?: string = '';
     public isGuest?: boolean = false;
+    public publicTag?: string = '';
 
 }
 

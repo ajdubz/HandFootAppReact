@@ -13,7 +13,7 @@ import {
 } from "firebase/firestore";
 import { firebaseAuth, firestoreDb, isFirebaseConfigured } from "../../firebase";
 
-export type FirebaseCollectionName = "players" | "teams" | "games" | "gameTeams" | "rounds" | "friendships" | "friendRequests";
+export type FirebaseCollectionName = "players" | "playerDirectory" | "teams" | "games" | "gameTeams" | "rounds" | "friendships" | "friendRequests";
 
 export const getRequiredFirebase = (): { db: Firestore } => {
     if (!isFirebaseConfigured || !firestoreDb) {
@@ -69,23 +69,6 @@ export const nextNumericId = async (name: FirebaseCollectionName): Promise<numbe
         transaction.set(counterRef, { nextId: nextValue + 1 }, { merge: true });
         return nextValue;
     });
-};
-
-export const getFirstByNumericId = async <T>(
-    name: FirebaseCollectionName,
-    id: number,
-): Promise<{ docId: string; data: T } | undefined> => {
-    const snapshot = await getDocs(query(getCollection<T>(name), where("id", "==", id), limit(1)));
-    const firstDoc = snapshot.docs[0];
-
-    if (!firstDoc) {
-        return undefined;
-    }
-
-    return {
-        docId: firstDoc.id,
-        data: firstDoc.data(),
-    };
 };
 
 export const getOwnedByNumericId = async <T extends { ownerUid: string }>(

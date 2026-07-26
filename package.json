@@ -29,6 +29,11 @@
     "start:firebase": "set \"REACT_APP_DATA_BACKEND=firebase\" && react-scripts start",
     "start:firebase:emulators": "set \"REACT_APP_DATA_BACKEND=firebase\" && set \"REACT_APP_FIREBASE_USE_EMULATORS=true\" && react-scripts start",
     "firebase:emulators": "firebase.cmd emulators:start --only auth,firestore",
+    "test:firebase:friends": "firebase.cmd emulators:exec --only auth,firestore \"node scripts/firebase-friends-rules-smoke.mjs\"",
+    "test:firebase:hosting": "firebase.cmd emulators:exec --only hosting \"node scripts/firebase-hosting-cache-smoke.mjs\"",
+    "build:firebase": "set \"REACT_APP_DATA_BACKEND=firebase\" && set \"REACT_APP_FIREBASE_USE_EMULATORS=false\" && react-scripts build",
+    "firebase:verify": "npm.cmd test -- --watchAll=false --cacheDirectory=.jest-cache --silent && npm.cmd run test:firebase:friends && npm.cmd run build:firebase && npm.cmd run test:firebase:hosting",
+    "firebase:deploy": "npm.cmd run firebase:verify && firebase.cmd deploy --only hosting,firestore:rules,firestore:indexes",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

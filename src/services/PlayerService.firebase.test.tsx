@@ -1,4 +1,5 @@
 import PlayerLoginDTO from "../models/DTOs/Player/PlayerLoginDTO";
+import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import FirebasePlayerService from "./firebase/FirebasePlayerService";
 import PlayerService from "./PlayerService";
 
@@ -14,6 +15,7 @@ const restoreEnv = (key: string, value: string | undefined): void => {
 jest.mock("./firebase/FirebasePlayerService", () => ({
     __esModule: true,
     default: {
+        LoginPlayer: jest.fn(),
         startGuestSession: jest.fn(),
     },
 }));
@@ -57,5 +59,24 @@ describe("PlayerService firebase backend routing", () => {
         expect(localStorage.getItem("token")).toBe("firebase-token");
         expect(localStorage.getItem("currentPlayerId")).toBe("77");
         expect(localStorage.getItem("isGuestSession")).toBe("true");
+    });
+
+    test("routes account login through Firebase even when the local API URL says mock", async () => {
+        const account = Object.assign(new PlayerAccountDTO(), {
+            email: "alex@example.com",
+            password: "password",
+        });
+        const login = Object.assign(new PlayerLoginDTO(), {
+            id: 1,
+            nickName: "Alex",
+            email: "alex@example.com",
+            token: "firebase-token",
+        });
+        (FirebasePlayerService.LoginPlayer as jest.Mock).mockResolvedValue(login);
+
+        await expect(PlayerService.LoginPlayer(account)).resolves.toEqual(login);
+
+        expect(FirebasePlayerService.LoginPlayer).toHaveBeenCalledWith(account);
+        expect(global.fetch).not.toHaveBeenCalled();
     });
 });

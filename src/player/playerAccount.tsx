@@ -8,6 +8,7 @@ import Button from "react-bootstrap/Button";
 import { Row, Col } from "react-bootstrap";
 import { isApiErrorCode } from "../services/apiClient";
 import { isFirebaseBackend } from "../services/apiConfig";
+import { getPlayerPublicId } from "./playerPublicId";
 
 interface RouteParams {
     [id: string]: string | undefined;
@@ -71,7 +72,7 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
             .then(() => { navigate(isRegistrationPage ? "/login" : "/playersList"); })
             .catch((error: unknown) => {
                 if (isDuplicateAccountError(error)) {
-                    setErrors({ accountExists: "Account already exists. Please use a different nickname or email." });
+                    setErrors({ accountExists: "Account already exists. Please use a different email." });
                     return;
                 }
                 console.log(error);
@@ -96,7 +97,7 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
             .then(() => { navigate(`/player/${id}`); })
             .catch((error: unknown) => {
                 if (isDuplicateAccountError(error)) {
-                    setErrors({ accountExists: "Account already exists. Please use a different nickname or email." });
+                    setErrors({ accountExists: "Account already exists. Please use a different email." });
                     return;
                 }
                 console.log(error);
@@ -135,7 +136,6 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
 
     const checkDuplicateUser = async (): Promise<string | undefined> => {
         const allPlayers = await PlayerService.getPlayers();
-        const normalizedNickname = nickname.trim().toLowerCase();
         const normalizedEmail = email.trim().toLowerCase();
         const currentId = id ? Number(id) : undefined;
         const playerAccounts = await Promise.all(
@@ -150,16 +150,15 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
                 return false;
             }
 
-            const sameNickname = (existingPlayer.nickName ?? "").trim().toLowerCase() === normalizedNickname;
             const sameEmail = (existingPlayer.email ?? "").trim().toLowerCase() === normalizedEmail;
-            return sameNickname || sameEmail;
+            return sameEmail;
         });
 
         if (!duplicate) {
             return undefined;
         }
 
-        return "Account already exists. Please use a different nickname or email.";
+        return "Account already exists. Please use a different email.";
     };
 
     const onSubmitFunc = async () => {
@@ -224,6 +223,19 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
                             <Form.Control type="text" id="nickname" name="nickname" defaultValue={nickname} onChange={(e) => setNickname(e.target.value)} />
                             {errors.nickname && <div className="text-danger">{errors.nickname}</div>}
                         </Form.Group>
+                        {id && (
+                            <Form.Group className="mb-3">
+                                <Form.Label htmlFor="publicPlayerId">Public Player ID</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    id="publicPlayerId"
+                                    name="publicPlayerId"
+                                    value={getPlayerPublicId(nickname, Number(id), player?.publicTag)}
+                                    readOnly
+                                />
+                                <Form.Text>Share this ID so other players can find the right account.</Form.Text>
+                            </Form.Group>
+                        )}
                         <Form.Group className="mb-3">
                             <Form.Label htmlFor="fullName">Full Name</Form.Label>
                             <Form.Control type="text" id="fullName" name="fullName" defaultValue={fullName} onChange={(e) => setFullName(e.target.value)} />

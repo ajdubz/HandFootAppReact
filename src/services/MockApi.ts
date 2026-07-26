@@ -13,6 +13,10 @@ import TeamCreateDTO from "../models/DTOs/Team/TeamCreateDTO";
 import TeamGetBasicDTO from "../models/DTOs/Team/TeamGetBasicDTO";
 import TeamGetWithPlayerNamesDTO from "../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
 import { normalizeRules } from "../rules/rulesDefaults";
+import {
+    getPlayerPublicTag,
+    matchesPlayerPublicSearch,
+} from "../player/playerPublicId";
 import { isMockApiConfigured } from "./apiConfig";
 
 type MockState = {
@@ -92,7 +96,8 @@ class MockApi {
     }
 
     public static async getPlayerAccountById(id: number): Promise<PlayerAccountDTO | undefined> {
-        return this.getState().players.find((p) => p.id === id);
+        const player = this.getState().players.find((p) => p.id === id);
+        return player ? { ...player, publicTag: getPlayerPublicTag(player.id, player.publicTag) } : undefined;
     }
 
     public static async getPlayerFullDetailsById(id: number): Promise<PlayerFullDetailsDTO> {
@@ -101,6 +106,7 @@ class MockApi {
         const details = new PlayerFullDetailsDTO();
         details.nickName = player?.nickName ?? "";
         details.fullName = player?.fullName ?? "";
+        details.publicTag = getPlayerPublicTag(player?.id, player?.publicTag);
         details.friends = this.friendIdsFor(state, id).map((friendId) => this.toBasicPlayerById(state, friendId)).filter(Boolean) as PlayerGetBasicDTO[];
         details.gameTeams = state.gameTeams.filter((gameTeam) => gameTeam.team?.teamMembers?.some((member) => member.id === id));
         return details;
@@ -108,18 +114,21 @@ class MockApi {
 
     public static async createPlayer(player: PlayerAccountDTO): Promise<PlayerAccountDTO> {
         const state = this.getState();
-        const normalizedNickName = (player.nickName ?? "").trim().toLowerCase();
         const normalizedEmail = (player.email ?? "").trim().toLowerCase();
         const duplicatePlayer = state.players.find((existingPlayer) =>
-            (existingPlayer.nickName ?? "").trim().toLowerCase() === normalizedNickName ||
             (existingPlayer.email ?? "").trim().toLowerCase() === normalizedEmail
         );
 
         if (duplicatePlayer) {
-            throw new Error("An account with that nickname or email already exists.");
+            throw new Error("An account with that email already exists.");
         }
 
-        const newPlayer = { ...player, id: this.nextId(state.players) };
+        const nextPlayerId = this.nextId(state.players);
+        const newPlayer = {
+            ...player,
+            id: nextPlayerId,
+            publicTag: getPlayerPublicTag(nextPlayerId, player.publicTag),
+        };
         state.players.push(newPlayer);
         this.saveState(state);
         return newPlayer;
@@ -139,23 +148,24 @@ class MockApi {
 
     public static async updatePlayerAccount(playerId: number, player: PlayerAccountDTO) {
         const state = this.getState();
-        const normalizedNickName = (player.nickName ?? "").trim().toLowerCase();
         const normalizedEmail = (player.email ?? "").trim().toLowerCase();
         const duplicatePlayer = state.players.find((existingPlayer) =>
             existingPlayer.id !== playerId &&
-            (
-                (existingPlayer.nickName ?? "").trim().toLowerCase() === normalizedNickName ||
-                (existingPlayer.email ?? "").trim().toLowerCase() === normalizedEmail
-            )
+            (existingPlayer.email ?? "").trim().toLowerCase() === normalizedEmail
         );
 
         if (duplicatePlayer) {
-            throw new Error("An account with that nickname or email already exists.");
+            throw new Error("An account with that email already exists.");
         }
 
         const index = state.players.findIndex((p) => p.id === playerId);
         if (index >= 0) {
-            state.players[index] = { ...state.players[index], ...player, id: playerId };
+            state.players[index] = {
+                ...state.players[index],
+                ...player,
+                id: playerId,
+                publicTag: getPlayerPublicTag(playerId, state.players[index].publicTag),
+            };
             this.saveState(state);
         }
     }
@@ -233,6 +243,7 @@ class MockApi {
             .filter((p) => {
                 const candidateId = p.id ?? 0;
                 return candidateId !== playerId &&
+                    p.isGuest !== true &&
                     !existingFriendIds.has(candidateId) &&
                     !sentRequestIds.has(candidateId) &&
                     !incomingRequestIds.has(candidateId) &&
@@ -472,6 +483,7 @@ class MockApi {
             fullName: player.fullName,
             email: player.email,
             isGuest: player.isGuest ?? false,
+            publicTag: getPlayerPublicTag(player.id, player.publicTag),
         };
     }
 
@@ -493,7 +505,7 @@ class MockApi {
     }
 
     private static matchesPlayer(player: PlayerAccountDTO | PlayerGetBasicDTO, search: string): boolean {
-        return this.matchesText(player.nickName, search) || this.matchesText(player.fullName, search);
+        return matchesPlayerPublicSearch(this.toBasicPlayer(player), search);
     }
 
     private static matchesText(value: string | undefined, search: string): boolean {

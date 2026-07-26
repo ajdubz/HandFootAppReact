@@ -1,5 +1,5 @@
 import PlayerFriendBasicDTO from "../../models/DTOs/Player/PlayerFriendBasicDTO";
-import { deleteDoc, doc, getDocs, query, setDoc, where } from "firebase/firestore";
+import { deleteDoc, doc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { getAllOwnedDocs, getFirebaseUser, getRequiredFirebase, nextNumericId } from "./firebaseRepository";
 import FirebaseFriendService from "./FirebaseFriendService";
 import FirebasePlayerService from "./FirebasePlayerService";
@@ -10,6 +10,7 @@ jest.mock("firebase/firestore", () => ({
     getDocs: jest.fn(),
     query: jest.fn((collectionRef: unknown, ...conditions: unknown[]) => ({ collectionRef, conditions })),
     setDoc: jest.fn(),
+    updateDoc: jest.fn(),
     where: jest.fn((field: string, operator: string, value: unknown) => ({ field, operator, value })),
 }));
 
@@ -25,7 +26,7 @@ jest.mock("./FirebasePlayerService", () => ({
     __esModule: true,
     default: {
         getPlayerDocumentById: jest.fn(),
-        getReadablePlayerDocumentById: jest.fn(),
+        getPublicPlayerById: jest.fn(),
         searchPlayers: jest.fn(),
     },
 }));
@@ -39,16 +40,17 @@ describe("FirebaseFriendService", () => {
         (nextNumericId as jest.Mock).mockResolvedValue(123);
         (doc as jest.Mock).mockImplementation((_db, collectionName: string, documentId: string) => ({ collectionName, documentId }));
         (getDocs as jest.Mock).mockResolvedValue({ docs: [] });
-        (FirebasePlayerService.getReadablePlayerDocumentById as jest.Mock).mockResolvedValue(undefined);
+        (FirebasePlayerService.getPublicPlayerById as jest.Mock).mockResolvedValue(undefined);
     });
 
     test("sends friend requests to documents visible to the recipient", async () => {
-        (FirebasePlayerService.getReadablePlayerDocumentById as jest.Mock).mockResolvedValue({
+        (FirebasePlayerService.getPublicPlayerById as jest.Mock).mockResolvedValue({
             id: 4,
-            uid: "recipient-uid",
             ownerUid: "recipient-uid",
             nickName: "Casey",
-            fullName: "Casey Morgan",
+            nickNameNormalized: "casey",
+            publicTag: "CAS1234",
+            publicTagNormalized: "cas1234",
         });
         const playerFriend = new PlayerFriendBasicDTO();
         playerFriend.playerId = 1;
@@ -71,6 +73,42 @@ describe("FirebaseFriendService", () => {
         );
     });
 
+    test("lists friendships through owner and scalar participant queries", async () => {
+        await FirebaseFriendService.getFriends(1);
+
+        expect(where).toHaveBeenCalledWith("ownerUid", "==", "owner-uid");
+        expect(where).toHaveBeenCalledWith("participantUid1", "==", "owner-uid");
+        expect(where).toHaveBeenCalledWith("participantUid2", "==", "owner-uid");
+        expect(where).not.toHaveBeenCalledWith("participantUids", "array-contains", "owner-uid");
+    });
+
+    test("backfills scalar participant fields on owned legacy friendships", async () => {
+        (getDocs as jest.Mock)
+            .mockResolvedValueOnce({
+                docs: [{
+                    id: "legacy-friendship",
+                    data: () => ({
+                        id: 1,
+                        ownerUid: "owner-uid",
+                        playerId: 1,
+                        friendId: 4,
+                        participantUids: ["owner-uid", "friend-uid"],
+                    }),
+                }],
+            })
+            .mockResolvedValue({ docs: [] });
+
+        await FirebaseFriendService.getFriends(1);
+
+        expect(updateDoc).toHaveBeenCalledWith(
+            { collectionName: "friendships", documentId: "legacy-friendship" },
+            {
+                participantUid1: "owner-uid",
+                participantUid2: "friend-uid",
+            },
+        );
+    });
+
     test("loads incoming friend requests by recipient uid", async () => {
         (getDocs as jest.Mock).mockResolvedValue({
             docs: [
@@ -78,27 +116,35 @@ describe("FirebaseFriendService", () => {
                 { data: () => ({ id: 124, ownerUid: "other-uid", recipientUid: "owner-uid", playerId: 5, friendId: 9 }) },
             ],
         });
-        (FirebasePlayerService.getReadablePlayerDocumentById as jest.Mock).mockResolvedValue({
+        (FirebasePlayerService.getPublicPlayerById as jest.Mock).mockResolvedValue({
             id: 4,
-            uid: "requester-uid",
             ownerUid: "requester-uid",
             nickName: "Casey",
-            fullName: "Casey Morgan",
+            nickNameNormalized: "casey",
+            publicTag: "CAS1234",
+            publicTagNormalized: "cas1234",
         });
 
         const requests = await FirebaseFriendService.getFriendRequests(1);
 
         expect(where).toHaveBeenCalledWith("recipientUid", "==", "owner-uid");
         expect(requests).toEqual([
-            expect.objectContaining({ id: 4, nickName: "Casey" }),
+            expect.objectContaining({ id: 4, nickName: "Casey", publicTag: "CAS1234" }),
         ]);
     });
 
-    test("declines incoming friend requests by deleting the sender-owned request document", async () => {
-        (FirebasePlayerService.getReadablePlayerDocumentById as jest.Mock).mockResolvedValue({
-            id: 4,
-            uid: "requester-uid",
-            ownerUid: "requester-uid",
+    test("declines incoming legacy requests by deleting the actual matching document", async () => {
+        (getDocs as jest.Mock).mockResolvedValue({
+            docs: [{
+                id: "legacy-request-document",
+                data: () => ({
+                    id: 99,
+                    ownerUid: "requester-uid",
+                    recipientUid: "owner-uid",
+                    playerId: 4,
+                    friendId: 1,
+                }),
+            }],
         });
         const playerFriend = new PlayerFriendBasicDTO();
         playerFriend.playerId = 1;
@@ -107,7 +153,7 @@ describe("FirebaseFriendService", () => {
         await FirebaseFriendService.declineFriendRequest(1, playerFriend);
 
         expect(query).toHaveBeenCalled();
-        expect(doc).toHaveBeenCalledWith({}, "friendRequests", "requester-uid_4_1");
-        expect(deleteDoc).toHaveBeenCalledWith({ collectionName: "friendRequests", documentId: "requester-uid_4_1" });
+        expect(FirebasePlayerService.getPublicPlayerById).not.toHaveBeenCalled();
+        expect(deleteDoc).toHaveBeenCalledWith({ collectionName: "friendRequests", documentId: "legacy-request-document" });
     });
 });

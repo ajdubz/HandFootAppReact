@@ -3,6 +3,7 @@ import FriendService from "../services/FriendService";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import PlayerGetBasicDTO from "../models/DTOs/Player/PlayerGetBasicDTO";
 import PlayerFriendBasicDTO from "../models/DTOs/Player/PlayerFriendBasicDTO";
+import { getPlayerPublicId } from "./playerPublicId";
 import "./playerFriends.css";
 
 interface RouteParams {
@@ -14,14 +15,7 @@ const MIN_SEARCH_LENGTH = 2;
 const SEARCH_DEBOUNCE_MS = 250;
 
 const getPlayerLabel = (player: PlayerGetBasicDTO): string => {
-    const nickName = player.nickName?.trim();
-    const fullName = player.fullName?.trim();
-
-    if (nickName && fullName) {
-        return `${nickName} (${fullName})`;
-    }
-
-    return nickName || fullName || "Unnamed player";
+    return getPlayerPublicId(player.nickName, player.id, player.publicTag);
 };
 
 const toPlayerFriend = (playerId: number, friendId: number): PlayerFriendBasicDTO => {
@@ -176,6 +170,10 @@ function PlayerFriends(): React.ReactElement {
         }
     };
 
+    const searchStatusProps: React.HTMLAttributes<HTMLDivElement> = searchError
+        ? { role: "alert" }
+        : { role: "status" };
+
     return (
         <div className="friends-page">
             <div className="friends-header">
@@ -192,7 +190,7 @@ function PlayerFriends(): React.ReactElement {
             <section className="friends-section" aria-labelledby="friend-search-heading">
                 <div className="friends-section-heading">
                     <h2 id="friend-search-heading">Find Players</h2>
-                    <span>Search by nickname or name</span>
+                    <span>Search by nickname or #tag</span>
                 </div>
                 <label className="friends-search-label" htmlFor="friend-search">
                     Search players
@@ -201,14 +199,17 @@ function PlayerFriends(): React.ReactElement {
                     id="friend-search"
                     className="friends-search-input"
                     type="search"
-                    placeholder="Type a player name"
+                    placeholder="Type a nickname or #tag"
                     value={searchText}
                     onChange={(event) => {
                         setSearchText(event.target.value);
                         setMessage("");
                     }}
                 />
-                <div className={`friends-search-status${searchError ? " friends-search-status-error" : ""}`} role={searchError ? "alert" : "status"}>
+                <div
+                    className={`friends-search-status${searchError ? " friends-search-status-error" : ""}`}
+                    {...searchStatusProps}
+                >
                     {searchError}
                 </div>
                 <div className="friends-list" aria-live="polite">
@@ -220,8 +221,8 @@ function PlayerFriends(): React.ReactElement {
                         return (
                             <div className="friends-row" key={friendId}>
                                 <div>
-                                    <strong>{player.nickName}</strong>
-                                    <span>{player.fullName}</span>
+                                    <strong>{getPlayerLabel(player)}</strong>
+                                    <span>Public player ID</span>
                                 </div>
                                 <button
                                     type="button"
@@ -326,8 +327,8 @@ function PlayerFriends(): React.ReactElement {
                         key={player.id}
                         onClick={() => navigateTo(`/player/${player.id}`)}
                     >
-                        <strong>{player.nickName}</strong>
-                        <span>{player.fullName}</span>
+                        <strong>{getPlayerLabel(player)}</strong>
+                        <span>Public player ID</span>
                     </button>
                 ))}
             </div>

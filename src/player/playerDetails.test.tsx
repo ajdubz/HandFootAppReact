@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import MockApi from "../services/MockApi";
 import PlayerDetails from "./playerDetails";
+import { getPlayerPublicId } from "./playerPublicId";
 
 describe("PlayerDetails active game link", () => {
     const originalApiUrl = process.env.REACT_APP_API_URL;
@@ -31,6 +32,7 @@ describe("PlayerDetails active game link", () => {
 
         expect(await screen.findByRole("button", { name: /back to active game/i })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: /start game/i })).toBeInTheDocument();
+        expect(await screen.findByDisplayValue(getPlayerPublicId("Alex", 1))).toBeInTheDocument();
         expect(screen.queryByRole("button", { name: /account/i })).not.toBeInTheDocument();
         expect(screen.queryByRole("button", { name: /see friends/i })).not.toBeInTheDocument();
     });
