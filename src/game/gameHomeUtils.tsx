@@ -24,6 +24,11 @@ export type TeamStats = {
     redThrees: number;
 };
 
+export type RankedRound = {
+    round: GameRoundDTO;
+    rank: number;
+};
+
 export const DEFAULT_SCORING_RULES: ScoringRules = {
     cleanBookScore: DEFAULT_RULE_VALUES.cleanBookScore,
     dirtyBookScore: DEFAULT_RULE_VALUES.dirtyBookScore,
@@ -102,6 +107,46 @@ export const groupRoundsByGameTeamId = (rounds: GameRoundDTO[]): Record<number, 
         groups[gameTeamId] = [...(groups[gameTeamId] ?? []), round];
         return groups;
     }, {});
+};
+
+export const rankRoundsByScore = (rounds: GameRoundDTO[]): RankedRound[] => {
+    const sortedRounds = [...rounds].sort((a, b) => {
+        const roundDiff = numberOrZero(a.roundNumber) - numberOrZero(b.roundNumber);
+        if (roundDiff !== 0) {
+            return roundDiff;
+        }
+
+        const scoreDiff = numberOrZero(b.handScore) - numberOrZero(a.handScore);
+        if (scoreDiff !== 0) {
+            return scoreDiff;
+        }
+
+        return (a.gameTeam?.team?.name ?? "").localeCompare(b.gameTeam?.team?.name ?? "");
+    });
+
+    let currentRoundNumber: number | undefined;
+    let previousScore: number | undefined;
+    let positionInRound = 0;
+    let rank = 0;
+
+    return sortedRounds.map((round) => {
+        const roundNumber = numberOrZero(round.roundNumber);
+        const score = numberOrZero(round.handScore);
+
+        if (roundNumber !== currentRoundNumber) {
+            currentRoundNumber = roundNumber;
+            previousScore = undefined;
+            positionInRound = 0;
+        }
+
+        positionInRound += 1;
+        if (previousScore === undefined || score !== previousScore) {
+            rank = positionInRound;
+        }
+        previousScore = score;
+
+        return { round, rank };
+    });
 };
 
 export const calculateTeamStats = (teams: GameTeamDTO[], rounds: GameRoundDTO[]): Record<number, TeamStats> => {

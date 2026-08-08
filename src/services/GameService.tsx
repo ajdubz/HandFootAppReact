@@ -149,6 +149,29 @@ class GameService {
             throw error;
         }
     }
+
+    public static async saveGameRounds(gameId: number, rounds: GameRoundDTO[]): Promise<GameRoundDTO[]> {
+        if (MockApi.isEnabled()) {
+            const savedRounds: GameRoundDTO[] = [];
+            for (const round of rounds) {
+                savedRounds.push(await MockApi.saveGameRound(gameId, round));
+            }
+            return savedRounds;
+        }
+
+        if (isFirebaseBackend()) {
+            return FirebaseGameService.saveGameRounds(gameId, rounds);
+        }
+
+        const savedRounds: GameRoundDTO[] = [];
+        for (const round of rounds) {
+            const savedRound = await this.saveGameRound(gameId, round);
+            if (savedRound) {
+                savedRounds.push(savedRound);
+            }
+        }
+        return savedRounds;
+    }
 }
 
 export default GameService;

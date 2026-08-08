@@ -8,6 +8,7 @@ import {
     getEffectiveRules,
     getNextRoundNumber,
     isGameComplete,
+    rankRoundsByScore,
 } from "./gameHomeUtils";
 
 test("calculates round score with default book, red three, pulled, and winner bonuses", () => {
@@ -74,6 +75,48 @@ test("aggregates team stats from saved rounds", () => {
         dirtyBooks: 0,
         redThrees: 1,
     });
+});
+
+test("ranks teams independently within each round by score", () => {
+    const round = (roundNumber: number, handScore: number, teamName: string): GameRoundDTO => {
+        const gameRound = new GameRoundDTO();
+        gameRound.roundNumber = roundNumber;
+        gameRound.handScore = handScore;
+        gameRound.gameTeam = Object.assign(new GameTeamDTO(), {
+            team: { name: teamName },
+        });
+        return gameRound;
+    };
+
+    const rankedRounds = rankRoundsByScore([
+        round(2, 300, "Wild Cards"),
+        round(1, 450, "Blaze"),
+        round(2, 700, "Blaze"),
+        round(1, 200, "Wild Cards"),
+    ]);
+
+    expect(rankedRounds.map(({ round: rankedRound, rank }) => ({
+        roundNumber: rankedRound.roundNumber,
+        teamName: rankedRound.gameTeam?.team?.name,
+        rank,
+    }))).toEqual([
+        { roundNumber: 1, teamName: "Blaze", rank: 1 },
+        { roundNumber: 1, teamName: "Wild Cards", rank: 2 },
+        { roundNumber: 2, teamName: "Blaze", rank: 1 },
+        { roundNumber: 2, teamName: "Wild Cards", rank: 2 },
+    ]);
+});
+
+test("gives tied round scores the same competition rank", () => {
+    const rounds = [500, 500, 200].map((handScore, index) => Object.assign(new GameRoundDTO(), {
+        roundNumber: 1,
+        handScore,
+        gameTeam: Object.assign(new GameTeamDTO(), {
+            team: { name: `Team ${index + 1}` },
+        }),
+    }));
+
+    expect(rankRoundsByScore(rounds).map(({ rank }) => rank)).toEqual([1, 1, 3]);
 });
 
 test("finds the next round number", () => {

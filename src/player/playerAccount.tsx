@@ -5,10 +5,10 @@ import { Form } from "react-bootstrap";
 import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
 import ConfirmChanges from "../modals/confirmChanges";
 import Button from "react-bootstrap/Button";
-import { Row, Col } from "react-bootstrap";
 import { isApiErrorCode } from "../services/apiClient";
 import { isFirebaseBackend } from "../services/apiConfig";
 import { getPlayerPublicId } from "./playerPublicId";
+import "./playerAccount.css";
 
 interface RouteParams {
     [id: string]: string | undefined;
@@ -36,7 +36,9 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
     const navigate = useNavigate();
     const [showModalDelete, setShowModalDelete] = useState(false);
     const [showModalSave, setShowModalSave] = useState(false);
+    const [copyStatus, setCopyStatus] = useState("");
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const publicPlayerId = id ? getPlayerPublicId(nickname, Number(id), player?.publicTag) : "";
 
     const fetchData = useCallback(async () => {
         if (!id) return;
@@ -208,109 +210,85 @@ function PlayerAccount({ isRegistration = false }: PlayerAccountProps): React.Re
         }
     }
 
+    const copyPublicPlayerId = async () => {
+        try {
+            await navigator.clipboard.writeText(publicPlayerId);
+            setCopyStatus("Copied.");
+        } catch (error) {
+            console.error("Unable to copy public player ID:", error);
+            setCopyStatus("Unable to copy. Select the ID and copy it manually.");
+        }
+    };
+
     return (
-        <>
-            <h2>Player Account Details</h2>
-            <Form onSubmit={(e) => e.preventDefault()}>
-                <Row>
-                    <Col md={3}>
-                        <Form.Group className="mb-3">
-                            <Form.Label htmlFor="id">Id</Form.Label>
-                            <Form.Control type="text" id="id" name="id" defaultValue={id} disabled />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
+        <main className="player-account-page">
+            <header className="player-account-header">
+                <p className="player-account-eyebrow">Your profile</p>
+                <h1>Player Account Details</h1>
+                <p>Update the information tied to your Hand &amp; Foot profile.</p>
+            </header>
+            {id && (
+                <section className="account-public-id" aria-label="Public Player ID">
+                    <div className="account-public-id-label">Public Player ID</div>
+                    <div className="account-public-id-row">
+                        <code>{publicPlayerId}</code>
+                        <Button type="button" variant="outline-light" size="sm" onClick={copyPublicPlayerId}>
+                            Copy
+                        </Button>
+                    </div>
+                    <div className="account-public-id-help">Share this ID so other players can find the right account.</div>
+                    <div className="account-public-id-status" aria-live="polite">{copyStatus}</div>
+                </section>
+            )}
+            <Form className="player-account-form" onSubmit={(e) => e.preventDefault()}>
+                <div className="player-account-form-grid">
+                        <Form.Group className="player-account-field">
                             <Form.Label htmlFor="nickname">Nickname</Form.Label>
-                            <Form.Control type="text" id="nickname" name="nickname" defaultValue={nickname} onChange={(e) => setNickname(e.target.value)} />
+                            <Form.Control type="text" id="nickname" name="nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} />
                             {errors.nickname && <div className="text-danger">{errors.nickname}</div>}
                         </Form.Group>
-                        {id && (
-                            <Form.Group className="mb-3">
-                                <Form.Label htmlFor="publicPlayerId">Public Player ID</Form.Label>
-                                <Form.Control
-                                    type="text"
-                                    id="publicPlayerId"
-                                    name="publicPlayerId"
-                                    value={getPlayerPublicId(nickname, Number(id), player?.publicTag)}
-                                    readOnly
-                                />
-                                <Form.Text>Share this ID so other players can find the right account.</Form.Text>
-                            </Form.Group>
-                        )}
-                        <Form.Group className="mb-3">
+                        <Form.Group className="player-account-field">
                             <Form.Label htmlFor="fullName">Full Name</Form.Label>
-                            <Form.Control type="text" id="fullName" name="fullName" defaultValue={fullName} onChange={(e) => setFullName(e.target.value)} />
+                            <Form.Control type="text" id="fullName" name="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} />
                             {errors.fullName && <div className="text-danger">{errors.fullName}</div>}
                         </Form.Group>
-                        <Form.Group className="mb-3">
+                        <Form.Group className="player-account-field is-wide">
                             <Form.Label htmlFor="email">Email</Form.Label>
-                            <Form.Control type="email" id="email" name="email" defaultValue={email} onChange={(e) => setEmail(e.target.value)} />
+                            <Form.Control type="email" id="email" name="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                             {errors.email && <div className="text-danger">{errors.email}</div>}
                         </Form.Group>
-                        <Form.Group className="mb-3">
+                        <Form.Group className="player-account-field">
                             <Form.Label htmlFor="password">Password</Form.Label>
-                            <Form.Control type="password" id="password" name="password" defaultValue={password} onChange={(e) => setPassword(e.target.value)} />
+                            <Form.Control type="password" id="password" name="password" value={password} onChange={(e) => setPassword(e.target.value)} />
                             {errors.password && <div className="text-danger">{errors.password}</div>}
                         </Form.Group>
-                        <Form.Group className="mb-3">
+                        <Form.Group className="player-account-field">
                             <Form.Label htmlFor="confirmPassword">Confirm Password</Form.Label>
-                            <Form.Control type="password" id="confirmPassword" name="confirmPassword" defaultValue={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                            <Form.Control type="password" id="confirmPassword" name="confirmPassword" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                             {errors.confirmPassword && <div className="text-danger">{errors.confirmPassword}</div>}
                         </Form.Group>
-                    </Col>
-                </Row>
-                <Button type="submit" variant="primary" className="me-2" onClick={() => setShowModalSave(true)}>
-                    Save
-                </Button>
+                </div>
                 {errors.accountExists && <div className="text-danger mt-2">{errors.accountExists}</div>}
-                <Button type="button" variant="secondary" className="me-2" onClick={returnToDetails}>
-                    Cancel
-                </Button>
-                <Button type="button" className="btn-danger" onClick={() => setShowModalDelete(true)}>
-                    Delete
-                </Button>
+                <div className="player-account-actions">
+                    <Button type="submit" variant="primary" onClick={() => setShowModalSave(true)}>
+                        Save Changes
+                    </Button>
+                    <Button type="button" variant="outline-secondary" onClick={returnToDetails}>
+                        Cancel
+                    </Button>
+                    {!isRegistrationPage && id && (
+                        <Button type="button" variant="outline-danger" onClick={() => setShowModalDelete(true)}>
+                            Delete Account
+                        </Button>
+                    )}
+                </div>
             </Form>
             <ConfirmChanges
                 isOpen={showModalSave || showModalDelete}
                 onConfirm={handleModalConfirm}
                 onCancel={() => (showModalDelete ? setShowModalDelete(false) : setShowModalSave(false))}
             />
-        </>
-
-        // <div>
-        //     <h2>Player Account Details</h2>
-        //     <form >
-        //         <div className="col-md-2">
-        //             <div className="mb-3 ">
-        //                 <label htmlFor="id" className="form-label">Id</label>
-        //                 <input type="text" className="form-control" id="id" name="id" defaultValue={id} disabled />
-        //             </div>
-        //             <div className="mb-3">
-        //                 <label htmlFor="nickname" className="form-label">Nickname</label>
-        //                 <input type="text" className="form-control" id="nickname" name="nickname" defaultValue={nickname} onChange={(e) => setNickname(e.target.value)} />
-        //             </div>
-        //             <div className="mb-3">
-        //                 <label htmlFor="fullName" className="form-label">Full Name</label>
-        //                 <input type="text" className="form-control" id="fullName" name="fullName" defaultValue={fullName} onChange={(e) => setFullName(e.target.value)} />
-        //             </div>
-        //             <div className="mb-3">
-        //                 <label htmlFor="email" className="form-label">Email</label>
-        //                 <input type="email" className="form-control" id="email" name="email" defaultValue={email} onChange={(e) => setEmail(e.target.value)} />
-        //             </div>
-        //             <div className="mb-3">
-        //                 <label htmlFor="password" className="form-label">Password</label>
-        //                 <input type="password" className="form-control" id="password" name="password" defaultValue={password} onChange={(e) => setPassword(e.target.value)} />
-        //             </div>
-        //             <div className="mb-3">
-        //                 <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
-        //                 <input type="password" className="form-control" id="confirmPassword" name="confirmPassword" defaultValue={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-        //             </div>
-        //         </div>
-        //         <button type="submit" className="btn btn-primary me-2" onClick={onSubmitFunc}>Save</button>
-        //         <button type="button" className="btn btn-secondary me-2" onClick={returnToDetails}>Cancel</button>
-        //         <button type="button" className="btn btn-danger" onClick={() => setShowModalDelete(true)}>Delete</button>
-        //     </form>
-        //     <ConfirmChanges isOpen={showModalSave || showModalDelete} onConfirm={showModalDelete ? handleModalConfirm : returnToDetails} onCancel={() => showModalDelete ? setShowModalDelete(false) : setShowModalSave(false) } />
-        // </div>
+        </main>
     );
 }
 

@@ -116,6 +116,14 @@
       "collectionGroup": "rounds",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "gameId", "mode": "ASCENDING" },
+        { "fieldPath": "gameTeamId", "mode": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "rounds",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "ownerUid", "mode": "ASCENDING" },
         { "fieldPath": "gameId", "mode": "ASCENDING" },
         { "fieldPath": "gameTeamId", "mode": "ASCENDING" },

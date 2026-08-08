@@ -23,12 +23,12 @@ test('renders login screen', () => {
   expect(screen.getByRole('button', { name: /play as guest/i })).toBeInTheDocument();
 });
 
-test('play as guest starts a local guest session and lands on player details', async () => {
+test('play as guest starts a local guest session and lands on home', async () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: /play as guest/i }));
 
-  expect(await screen.findByRole('heading', { name: /player details/i })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: /ready to play/i })).toBeInTheDocument();
   await waitFor(() => expect(window.location.pathname).toBe('/player/5'));
   expect(localStorage.getItem('token')).toBe('guest-token-5');
   expect(localStorage.getItem('currentPlayerId')).toBe('5');
@@ -59,7 +59,7 @@ test('sign out clears auth and returns to login', async () => {
 
   render(<App />);
 
-  fireEvent.click(screen.getByRole('link', { name: /sign out/i }));
+  fireEvent.click(screen.getByRole('button', { name: /sign out/i }));
 
   expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
   expect(localStorage.getItem('token')).toBeNull();
@@ -68,7 +68,7 @@ test('sign out clears auth and returns to login', async () => {
   expect(localStorage.getItem('isGuestSession')).toBeNull();
 });
 
-test('top menu includes current player home, account, and friends links', () => {
+test('top menu includes primary links in user-focused order', () => {
   localStorage.setItem('token', 'test-token');
   localStorage.setItem('currentPlayerId', '123');
   window.history.pushState({}, '', '/rules');
@@ -79,6 +79,43 @@ test('top menu includes current player home, account, and friends links', () => 
   expect(screen.getByRole('link', { name: /games/i })).toHaveAttribute('href', '/games');
   expect(screen.getByRole('link', { name: /account/i })).toHaveAttribute('href', '/player/123/account');
   expect(screen.getByRole('link', { name: /friends/i })).toHaveAttribute('href', '/player/123/friends');
+  expect(Array.from(screen.getByRole('navigation', { name: /primary navigation/i }).querySelectorAll('a')).map((link) => link.textContent)).toEqual([
+    'Home',
+    'Games',
+    'Rules',
+    'Friends',
+    'Account',
+  ]);
+  expect(screen.getByRole('button', { name: /sign out/i })).toHaveClass('app-header-signout');
+  expect(screen.queryByRole('link', { name: /^players$/i })).not.toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: /^teams$/i })).not.toBeInTheDocument();
+});
+
+test('account page hides the internal numeric player ID', async () => {
+  localStorage.setItem('token', 'test-token');
+  localStorage.setItem('currentPlayerId', '1');
+  window.history.pushState({}, '', '/player/1/account');
+
+  render(<App />);
+
+  expect(await screen.findByRole('heading', { name: /player account details/i })).toBeInTheDocument();
+  expect(screen.getByRole('main')).toHaveClass('player-account-page');
+  expect(screen.queryByLabelText(/^id$/i)).not.toBeInTheDocument();
+  expect(await screen.findByDisplayValue('Alex')).toHaveAttribute('id', 'nickname');
+  expect(screen.getByDisplayValue('Alex Davis')).toHaveAttribute('id', 'fullName');
+  expect(screen.getByLabelText(/public player id/i)).toHaveTextContent(/^Public Player IDAlex#/i);
+  expect(screen.getByRole('button', { name: /^copy$/i })).toBeInTheDocument();
+});
+
+test.each(['/playersList', '/teams'])('legacy list route %s redirects to player home', async (route) => {
+  localStorage.setItem('token', 'test-token');
+  localStorage.setItem('currentPlayerId', '1');
+  window.history.pushState({}, '', route);
+
+  render(<App />);
+
+  await waitFor(() => expect(window.location.pathname).toBe('/player/1'));
+  expect(screen.queryByRole('button', { name: /delete my previous games/i })).not.toBeInTheDocument();
 });
 
 test('top menu closes when clicking outside it', () => {
@@ -106,10 +143,26 @@ test('games route lists previous games directly', async () => {
   render(<App />);
 
   expect(await screen.findByRole('heading', { name: /games/i })).toBeInTheDocument();
+  expect(await screen.findByRole('searchbox', { name: /search games/i })).toHaveAttribute(
+    'placeholder',
+    'Search by date, team, or player nickname',
+  );
   expect(screen.getByRole('columnheader', { name: /margin/i })).toBeInTheDocument();
   expect(screen.queryByRole('columnheader', { name: /books/i })).not.toBeInTheDocument();
   expect((await screen.findAllByText(/game #1/i)).length).toBeGreaterThan(0);
+  expect(screen.getAllByLabelText(/alex and sam\. players: alex, sam/i).length).toBeGreaterThan(0);
   expect(screen.getAllByRole('link', { name: /continue/i })[0]).toHaveAttribute('href', '/player/1/game/1');
+
+  fireEvent.change(screen.getByRole('searchbox', { name: /search games/i }), {
+    target: { value: 'not a saved player' },
+  });
+
+  expect(screen.getByText(/no games match/i)).toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: /continue/i })).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: /clear search/i }));
+
+  expect(screen.getAllByRole('link', { name: /continue/i })[0]).toBeInTheDocument();
 });
 
 test('game history detail route shows read-only rounds and returns to games list', async () => {

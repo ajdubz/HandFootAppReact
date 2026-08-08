@@ -1,0 +1,141 @@
+.player-account-page {
+    margin: 0 auto;
+    max-width: 760px;
+}
+
+.player-account-header {
+    margin-bottom: 20px;
+}
+
+.player-account-header h1 {
+    font-size: clamp(2rem, 6vw, 3rem);
+    line-height: 1.08;
+    margin: 4px 0 8px;
+}
+
+.player-account-header > p:last-child {
+    color: #cfc2b0;
+    margin: 0;
+}
+
+.player-account-eyebrow {
+    color: #f0c46b;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.account-public-id {
+    background: rgba(255, 255, 255, 0.08);
+    border-left: 4px solid #d8a64a;
+    border-radius: 8px;
+    margin: 0 0 18px;
+    padding: 14px 16px;
+}
+
+.account-public-id-label {
+    color: #cfc2b0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+.account-public-id-row {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.account-public-id code {
+    color: #ffffff;
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+    user-select: all;
+}
+
+.account-public-id-help,
+.account-public-id-status {
+    color: #cfc2b0;
+    font-size: 0.85rem;
+    margin-top: 6px;
+}
+
+.account-public-id-status:empty {
+    display: none;
+}
+
+.player-account-form {
+    background: #ffffff;
+    border: 1px solid #d8dde3;
+    border-radius: 12px;
+    color: #212529;
+    padding: 22px;
+}
+
+.player-account-form-grid {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.player-account-field.is-wide {
+    grid-column: 1 / -1;
+}
+
+.player-account-field label {
+    font-weight: 700;
+}
+
+.player-account-field .form-control {
+    min-height: 44px;
+}
+
+.player-account-actions {
+    align-items: center;
+    border-top: 1px solid #d8dde3;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+    padding-top: 18px;
+}
+
+.player-account-actions .btn-outline-danger {
+    margin-left: auto;
+}
+
+@media (max-width: 600px) {
+    .player-account-form {
+        padding: 16px;
+    }
+
+    .player-account-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .player-account-field.is-wide {
+        grid-column: auto;
+    }
+
+    .account-public-id-row,
+    .player-account-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .account-public-id-row .btn {
+        align-self: flex-start;
+    }
+
+    .player-account-actions .btn,
+    .player-account-actions .btn-outline-danger {
+        margin-left: 0;
+        min-height: 46px;
+        width: 100%;
+    }
+}

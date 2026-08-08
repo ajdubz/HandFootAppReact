@@ -1,65 +1,161 @@
-import { useCallback, useEffect, useState } from "react";
-import PlayerService from "../services/PlayerService";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
-import PlayerFullDetailsDTO from "../models/DTOs/Player/PlayerFullDetailsDTO";
-import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Button from "react-bootstrap/Button";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import StartGame from "../modals/startGame";
+import PlayerAccountDTO from "../models/DTOs/Player/PlayerAccountDTO";
+import PlayerService from "../services/PlayerService";
+import GameService from "../services/GameService";
+import { loadGameHistoryResults, GameHistoryResult } from "../game/gameHistoryUtils";
+import { isGameComplete } from "../game/gameHomeUtils";
 import { isGuestSession } from "../utils/auth";
-import { getActiveGameRoute } from "../utils/activeGame";
-import { getPlayerPublicId } from "./playerPublicId";
+import { clearActiveGameRoute, getActiveGameRoute, getGameIdFromActiveGameRoute } from "../utils/activeGame";
+import { buildPlayerHomeSummary, RecentGameSummary } from "./playerHomeUtils";
 import "./playerDetails.css";
 
 interface RouteParams {
     [id: string]: string | undefined;
 }
 
+const formatGameDate = (date?: Date): string => date
+    ? date.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+    : "Date unknown";
+
+const getRecentGameDescription = (recentGame: RecentGameSummary): string => {
+    switch (recentGame.outcome) {
+        case "won":
+            return `${recentGame.teamName} won by ${(recentGame.margin ?? 0).toLocaleString()}.`;
+        case "lost":
+            return `${recentGame.teamName} lost by ${(recentGame.margin ?? 0).toLocaleString()}.`;
+        case "tied":
+            return `${recentGame.teamName} tied for the lead.`;
+        case "inProgress":
+            return `The game with ${recentGame.teamName} is still in progress.`;
+        default:
+            return "Open the scorecard for the full game result.";
+    }
+};
+
 function PlayerDetails() {
     const { id = "" } = useParams<RouteParams>();
     const location = useLocation();
+    const navigate = useNavigate();
     const rulesMessage = (location.state as { rulesMessage?: string } | null)?.rulesMessage ?? "";
     const currentPlayerId = Number(localStorage.getItem("currentPlayerId") ?? localStorage.getItem("mockPlayerId") ?? 0);
-    const activeGameRoute = getActiveGameRoute(currentPlayerId);
-    const [player, setPlayer] = useState<PlayerFullDetailsDTO | undefined>();
-    const [nickname, setNickname] = useState<string>(player?.nickName || "");
-    // const [showModalSave, setShowModalSave] = useState(false);
+    const playerId = currentPlayerId || Number(id);
+    const guestSession = isGuestSession();
+    const canEditGuestNickname = guestSession && Number(id) === currentPlayerId;
+    const [activeGameRoute, setActiveGameRoute] = useState("");
+    const [dashboardError, setDashboardError] = useState("");
+    const [gameResults, setGameResults] = useState<GameHistoryResult[]>([]);
+    const [isDashboardLoading, setIsDashboardLoading] = useState(true);
+    const [nickname, setNickname] = useState("");
     const [showModalStart, setShowModalStart] = useState(false);
-    const navigate = useNavigate();
-    const canEditGuestNickname = isGuestSession() && Number(id) === currentPlayerId;
-
-    
-    const fetchData = useCallback(async () => {
-        await PlayerService.getPlayerFullDetailsById(Number(id))
-            .then((data) => {
-                setPlayer(data);
-                setNickname(data?.nickName || "");
-            })
-            .catch((error) => {
-                console.error("Error in getPlayerFullDetailsById:", error);
-                setPlayer(new PlayerFullDetailsDTO());
-            });
-    }, [id]);
+    const isNicknameDirtyRef = useRef(false);
+    const dashboardSummary = useMemo(
+        () => buildPlayerHomeSummary(gameResults, playerId),
+        [gameResults, playerId],
+    );
 
     useEffect(() => {
         if (currentPlayerId && Number(id) !== currentPlayerId) {
             navigate(`/player/${currentPlayerId}`);
+        }
+    }, [currentPlayerId, id, navigate]);
+
+    useEffect(() => {
+        if (!canEditGuestNickname) {
             return;
         }
 
-        fetchData();
-    }, [currentPlayerId, fetchData, id, navigate]);
+        let isCancelled = false;
+        PlayerService.getPlayerAccountById(Number(id))
+            .then((account) => {
+                if (!isCancelled && !isNicknameDirtyRef.current) {
+                    setNickname(account?.nickName?.trim() || "Guest Player");
+                }
+            })
+            .catch((error) => {
+                console.error("Error loading guest nickname:", error);
+                if (!isCancelled) {
+                    setNickname("Guest Player");
+                }
+            });
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [canEditGuestNickname, id]);
 
     useEffect(() => {
-        const shouldOpenStartGame = new URLSearchParams(location.search).get("startGame") === "true";
-        if (shouldOpenStartGame) {
+        let isCancelled = false;
+        setDashboardError("");
+        setIsDashboardLoading(true);
+
+        loadGameHistoryResults(playerId ? { playerId } : {})
+            .then((results) => {
+                if (!isCancelled) {
+                    setGameResults(results);
+                }
+            })
+            .catch((error) => {
+                console.error("Error loading player dashboard:", error);
+                if (!isCancelled) {
+                    setDashboardError("Your game summary is unavailable right now.");
+                    setGameResults([]);
+                }
+            })
+            .finally(() => {
+                if (!isCancelled) {
+                    setIsDashboardLoading(false);
+                }
+            });
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [playerId]);
+
+    useEffect(() => {
+        const storedRoute = getActiveGameRoute(currentPlayerId);
+        const activeGameId = getGameIdFromActiveGameRoute(storedRoute);
+        let isCancelled = false;
+
+        if (!activeGameId) {
+            setActiveGameRoute("");
+            return;
+        }
+
+        GameService.getRoundsByGameId(activeGameId)
+            .then((rounds) => {
+                if (isCancelled) {
+                    return;
+                }
+
+                if (isGameComplete(rounds ?? [])) {
+                    clearActiveGameRoute();
+                    setActiveGameRoute("");
+                    return;
+                }
+
+                setActiveGameRoute(storedRoute);
+            })
+            .catch((error) => {
+                console.error("Error validating active game:", error);
+                if (!isCancelled) {
+                    setActiveGameRoute(storedRoute);
+                }
+            });
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [currentPlayerId]);
+
+    useEffect(() => {
+        if (new URLSearchParams(location.search).get("startGame") === "true") {
             setShowModalStart(true);
         }
     }, [location.search]);
-
-    const handleConfirm = (newGameId: number) => {
-        setShowModalStart(false);
-        navigate(`/player/${id}/game/${newGameId}`);
-    };
 
     const saveGuestNickname = async () => {
         if (!canEditGuestNickname) {
@@ -88,58 +184,126 @@ function PlayerDetails() {
         setShowModalStart(true);
     };
 
+    const handleConfirm = (newGameId: number) => {
+        setShowModalStart(false);
+        navigate(`/player/${id}/game/${newGameId}`);
+    };
+
+    const recentGame = dashboardSummary.recentGame;
+    const recentGameRoute = recentGame?.isComplete
+        ? `/games/${recentGame.gameId}`
+        : `/player/${id}/game/${recentGame?.gameId}`;
+
     return (
-        <div>
-            <h2>Player Details</h2>
+        <main className="player-home">
+            <header className="player-home-hero">
+                <p className="player-home-eyebrow">Hand &amp; Foot scorekeeper</p>
+                <h1>Ready to play?</h1>
+                <p>Start a new scorecard or pick up your game where you left off.</p>
+            </header>
+
             {rulesMessage && <div className="rules-save-message">{rulesMessage}</div>}
-            <div>
-                <label>
-                    Nickname:
+
+            {canEditGuestNickname && (
+                <section className="player-home-guest" aria-labelledby="guest-nickname-heading">
+                    <h2 id="guest-nickname-heading">Playing as a guest</h2>
+                    <label htmlFor="guest-nickname">Nickname</label>
                     <input
+                        id="guest-nickname"
                         type="text"
                         name="nickname"
                         value={nickname}
-                        disabled={!canEditGuestNickname}
                         onBlur={() => { saveGuestNickname().catch((error) => console.error("Error saving guest nickname:", error)); }}
-                        onChange={(event) => setNickname(event.target.value)}
+                        onChange={(event) => {
+                            isNicknameDirtyRef.current = true;
+                            setNickname(event.target.value);
+                        }}
                         onKeyDown={(event) => {
                             if (event.key === "Enter") {
                                 event.currentTarget.blur();
                             }
                         }}
                     />
-                </label>
-                <br />
-            </div>
-            {player && !isGuestSession() && (
-                <div>
-                    <label>
-                        Public player ID:
-                        <input
-                            type="text"
-                            name="publicPlayerId"
-                            value={getPlayerPublicId(player?.nickName, Number(id), player?.publicTag)}
-                            readOnly
-                        />
-                    </label>
-                    <br />
-                    <small>Share this ID so other players can find the right account.</small>
-                </div>
+                </section>
             )}
-            <div className="player-detail-actions" aria-label="Player actions">
+
+            <section className="player-home-actions" aria-label="Game actions">
                 {activeGameRoute && (
-                    <Button variant="success" onClick={() => navigate(activeGameRoute)}>
+                    <Button size="lg" variant="success" onClick={() => navigate(activeGameRoute)}>
                         Back to Active Game
                     </Button>
                 )}
-                <Button variant="primary" onClick={handleStartGame}>
+                <Button size="lg" variant="primary" onClick={handleStartGame}>
                     Start Game
                 </Button>
-            </div>
+            </section>
 
-            <StartGame id={Number(id)} isOpen={showModalStart} onCancel={() => setShowModalStart(false)} onConfirm={(newGameId) => handleConfirm(newGameId)} />
-            {/* <ConfirmChanges isOpen={showModalSave} onConfirm={onSubmitFunc} onCancel={() => setShowModalSave(false)} /> */}
-        </div>
+            <section className="player-home-summary" aria-labelledby="home-stats-heading">
+                <div className="player-home-section-heading">
+                    <div>
+                        <h2 id="home-stats-heading">Your stats</h2>
+                        <p>Completed games with you on the scorecard.</p>
+                    </div>
+                </div>
+
+                {isDashboardLoading && <p className="player-home-message" role="status">Loading your game summary...</p>}
+                {!isDashboardLoading && dashboardError && (
+                    <p className="player-home-message is-error" role="alert">{dashboardError} You can still start a game.</p>
+                )}
+                {!isDashboardLoading && !dashboardError && (
+                    <dl className="player-home-stat-grid">
+                        <div>
+                            <dt>Games played</dt>
+                            <dd>{dashboardSummary.completedGames}</dd>
+                        </div>
+                        <div>
+                            <dt>Wins</dt>
+                            <dd>{dashboardSummary.wins}</dd>
+                        </div>
+                        <div>
+                            <dt>Win rate</dt>
+                            <dd>{dashboardSummary.winRate}%</dd>
+                        </div>
+                    </dl>
+                )}
+            </section>
+
+            {!isDashboardLoading && !dashboardError && (
+                <section className="player-home-recent" aria-labelledby="recent-game-heading">
+                    <div className="player-home-section-heading">
+                        <div>
+                            <h2 id="recent-game-heading">Most recent game</h2>
+                            <p>Your latest scorecard at a glance.</p>
+                        </div>
+                    </div>
+
+                    {recentGame ? (
+                        <article className="player-home-recent-card">
+                            <p className="player-home-recent-date">{formatGameDate(recentGame.gameDate)}</p>
+                            <h3>{recentGame.teamName}</h3>
+                            <p>{getRecentGameDescription(recentGame)}</p>
+                            <div className="player-home-recent-actions">
+                                <Link className="btn btn-primary" to={recentGameRoute}>
+                                    {recentGame.isComplete ? "View game" : "Continue game"}
+                                </Link>
+                                <Link className="btn btn-outline-secondary" to="/games">View all games</Link>
+                            </div>
+                        </article>
+                    ) : (
+                        <div className="player-home-empty">
+                            <p>No games yet. Start your first scorecard when everyone is ready.</p>
+                        </div>
+                    )}
+                </section>
+            )}
+
+            <StartGame
+                id={Number(id)}
+                isOpen={showModalStart}
+                onCancel={() => setShowModalStart(false)}
+                onConfirm={handleConfirm}
+            />
+        </main>
     );
 }
 

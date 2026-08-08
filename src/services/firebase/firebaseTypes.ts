@@ -30,10 +30,18 @@ export interface FirebaseGameDocument {
     id: number;
     ownerUid: string;
     ownerPlayerId?: number;
+    participantUids?: string[];
+    accessProvisionedUids?: string[];
     date?: string;
     rules?: Partial<Rules>;
     teamIds: number[];
     memberPlayerIds: number[];
+}
+
+export interface FirebaseGameAccessDocument {
+    gameId: number;
+    ownerUid: string;
+    participantUid: string;
 }
 
 export interface FirebaseGameTeamDocument {
@@ -41,6 +49,7 @@ export interface FirebaseGameTeamDocument {
     ownerUid: string;
     gameId: number;
     teamId: number;
+    teamName?: string;
     memberPlayerIds: number[];
 }
 

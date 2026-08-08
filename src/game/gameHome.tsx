@@ -16,8 +16,9 @@ import {
     getNextRoundNumber,
     isGameComplete,
     numberOrZero,
+    rankRoundsByScore,
 } from "./gameHomeUtils";
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import NumericStepper from "../components/NumericStepper";
 import { clearActiveGameRoute, saveActiveGameRoute } from "../utils/activeGame";
 
@@ -55,6 +56,7 @@ function GamePage() {
     const [isSavingRound, setIsSavingRound] = useState(false);
     const [roundError, setRoundError] = useState("");
     const [showStartGameModal, setShowStartGameModal] = useState(false);
+    const cleanedUpGameId = useRef("");
 
     const navigate = useNavigate();
     const currentPlayerId = localStorage.getItem("currentPlayerId") ?? localStorage.getItem("mockPlayerId") ?? "";
@@ -71,14 +73,7 @@ function GamePage() {
 
         return bScore - aScore;
     }), [teams, teamStats]);
-    const sortedRounds = useMemo(() => [...rounds].sort((a, b) => {
-        const roundDiff = numberOrZero(a.roundNumber) - numberOrZero(b.roundNumber);
-        if (roundDiff !== 0) {
-            return roundDiff;
-        }
-
-        return (a.gameTeam?.team?.name ?? "").localeCompare(b.gameTeam?.team?.name ?? "");
-    }), [rounds]);
+    const rankedRounds = useMemo(() => rankRoundsByScore(rounds), [rounds]);
     const getRoundEntryBookTotals = (team: GameTeamDTO) => {
         const gameTeamId = team.id ?? 0;
         const entry = roundEntries[gameTeamId] ?? emptyRoundEntry();
@@ -164,7 +159,7 @@ function GamePage() {
             normalizedEmail.endsWith("@mock.local");
     };
 
-    const removeGuestAccountsForSession = async () => {
+    const removeGuestAccountsForSession = useCallback(async () => {
         const activePlayerId = Number(currentPlayerId || id);
         const teamMemberIds = new Set<number>();
         teams.forEach((team) => {
@@ -188,31 +183,27 @@ function GamePage() {
             .map((account) => account?.id as number);
 
         await Promise.all(guestPlayerIds.map((guestPlayerId) => PlayerService.deletePlayer(guestPlayerId)));
-    };
+    }, [currentPlayerId, id, teams]);
 
-    const handleBack = () => {
-        navigate(id ? `/player/${id}` : "/games");
-    };
+    useEffect(() => {
+        if (!gameComplete) {
+            return;
+        }
+
+        clearActiveGameRoute();
+        if (cleanedUpGameId.current === gameId) {
+            return;
+        }
+
+        cleanedUpGameId.current = gameId;
+        removeGuestAccountsForSession().catch((error) => {
+            console.error("Error removing guest accounts:", error);
+        });
+    }, [gameComplete, gameId, removeGuestAccountsForSession]);
 
     const handleNewGameConfirm = (newGameId: number) => {
         setShowStartGameModal(false);
         navigate(playerIdForActions ? `/player/${playerIdForActions}/game/${newGameId}` : `/games/${newGameId}`);
-    };
-
-    const handleEndGame = async () => {
-        if (!gameComplete) {
-            setRoundError("You can end the game after round 4 is complete.");
-            return;
-        }
-
-        try {
-            await removeGuestAccountsForSession();
-        } catch (error) {
-            console.error("Error removing guest accounts:", error);
-        }
-
-        clearActiveGameRoute();
-        navigate(id ? `/player/${id}` : "/games");
     };
 
     const updateRoundEntry = (gameTeamId: number, field: keyof RoundEntry, value: string | boolean) => {
@@ -316,7 +307,7 @@ function GamePage() {
                 return;
             }
 
-            await Promise.all(roundPayloads.map((round) => GameService.saveGameRound(Number(gameId), round)));
+            await GameService.saveGameRounds(Number(gameId), roundPayloads);
             resetRoundEntries();
             await fetchData();
         } catch (error) {
@@ -373,28 +364,6 @@ function GamePage() {
 
     return (
         <div className="game-page">
-            <div className="game-header">
-                <div>
-                    <h1>Game Center</h1>
-                    <p className="round-context">
-                        {gameComplete
-                            ? `Game complete. Winner: ${rankedTeams[0]?.team?.name ?? "No winner yet"}`
-                            : `Round ${nextRoundNumber} entry - Book threshold: ${bookThreshold} - Go out: ${scoringRules.cleanBooksRequiredToGoOut} clean / ${scoringRules.dirtyBooksRequiredToGoOut} dirty`}
-                    </p>
-                </div>
-                <div>
-                    <Button variant="danger" className="me-2" onClick={handleEndGame} disabled={!gameComplete}>
-                        End Game
-                    </Button>
-                    <Button variant="primary" className="me-2" onClick={() => setShowStartGameModal(true)}>
-                        New Game
-                    </Button>
-                    <Button variant="secondary" onClick={handleBack}>
-                        Back
-                    </Button>
-                </div>
-            </div>
-
             <StartGame
                 id={Number(playerIdForActions)}
                 isOpen={showStartGameModal}
@@ -405,7 +374,24 @@ function GamePage() {
             {roundError && <div className="round-error">{roundError}</div>}
 
             <section className="game-section">
-                <h2>Scoreboard</h2>
+                <div className="section-heading-row">
+                    <h2>Scoreboard</h2>
+                    {gameComplete && (
+                        <Button variant="primary" onClick={() => setShowStartGameModal(true)}>
+                            New Game
+                        </Button>
+                    )}
+                </div>
+                {gameComplete ? (
+                    <div className="game-winner" aria-live="polite">
+                        <span>Winner</span>
+                        <strong>{rankedTeams[0]?.team?.name ?? "No winner yet"}</strong>
+                    </div>
+                ) : (
+                    <p className="round-context">
+                        Round {nextRoundNumber} entry - Book threshold: {bookThreshold} - Go out: {scoringRules.cleanBooksRequiredToGoOut} clean / {scoringRules.dirtyBooksRequiredToGoOut} dirty
+                    </p>
+                )}
                 <div className="desktop-table-wrap">
                     <Table bordered responsive id="gameTable">
                         <thead>
@@ -470,10 +456,10 @@ function GamePage() {
                 </div>
             </section>
 
-            <section className="game-section score-round-section">
+            {!gameComplete && <section className="game-section score-round-section">
                 <div className="section-heading-row">
-                    <h2>{gameComplete ? "Game Complete" : `Score Round ${nextRoundNumber}`}</h2>
-                    <Button className="round-save-button" variant="primary" onClick={handleSaveRound} disabled={!teams.length || isSavingRound || gameComplete || !hasWentOutSelection}>
+                    <h2>Score Round {nextRoundNumber}</h2>
+                    <Button className="round-save-button" variant="primary" onClick={handleSaveRound} disabled={!teams.length || isSavingRound || !hasWentOutSelection}>
                         {isSavingRound ? "Saving..." : "Save Round"}
                     </Button>
                 </div>
@@ -568,7 +554,7 @@ function GamePage() {
                         </div>
                     )}
                 </div>
-            </section>
+            </section>}
 
             <section className="game-section">
                 <h2>Previous Rounds</h2>
@@ -576,7 +562,7 @@ function GamePage() {
                     <Table bordered responsive className="round-history-table">
                         <thead>
                             <tr>
-                                <th>Round</th>
+                                <th>Rank</th>
                                 <th>Team</th>
                                 <th>Card Points</th>
                                 <th>Clean Books</th>
@@ -588,9 +574,9 @@ function GamePage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {sortedRounds.length ? sortedRounds.map((round, index) => {
+                            {rankedRounds.length ? rankedRounds.map(({ round, rank }, index) => {
                                 const roundNumber = numberOrZero(round.roundNumber);
-                                const previousRoundNumber = index > 0 ? numberOrZero(sortedRounds[index - 1].roundNumber) : undefined;
+                                const previousRoundNumber = index > 0 ? numberOrZero(rankedRounds[index - 1].round.roundNumber) : undefined;
                                 const startsNewRound = index === 0 || roundNumber !== previousRoundNumber;
                                 const rowKey = round.id ?? `${round.gameTeam?.id}-${round.roundNumber}`;
 
@@ -602,7 +588,7 @@ function GamePage() {
                                             </tr>
                                         )}
                                         <tr className={round.isWinner ? "round-history-row is-winner" : "round-history-row"}>
-                                            <td>{round.roundNumber}</td>
+                                            <td>{rank}</td>
                                             <td>{round.gameTeam?.team?.name}</td>
                                             <td>{round.cardPoints ?? 0}</td>
                                             <td>{round.cleanBooks ?? 0}</td>
@@ -625,10 +611,10 @@ function GamePage() {
                     </Table>
                 </div>
                 <div className="mobile-card-list" aria-label="Mobile previous rounds">
-                    {sortedRounds.length ? sortedRounds.map((round) => (
+                    {rankedRounds.length ? rankedRounds.map(({ round, rank }) => (
                         <article className="round-history-card" key={round.id ?? `${round.gameTeam?.id}-${round.roundNumber}`}>
                             <div className="round-history-card-header">
-                                <span>Round {round.roundNumber}</span>
+                                <span>Round {round.roundNumber} · Rank #{rank}</span>
                                 <strong>{round.gameTeam?.team?.name}</strong>
                             </div>
                             <div className="round-history-total">

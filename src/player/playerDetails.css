@@ -1,19 +1,216 @@
-.player-detail-actions {
-    align-items: stretch;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 24px;
-    max-width: 280px;
+.player-home {
+    margin: 0 auto;
+    max-width: 820px;
 }
 
-.player-detail-actions .btn {
+.player-home-hero {
+    margin-bottom: 22px;
+}
+
+.player-home-hero h1 {
+    font-size: clamp(2rem, 7vw, 3.4rem);
+    line-height: 1.05;
+    margin: 4px 0 10px;
+}
+
+.player-home-hero > p:last-child,
+.player-home-section-heading p {
+    color: #cfc2b0;
+    margin: 0;
+}
+
+.player-home-eyebrow {
+    color: #f0c46b;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.player-home-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 22px 0 30px;
+}
+
+.player-home-actions .btn {
+    min-width: 220px;
+}
+
+.player-home-guest {
+    background: rgba(255, 255, 255, 0.08);
+    border-left: 4px solid #d8a64a;
+    border-radius: 6px;
+    margin-top: 18px;
+    max-width: 460px;
+    padding: 14px;
+}
+
+.player-home-guest h2 {
+    font-size: 1rem;
+    margin: 0 0 10px;
+}
+
+.player-home-guest label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.player-home-guest input {
+    border: 1px solid #707070;
+    border-radius: 6px;
+    min-height: 44px;
+    padding: 8px 10px;
     width: 100%;
 }
 
+.player-home-summary,
+.player-home-recent {
+    margin-top: 28px;
+}
+
+.player-home-section-heading h2 {
+    font-size: 1.35rem;
+    margin: 0 0 4px;
+}
+
+.player-home-stat-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 14px 0 0;
+}
+
+.player-home-stat-grid > div,
+.player-home-recent-card,
+.player-home-empty,
+.player-home-message {
+    background: #ffffff;
+    border: 1px solid #d8dde3;
+    border-radius: 10px;
+    color: #212529;
+    padding: 18px;
+}
+
+.player-home-stat-grid dt {
+    color: #505a63;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.player-home-stat-grid dd {
+    font-size: clamp(1.8rem, 5vw, 2.5rem);
+    font-weight: 800;
+    line-height: 1;
+    margin: 8px 0 0;
+}
+
+.player-home-message {
+    margin: 14px 0 0;
+}
+
+.player-home-message.is-error {
+    background: #f8d7da;
+    border-color: #842029;
+    color: #842029;
+}
+
+.player-home-recent-card,
+.player-home-empty {
+    margin-top: 14px;
+}
+
+.player-home-recent-card h3 {
+    font-size: 1.35rem;
+    margin: 4px 0 8px;
+}
+
+.player-home-recent-card > p:not(.player-home-recent-date),
+.player-home-empty p {
+    margin: 0;
+}
+
+.player-home-recent-date {
+    color: #505a63;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.player-home-recent-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.app-main .player-home-recent-actions .btn-primary,
+.app-main .player-home-recent-actions .btn-primary:visited {
+    color: #ffffff;
+}
+
+.app-main .player-home-recent-actions .btn-outline-secondary,
+.app-main .player-home-recent-actions .btn-outline-secondary:visited {
+    color: #505a63;
+}
+
+.app-main .player-home-recent-actions .btn-outline-secondary:hover,
+.app-main .player-home-recent-actions .btn-outline-secondary:focus-visible {
+    color: #ffffff;
+}
+
 @media (max-width: 640px) {
-    .player-detail-actions {
-        max-width: none;
+    .player-home-hero h1 {
+        font-size: 2.25rem;
+    }
+
+    .player-home-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .player-home-actions .btn {
+        min-height: 48px;
+        min-width: 0;
         width: 100%;
+    }
+
+    .player-home-stat-grid {
+        gap: 8px;
+    }
+
+    .player-home-stat-grid > div {
+        padding: 14px 10px;
+    }
+
+    .player-home-stat-grid dt {
+        font-size: 0.7rem;
+    }
+
+    .player-home-stat-grid dd {
+        font-size: 1.75rem;
+    }
+
+    .player-home-recent-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .player-home-recent-actions .btn {
+        min-height: 46px;
+        width: 100%;
+    }
+}
+
+@media (max-width: 360px) {
+    .player-home-stat-grid {
+        grid-template-columns: 1fr;
     }
 }

@@ -6,9 +6,9 @@ import TeamCreateDTO from "../../models/DTOs/Team/TeamCreateDTO";
 import TeamGetBasicDTO from "../../models/DTOs/Team/TeamGetBasicDTO";
 import TeamGetWithPlayerNamesDTO from "../../models/DTOs/Team/TeamGetWithPlayerNamesDTO";
 import { getCollection, getFirebaseUser, getOwnedByNumericId, getRequiredFirebase, nextNumericId } from "./firebaseRepository";
-import { FirebaseTeamDocument } from "./firebaseTypes";
+import { FirebaseGameTeamDocument, FirebaseTeamDocument } from "./firebaseTypes";
 import FirebasePlayerService from "./FirebasePlayerService";
-import { toPlayerBasicDTO, toTeamBasicDTO, toTeamWithPlayersDTO } from "./firebaseMappers";
+import { toPlayerBasicDTO, toPlayerDirectoryBasicDTO, toTeamBasicDTO, toTeamWithPlayersDTO } from "./firebaseMappers";
 
 const normalizeText = (value?: string): string => (value ?? "").trim().toLowerCase();
 
@@ -102,6 +102,25 @@ class FirebaseTeamService {
         const players = await Promise.all(team.memberPlayerIds.map((playerId) => FirebasePlayerService.getPlayerDocumentById(playerId)));
         const teamMembers = players.filter(Boolean).map((player) => toPlayerBasicDTO(player!));
         return toTeamWithPlayersDTO(team, teamMembers);
+    }
+
+    public static async toSharedGameTeam(gameTeam: FirebaseGameTeamDocument): Promise<TeamGetWithPlayerNamesDTO> {
+        const players = await Promise.all(
+            gameTeam.memberPlayerIds.map((playerId) => FirebasePlayerService.getPublicPlayerById(playerId))
+        );
+        const teamMembers = players.filter(Boolean).map((player) => toPlayerDirectoryBasicDTO(player!));
+        const inferredName = teamMembers
+            .map((player) => player.nickName?.trim())
+            .filter(Boolean)
+            .join(" and ");
+        const sharedTeam: FirebaseTeamDocument = {
+            id: gameTeam.teamId,
+            ownerUid: gameTeam.ownerUid,
+            name: gameTeam.teamName?.trim() || inferredName || `Team ${gameTeam.teamId}`,
+            memberPlayerIds: gameTeam.memberPlayerIds,
+        };
+
+        return toTeamWithPlayersDTO(sharedTeam, teamMembers);
     }
 }
 

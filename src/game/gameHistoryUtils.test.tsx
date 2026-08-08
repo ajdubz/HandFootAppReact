@@ -7,6 +7,7 @@ import {
     buildGameHistoryResult,
     GameHistoryResult,
     gameMatchesHistoryFilters,
+    gameMatchesHistorySearch,
     sortGameHistoryResults,
 } from "./gameHistoryUtils";
 
@@ -111,4 +112,23 @@ test("sorts game history newest first with game id as a tie breaker", () => {
 
     expect(sortGameHistoryResults(results).map((result) => result.gameId))
         .toEqual([3, 2, 1]);
+});
+
+test("searches game history by date, team name, and player nickname", () => {
+    const alex = player(1, "Alex");
+    const sam = player(2, "Sam");
+    const blaze = gameTeam(10, 100, "Blaze", [alex, sam]);
+    const tableTalk = gameTeam(11, 101, "Table Talk", [player(3, "Casey")]);
+    const result = buildGameHistoryResult(
+        game(8, new Date("2026-07-02T12:00:00Z")),
+        [blaze, tableTalk],
+        [],
+    ) as GameHistoryResult;
+
+    expect(gameMatchesHistorySearch(result, "")).toBe(true);
+    expect(gameMatchesHistorySearch(result, "2026-07-02")).toBe(true);
+    expect(gameMatchesHistorySearch(result, "table")).toBe(true);
+    expect(gameMatchesHistorySearch(result, "alex")).toBe(true);
+    expect(gameMatchesHistorySearch(result, "Alex Sam")).toBe(true);
+    expect(gameMatchesHistorySearch(result, "Alex Jordan")).toBe(false);
 });

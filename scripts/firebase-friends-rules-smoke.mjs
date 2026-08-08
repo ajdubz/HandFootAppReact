@@ -52,6 +52,7 @@ const expectPermissionDenied = async (operation, description) => {
 
 const owner = await createClient("owner", "owner@example.com");
 const recipient = await createClient("recipient", "recipient@example.com");
+const outsider = await createClient("outsider", "outsider@example.com");
 
 const ownerPlayer = {
     id: 1,
@@ -71,9 +72,19 @@ const recipientPlayer = {
     email: "recipient@example.com",
     isGuest: false,
 };
+const outsiderPlayer = {
+    id: 3,
+    uid: outsider.uid,
+    ownerUid: outsider.uid,
+    nickName: "Outsider",
+    fullName: "Private Outsider Name",
+    email: "outsider@example.com",
+    isGuest: false,
+};
 
 await setDoc(doc(owner.db, "players", owner.uid), ownerPlayer);
 await setDoc(doc(recipient.db, "players", recipient.uid), recipientPlayer);
+await setDoc(doc(outsider.db, "players", outsider.uid), outsiderPlayer);
 await updateDoc(doc(owner.db, "players", owner.uid), { nickName: "Owner Updated" });
 
 await expectPermissionDenied(
@@ -183,6 +194,88 @@ assert.equal(ownerFriendships.size, 1, "The first participant should be able to 
 assert.equal(recipientFriendships.size, 1, "The second participant should be able to list friendships.");
 assert.equal(directFriendship.exists(), true, "A participant should be able to read a friendship directly.");
 
-await Promise.all([deleteApp(owner.app), deleteApp(recipient.app)]);
+await setDoc(doc(owner.db, "games", "game-10"), {
+    id: 10,
+    ownerUid: owner.uid,
+    participantUids: [owner.uid, recipient.uid],
+    date: new Date().toISOString(),
+    rules: {},
+    teamIds: [20, 21],
+    memberPlayerIds: [1, 2],
+});
+await setDoc(doc(owner.db, "gameAccess", `game-10-participant-${recipient.uid}`), {
+    gameId: 10,
+    ownerUid: owner.uid,
+    participantUid: recipient.uid,
+});
+await updateDoc(doc(owner.db, "games", "game-10"), {
+    accessProvisionedUids: [owner.uid, recipient.uid],
+});
+await setDoc(doc(owner.db, "gameTeams", "gameTeam-30"), {
+    id: 30,
+    ownerUid: owner.uid,
+    gameId: 10,
+    teamId: 20,
+    teamName: "Owner",
+    memberPlayerIds: [1],
+});
+await setDoc(doc(owner.db, "gameTeams", "gameTeam-31"), {
+    id: 31,
+    ownerUid: owner.uid,
+    gameId: 10,
+    teamId: 21,
+    teamName: "Recipient",
+    memberPlayerIds: [2],
+});
+await setDoc(doc(owner.db, "rounds", "game-10-team-30-round-1"), {
+    id: 40,
+    ownerUid: owner.uid,
+    gameId: 10,
+    gameTeamId: 30,
+    roundNumber: 1,
+    cardPoints: 100,
+    handScore: 200,
+    cleanBooks: 0,
+    dirtyBooks: 0,
+    redThrees: 0,
+    pulledCorrect: 0,
+    isWinner: true,
+});
 
-console.log("Firebase Friends rules smoke test passed.");
+const participantGameAccess = await getDocs(query(
+    collection(recipient.db, "gameAccess"),
+    where("participantUid", "==", recipient.uid),
+));
+const ownedGames = await getDocs(query(
+    collection(owner.db, "games"),
+    where("ownerUid", "==", owner.uid),
+));
+const participantGame = await getDoc(doc(recipient.db, "games", "game-10"));
+const participantGameTeams = await getDocs(query(
+    collection(recipient.db, "gameTeams"),
+    where("gameId", "==", 10),
+));
+const participantRounds = await getDocs(query(
+    collection(recipient.db, "rounds"),
+    where("gameId", "==", 10),
+));
+const participantTeamRounds = await getDocs(query(
+    collection(recipient.db, "rounds"),
+    where("gameId", "==", 10),
+    where("gameTeamId", "==", 30),
+));
+
+assert.equal(ownedGames.size, 1, "The creator should still be able to list owned games.");
+assert.equal(participantGameAccess.size, 1, "A selected player should be able to list shared-game access.");
+assert.equal(participantGame.exists(), true, "A selected player should be able to read the shared game.");
+assert.equal(participantGameTeams.size, 2, "A selected player should be able to read every team in the shared game.");
+assert.equal(participantRounds.size, 1, "A selected player should be able to read rounds in the shared game.");
+assert.equal(participantTeamRounds.size, 1, "A selected player should be able to read rounds for one game team.");
+await expectPermissionDenied(
+    () => getDoc(doc(outsider.db, "games", "game-10")),
+    "Players who were not selected for a game must not be able to read it.",
+);
+
+await Promise.all([deleteApp(owner.app), deleteApp(recipient.app), deleteApp(outsider.app)]);
+
+console.log("Firebase friends and shared-game rules smoke test passed.");

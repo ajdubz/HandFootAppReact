@@ -22,7 +22,7 @@ export type GameHistoryFilters = {
 
 const toGameDate = (value: unknown): Date | undefined => {
     if (value instanceof Date) {
-        return value;
+        return Number.isNaN(value.getTime()) ? undefined : value;
     }
 
     if (typeof value === "string" || typeof value === "number") {
@@ -91,6 +91,39 @@ export const sortGameHistoryResults = (results: GameHistoryResult[]): GameHistor
         (b.gameDate?.getTime() ?? 0) - (a.gameDate?.getTime() ?? 0) ||
         b.gameId - a.gameId
     );
+};
+
+export const gameMatchesHistorySearch = (result: GameHistoryResult, query: string): boolean => {
+    const searchTerms = query
+        .trim()
+        .toLocaleLowerCase()
+        .split(/\s+/)
+        .filter(Boolean);
+
+    if (!searchTerms.length) {
+        return true;
+    }
+
+    const dateValues = result.gameDate
+        ? [
+            result.gameDate.toLocaleDateString(),
+            result.gameDate.toLocaleDateString(undefined, {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+            }),
+            result.gameDate.toISOString().slice(0, 10),
+        ]
+        : [];
+    const teamAndPlayerNames = result.rankedTeams.flatMap((gameTeam) => [
+        gameTeam.team?.name ?? "",
+        ...(gameTeam.team?.teamMembers ?? []).map((member) => member.nickName ?? ""),
+    ]);
+    const searchableText = [...dateValues, ...teamAndPlayerNames]
+        .join(" ")
+        .toLocaleLowerCase();
+
+    return searchTerms.every((term) => searchableText.includes(term));
 };
 
 export const loadGameHistoryResults = async (filters: GameHistoryFilters = {}): Promise<GameHistoryResult[]> => {

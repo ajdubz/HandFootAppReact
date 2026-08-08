@@ -28,6 +28,15 @@ export const getActiveGameRoute = (currentPlayerId?: number | string): string =>
     return activeGameRoute;
 };
 
+export const getGameIdFromActiveGameRoute = (route: string): number | undefined => {
+    const routeMatch = route.match(ACTIVE_GAME_ROUTE_PATTERN);
+    if (!routeMatch) {
+        return undefined;
+    }
+
+    return Number(routeMatch[2]);
+};
+
 export const isActiveGameRoute = (route: string | undefined): route is string => {
     return Boolean(route?.match(ACTIVE_GAME_ROUTE_PATTERN));
 };

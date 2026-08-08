@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import GamePage from "./gameHome";
 import MockApi from "../services/MockApi";
@@ -81,27 +81,11 @@ describe("GamePage round entry", () => {
         expect(screen.getAllByRole("button", { name: /save round/i })).toHaveLength(1);
         expect(screen.getByRole("button", { name: /save round/i })).toBeDisabled();
         expect(screen.getByLabelText("Alex and Sam Went Out")).toBeDisabled();
-        expect(screen.getByRole("button", { name: /new game/i })).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /new game/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /end game/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /^back$/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole("heading", { name: /game center/i })).not.toBeInTheDocument();
         expect(localStorage.getItem("activeGameRoute")).toBe("/player/1/game/1");
-    });
-
-    test("opens the start game modal from New Game", async () => {
-        renderGamePage();
-
-        fireEvent.click(await screen.findByRole("button", { name: /new game/i }));
-
-        expect(await screen.findByText("Start Game")).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: /continue/i })).toBeInTheDocument();
-    });
-
-    test("back returns to player details without reopening the start game modal", async () => {
-        renderGamePageWithPlayerDetailsRoute("/player/1/game/1");
-
-        fireEvent.click(await screen.findByRole("button", { name: /^back$/i }));
-
-        expect(await screen.findByRole("heading", { name: /player details/i })).toBeInTheDocument();
-        expect(screen.getByTestId("location")).toHaveTextContent("/player/1");
-        expect(screen.queryByRole("button", { name: /continue/i })).not.toBeInTheDocument();
     });
 
     test("shows saved book threshold and going-out requirements for the game", async () => {
@@ -123,7 +107,18 @@ describe("GamePage round entry", () => {
         expect(screen.getByText(/go out: 3 clean \/ 1 dirty/i)).toBeInTheDocument();
     });
 
-    test("starts a new game from Game Center and navigates to it", async () => {
+    test("starts a new game from the completed-game winner state and navigates to it", async () => {
+        const gameTeams = await GameService.getTeamsByGameId(1);
+        for (const roundNumber of [1, 2, 3, 4]) {
+            await Promise.all((gameTeams ?? []).map((gameTeam) => {
+                const round = new GameRoundDTO();
+                round.gameTeam = gameTeam;
+                round.roundNumber = roundNumber;
+                round.handScore = gameTeam.id === 1 ? 500 : 250;
+                return GameService.saveGameRound(1, round);
+            }));
+        }
+
         renderGamePage();
 
         fireEvent.click(await screen.findByRole("button", { name: /new game/i }));
@@ -137,7 +132,7 @@ describe("GamePage round entry", () => {
         await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/player/1/game/2"));
     });
 
-    test("end game preserves the active guest nickname", async () => {
+    test("completing a game preserves the active guest nickname and removes temporary guests", async () => {
         const guestLogin = await PlayerService.startGuestSession();
         const guestId = guestLogin.id ?? 0;
         const guestAccount = Object.assign(new PlayerAccountDTO(), await PlayerService.getPlayerAccountById(guestId), {
@@ -178,13 +173,12 @@ describe("GamePage round entry", () => {
 
         renderGamePageWithPlayerDetailsRoute(`/player/${guestId}/game/${newGame?.id}`);
 
-        fireEvent.click(await screen.findByRole("button", { name: /end game/i }));
-
-        expect(await screen.findByRole("heading", { name: /player details/i })).toBeInTheDocument();
-        expect(await screen.findByDisplayValue("Wild Bill")).toBeInTheDocument();
+        expect(await screen.findByText("Wild Bill", { selector: ".game-winner strong" })).toBeInTheDocument();
         expect(await PlayerService.getPlayerAccountById(guestId)).toMatchObject({ nickName: "Wild Bill" });
-        expect(await PlayerService.getPlayerAccountById(temporaryGuestAccount.id ?? 0)).toBeUndefined();
-        expect(localStorage.getItem("activeGameRoute")).toBeNull();
+        await waitFor(async () => {
+            expect(await PlayerService.getPlayerAccountById(temporaryGuestAccount.id ?? 0)).toBeUndefined();
+            expect(localStorage.getItem("activeGameRoute")).toBeNull();
+        });
     });
 
     test("renders mobile scoring cards with touch-friendly controls", async () => {
@@ -201,6 +195,36 @@ describe("GamePage round entry", () => {
         expect(screen.getByLabelText("Mobile Alex and Sam Went Out")).toBeInTheDocument();
         expect(screen.getByLabelText("Mobile scoreboard")).toBeInTheDocument();
         expect(screen.getByLabelText("Mobile previous rounds")).toBeInTheDocument();
+    });
+
+    test("shows each team's rank within a previous round", async () => {
+        const gameTeams = await GameService.getTeamsByGameId(1);
+        const scoresByTeam = [250, 600];
+
+        await Promise.all((gameTeams ?? []).map((gameTeam, index) => {
+            const round = new GameRoundDTO();
+            round.gameTeam = gameTeam;
+            round.roundNumber = 1;
+            round.handScore = scoresByTeam[index];
+            return GameService.saveGameRound(1, round);
+        }));
+
+        renderGamePage();
+
+        const previousRoundsHeading = await screen.findByRole("heading", { name: /previous rounds/i });
+        const previousRoundsSection = previousRoundsHeading.closest("section");
+        expect(previousRoundsSection).not.toBeNull();
+
+        await waitFor(() => {
+            const rows = within(previousRoundsSection as HTMLElement).getAllByRole("row");
+            const alexAndSamRow = rows.find((row) => row.textContent?.includes("Alex and Sam"));
+            const jordanAndCaseyRow = rows.find((row) => row.textContent?.includes("Jordan and Casey"));
+
+            expect(alexAndSamRow).toBeDefined();
+            expect(jordanAndCaseyRow).toBeDefined();
+            expect(within(alexAndSamRow as HTMLElement).getAllByRole("cell")[0]).toHaveTextContent("2");
+            expect(within(jordanAndCaseyRow as HTMLElement).getAllByRole("cell")[0]).toHaveTextContent("1");
+        });
     });
 
     test("normalizes leading zeroes in round score inputs", async () => {
@@ -333,15 +357,18 @@ describe("GamePage round entry", () => {
             fireEvent.click(screen.getByLabelText("Alex and Sam Went Out"));
             clickSaveRound();
 
-            const nextHeading = roundNumber === 4
-                ? /game complete/i
-                : new RegExp(`score round ${roundNumber + 1}`, "i");
-            expect(await screen.findByRole("heading", { name: nextHeading })).toBeInTheDocument();
+            if (roundNumber === 4) {
+                expect(await screen.findByText("Alex and Sam", { selector: ".game-winner strong" })).toBeInTheDocument();
+            } else {
+                expect(await screen.findByRole("heading", { name: new RegExp(`score round ${roundNumber + 1}`, "i") })).toBeInTheDocument();
+            }
         }
 
-        screen.getAllByRole("button", { name: /save round/i }).forEach((button) => {
-            expect(button).toBeDisabled();
-        });
-        expect(screen.getByText(/game complete\. winner:/i)).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /save round/i })).not.toBeInTheDocument();
+        const newGameButton = screen.getByRole("button", { name: /new game/i });
+        expect(newGameButton).toBeInTheDocument();
+        expect(newGameButton.closest(".game-winner")).toBeNull();
+        expect(screen.queryByText(/game complete/i)).not.toBeInTheDocument();
+        expect(localStorage.getItem("activeGameRoute")).toBeNull();
     });
 });

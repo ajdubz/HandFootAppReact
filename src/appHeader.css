@@ -20,6 +20,25 @@
     letter-spacing: 0;
 }
 
+.app-header-signout {
+    background: transparent;
+    border: 0;
+    color: #cfc2b0;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-left: auto;
+    padding: 8px 4px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.app-header-signout:hover,
+.app-header-signout:focus-visible {
+    color: #ffffff;
+    outline: 2px solid #d8a64a;
+    outline-offset: 2px;
+}
+
 .hamburger-button {
     align-items: center;
     background: #fffaf2;
@@ -120,6 +139,7 @@
 
 @media (max-width: 640px) {
     .app-header {
+        gap: 10px;
         padding: 8px 12px;
     }
 

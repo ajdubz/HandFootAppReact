@@ -129,6 +129,18 @@ describe("RulesPage", () => {
         expect(getRuleInput("Cards to draw")).toHaveValue(3);
     });
 
+    test("keeps the page focused and calls out unsaved changes", () => {
+        renderRulesPage();
+
+        expect(screen.queryByText(/built-in defaults/i)).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /^back$/i })).not.toBeInTheDocument();
+        expect(screen.getByText(/defaults are up to date/i)).toBeInTheDocument();
+
+        fireEvent.change(getRuleInput("Clean book"), { target: { value: "600" } });
+
+        expect(screen.getByText(/unsaved changes/i)).toBeInTheDocument();
+    });
+
     test("keeps non-red rule values non-negative", () => {
         renderRulesPage();
 
@@ -156,16 +168,6 @@ describe("RulesPage", () => {
 
         fireEvent.click(screen.getByRole("button", { name: "Decrease Red 3 penalty" }));
         expect(getRuleInput("Red 3 penalty")).toHaveValue(-25);
-    });
-
-    test("back leaves without saving edits", () => {
-        renderRulesPage();
-
-        fireEvent.change(getRuleInput("Clean book"), { target: { value: "800" } });
-        fireEvent.click(screen.getByRole("button", { name: /back/i }));
-
-        expect(screen.getByRole("heading", { name: /player details/i })).toBeInTheDocument();
-        expect(loadRuleDefaults()).toEqual(buildDefaultRules());
     });
 
     test("returns to the active game when one is available", () => {

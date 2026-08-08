@@ -1,8 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Table } from "react-bootstrap";
-import GameRoundDTO from "../models/DTOs/Game/GameRoundDTO";
-import { numberOrZero } from "./gameHomeUtils";
+import { numberOrZero, rankRoundsByScore } from "./gameHomeUtils";
 import { GameHistoryResult, loadGameHistoryResultById } from "./gameHistoryUtils";
 import "./gameHome.css";
 
@@ -12,17 +11,6 @@ interface RouteParams {
 
 const formatGameDate = (date?: Date): string => {
     return date ? date.toLocaleDateString() : "Date unknown";
-};
-
-const sortRounds = (rounds: GameRoundDTO[]): GameRoundDTO[] => {
-    return [...rounds].sort((a, b) => {
-        const roundDiff = numberOrZero(a.roundNumber) - numberOrZero(b.roundNumber);
-        if (roundDiff !== 0) {
-            return roundDiff;
-        }
-
-        return (a.gameTeam?.team?.name ?? "").localeCompare(b.gameTeam?.team?.name ?? "");
-    });
 };
 
 function GameHistoryDetail(): React.ReactElement {
@@ -50,7 +38,7 @@ function GameHistoryDetail(): React.ReactElement {
         fetchResult();
     }, [fetchResult]);
 
-    const sortedRounds = useMemo(() => sortRounds(result?.rounds ?? []), [result]);
+    const rankedRounds = useMemo(() => rankRoundsByScore(result?.rounds ?? []), [result]);
 
     return (
         <div className="game-page">
@@ -81,7 +69,7 @@ function GameHistoryDetail(): React.ReactElement {
                             <Table bordered responsive className="round-history-table">
                                 <thead>
                                     <tr>
-                                        <th>Round</th>
+                                        <th>Rank</th>
                                         <th>Team</th>
                                         <th>Card Points</th>
                                         <th>Clean Books</th>
@@ -93,9 +81,9 @@ function GameHistoryDetail(): React.ReactElement {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {sortedRounds.length ? sortedRounds.map((round, index) => {
+                                    {rankedRounds.length ? rankedRounds.map(({ round, rank }, index) => {
                                         const roundNumber = numberOrZero(round.roundNumber);
-                                        const previousRoundNumber = index > 0 ? numberOrZero(sortedRounds[index - 1].roundNumber) : undefined;
+                                        const previousRoundNumber = index > 0 ? numberOrZero(rankedRounds[index - 1].round.roundNumber) : undefined;
                                         const startsNewRound = index === 0 || roundNumber !== previousRoundNumber;
                                         const rowKey = round.id ?? `${round.gameTeam?.id}-${round.roundNumber}`;
 
@@ -107,7 +95,7 @@ function GameHistoryDetail(): React.ReactElement {
                                                     </tr>
                                                 )}
                                                 <tr className={round.isWinner ? "round-history-row is-winner" : "round-history-row"}>
-                                                    <td>{round.roundNumber}</td>
+                                                    <td>{rank}</td>
                                                     <td>{round.gameTeam?.team?.name}</td>
                                                     <td>{round.cardPoints ?? 0}</td>
                                                     <td>{round.cleanBooks ?? 0}</td>
@@ -131,10 +119,10 @@ function GameHistoryDetail(): React.ReactElement {
                         </div>
 
                         <div className="mobile-card-list" aria-label="Mobile previous rounds">
-                            {sortedRounds.length ? sortedRounds.map((round) => (
+                            {rankedRounds.length ? rankedRounds.map(({ round, rank }) => (
                                 <article className="round-history-card" key={round.id ?? `${round.gameTeam?.id}-${round.roundNumber}`}>
                                     <div className="round-history-card-header">
-                                        <span>Round {round.roundNumber}</span>
+                                        <span>Round {round.roundNumber} · Rank #{rank}</span>
                                         <strong>{round.gameTeam?.team?.name}</strong>
                                     </div>
                                     <div className="round-history-total">

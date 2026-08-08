@@ -1,62 +1,62 @@
 {
-  "name": "handfootappreact",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^14.3.1",
-    "@testing-library/user-event": "^13.5.0",
-    "@types/jest": "^27.5.2",
-    "@types/node": "^16.18.105",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "ajv": "^8.17.1",
-    "bootstrap": "^5.3.3",
-    "dotenv": "^16.4.5",
-    "firebase": "^12.13.0",
-    "react": "^18.3.1",
-    "react-bootstrap": "^2.10.4",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.26.1",
-    "react-scripts": "5.0.1",
-    "typescript": "^4.9.5",
-    "web-vitals": "^2.1.4"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "start:mock": "set \"REACT_APP_DATA_BACKEND=mock\" && set \"REACT_APP_API_URL=mock\" && react-scripts start",
-    "start:api": "set \"REACT_APP_DATA_BACKEND=api\" && set \"REACT_APP_API_URL=http://127.0.0.1:8000\" && react-scripts start",
-    "start:firebase": "set \"REACT_APP_DATA_BACKEND=firebase\" && react-scripts start",
-    "start:firebase:emulators": "set \"REACT_APP_DATA_BACKEND=firebase\" && set \"REACT_APP_FIREBASE_USE_EMULATORS=true\" && react-scripts start",
-    "firebase:emulators": "firebase.cmd emulators:start --only auth,firestore",
-    "test:firebase:friends": "firebase.cmd emulators:exec --only auth,firestore \"node scripts/firebase-friends-rules-smoke.mjs\"",
-    "test:firebase:hosting": "firebase.cmd emulators:exec --only hosting \"node scripts/firebase-hosting-cache-smoke.mjs\"",
-    "build:firebase": "set \"REACT_APP_DATA_BACKEND=firebase\" && set \"REACT_APP_FIREBASE_USE_EMULATORS=false\" && react-scripts build",
-    "firebase:verify": "npm.cmd test -- --watchAll=false --cacheDirectory=.jest-cache --silent && npm.cmd run test:firebase:friends && npm.cmd run build:firebase && npm.cmd run test:firebase:hosting",
-    "firebase:deploy": "npm.cmd run firebase:verify && firebase.cmd deploy --only hosting,firestore:rules,firestore:indexes",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
-  }
+	"name": "handfootappreact",
+	"version": "0.1.0",
+	"private": true,
+	"dependencies": {
+		"@testing-library/jest-dom": "^5.17.0",
+		"@testing-library/react": "^14.3.1",
+		"@testing-library/user-event": "^13.5.0",
+		"@types/jest": "^27.5.2",
+		"@types/node": "^16.18.105",
+		"@types/react": "^18.3.3",
+		"@types/react-dom": "^18.3.0",
+		"ajv": "^8.17.1",
+		"bootstrap": "^5.3.3",
+		"dotenv": "^16.4.5",
+		"firebase": "^12.13.0",
+		"react": "^18.3.1",
+		"react-bootstrap": "^2.10.4",
+		"react-dom": "^18.3.1",
+		"react-router-dom": "^6.26.1",
+		"react-scripts": "5.0.1",
+		"typescript": "^4.9.5",
+		"web-vitals": "^2.1.4"
+	},
+	"scripts": {
+		"start": "react-scripts start",
+		"start:mock": "set \"REACT_APP_DATA_BACKEND=mock\" && set \"REACT_APP_API_URL=mock\" && react-scripts start",
+		"start:api": "set \"REACT_APP_DATA_BACKEND=api\" && set \"REACT_APP_API_URL=http://127.0.0.1:8000\" && react-scripts start",
+		"start:firebase": "set \"REACT_APP_DATA_BACKEND=firebase\" && react-scripts start",
+		"start:firebase:emulators": "set \"REACT_APP_DATA_BACKEND=firebase\" && set \"REACT_APP_FIREBASE_USE_EMULATORS=true\" && react-scripts start",
+		"firebase:emulators": "firebase.cmd emulators:start --only auth,firestore",
+		"test:firebase:friends": "firebase.cmd emulators:exec --only auth,firestore \"node scripts/firebase-friends-rules-smoke.mjs\"",
+		"test:firebase:hosting": "firebase.cmd emulators:exec --only hosting \"node scripts/firebase-hosting-cache-smoke.mjs\"",
+		"build:firebase": "set \"REACT_APP_DATA_BACKEND=firebase\" && set \"REACT_APP_FIREBASE_USE_EMULATORS=false\" && react-scripts build",
+		"firebase:verify": "npm.cmd test -- --watchAll=false --cacheDirectory=.jest-cache --silent && npm.cmd run test:firebase:friends && npm.cmd run build:firebase && npm.cmd run test:firebase:hosting",
+		"firebase:deploy": "npm.cmd run firebase:verify && firebase.cmd deploy --only hosting,firestore:rules,firestore:indexes",
+		"build": "react-scripts build",
+		"test": "react-scripts test",
+		"eject": "react-scripts eject"
+	},
+	"eslintConfig": {
+		"extends": [
+			"react-app",
+			"react-app/jest"
+		]
+	},
+	"browserslist": {
+		"production": [
+			">0.2%",
+			"not dead",
+			"not op_mini all"
+		],
+		"development": [
+			"last 1 chrome version",
+			"last 1 firefox version",
+			"last 1 safari version"
+		]
+	},
+	"devDependencies": {
+		"@babel/plugin-proposal-private-property-in-object": "^7.21.11"
+	}
 }

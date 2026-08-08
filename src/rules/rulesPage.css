@@ -1,112 +1,274 @@
+.rules-page {
+    margin: 0 auto;
+    max-width: 1080px;
+    padding-bottom: 20px;
+}
+
 .rules-header {
-    align-items: center;
+    align-items: flex-start;
     display: flex;
+    gap: 24px;
     justify-content: space-between;
-    gap: 16px;
+    margin-bottom: 24px;
 }
 
-.rules-header h1,
-.rules-section h2 {
+.rules-header h1 {
+    font-size: clamp(2rem, 6vw, 3rem);
+    line-height: 1.08;
+    margin: 4px 0 8px;
+}
+
+.rules-header > div > p:last-child {
+    color: #cfc2b0;
     margin: 0;
+    max-width: 680px;
 }
 
-.rules-header p {
-    margin: 6px 0 0;
+.rules-eyebrow {
+    color: #f0c46b;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.rules-header > .btn {
+    flex: 0 0 auto;
 }
 
 .rules-form {
-    margin-top: 24px;
+    display: grid;
+    gap: 18px;
 }
 
 .rules-section {
-    margin-top: 24px;
+    background: linear-gradient(145deg, #34271f, #2b211b);
+    border: 1px solid #654a38;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    color: #f8f3ea;
+    padding: 20px;
+}
+
+.rules-section-heading {
+    align-items: flex-start;
+    display: flex;
+    gap: 18px;
+    justify-content: space-between;
+}
+
+.rules-section-heading h2 {
+    font-size: 1.45rem;
+    margin: 1px 0 0;
+}
+
+.rules-section-heading p {
+    color: #e6b85f;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.rules-section-heading > span {
+    background: rgba(216, 166, 74, 0.14);
+    border: 1px solid rgba(216, 166, 74, 0.34);
+    border-radius: 999px;
+    color: #f0c46b;
+    flex: 0 0 auto;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 5px 10px;
+}
+
+.rules-section-description {
+    color: #d3c5b5;
+    margin: 7px 0 0;
 }
 
 .rules-grid {
     display: grid;
-    gap: 16px;
-    grid-template-columns: repeat(3, minmax(180px, 1fr));
-    margin-top: 12px;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-top: 18px;
 }
 
 .rules-field {
-    background: #ffffff;
-    border: 1px solid #1f1f1f;
+    background: #402f25;
+    border: 1px solid #624938;
     border-radius: 8px;
-    color: #212529;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
     padding: 14px;
 }
 
 .rules-field label {
-    font-weight: 700;
+    font-weight: 800;
+    margin-bottom: 0;
 }
 
 .rules-field .numeric-stepper {
+    margin-top: 10px;
+    max-width: none;
+}
+
+.rules-field .numeric-stepper-control {
+    background: #fffaf2;
+    border-color: #b89b74;
+}
+
+.rules-field .numeric-stepper-button {
+    background: #eadcc8;
+    border-color: #b89b74;
+    color: #2a201a;
+}
+
+.rules-field .numeric-stepper-button:hover,
+.rules-field .numeric-stepper-button:active {
+    background: #d8a64a;
+    border-color: #d8a64a;
+    color: #171311;
+}
+
+.rules-field .form-text {
+    color: #d3c5b5 !important;
+    display: block;
+    line-height: 1.35;
     margin-top: 8px;
-    width: min(100%, 240px);
-}
-
-.rules-defaults-summary {
-    background: #ffffff;
-    border: 1px solid #1f1f1f;
-    border-radius: 8px;
-    color: #212529;
-    padding: 14px;
-}
-
-.rules-defaults-summary dl {
-    display: grid;
-    gap: 10px;
-    grid-template-columns: repeat(4, minmax(120px, 1fr));
-    margin: 12px 0 0;
-}
-
-.rules-defaults-summary div {
-    background: #f4f6f8;
-    border: 1px solid #d8dde3;
-    border-radius: 6px;
-    padding: 8px;
-}
-
-.rules-defaults-summary dt {
-    color: #505a63;
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-.rules-defaults-summary dd {
-    font-size: 1.2rem;
-    font-weight: 700;
-    margin: 2px 0 0;
 }
 
 .rules-save-message {
     background: #d1e7dd;
     border: 1px solid #0f5132;
+    border-radius: 8px;
     color: #0f5132;
-    margin-top: 18px;
-    padding: 10px 12px;
+    margin-bottom: 18px;
+    padding: 11px 14px;
 }
 
 .rules-actions {
+    align-items: center;
+    backdrop-filter: blur(10px);
+    background: rgba(47, 36, 29, 0.96);
+    border: 1px solid #654a38;
+    border-radius: 10px;
+    bottom: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+    color: #f8f3ea;
     display: flex;
-    gap: 12px;
-    margin-top: 18px;
+    gap: 16px;
+    justify-content: space-between;
+    padding: 12px;
+    position: sticky;
+    z-index: 5;
+}
+
+.rules-actions-status {
+    color: #d3c5b5;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding-left: 4px;
+}
+
+.rules-actions-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    justify-content: flex-end;
+}
+
+.rules-actions .btn-primary {
+    background: #b84632;
+    border-color: #b84632;
+}
+
+.rules-actions .btn-primary:hover,
+.rules-actions .btn-primary:focus-visible {
+    background: #973827;
+    border-color: #973827;
+}
+
+.rules-actions .btn-outline-secondary {
+    border-color: #c6a978;
+    color: #f8f3ea;
+}
+
+.rules-actions .btn-outline-secondary:hover,
+.rules-actions .btn-outline-secondary:focus-visible {
+    background: #d8a64a;
+    border-color: #d8a64a;
+    color: #171311;
 }
 
 @media (max-width: 767px) {
-    .rules-grid,
-    .rules-defaults-summary dl {
+    .rules-header {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .rules-header > .btn {
+        min-height: 46px;
+        width: 100%;
+    }
+
+    .rules-section {
+        padding: 16px;
+    }
+
+    .rules-grid {
         grid-template-columns: 1fr;
+    }
+
+    .rules-field {
+        padding: 13px;
+    }
+
+    .rules-field .numeric-stepper {
+        min-height: 46px;
+    }
+
+    .rules-field .numeric-stepper-button {
+        flex-basis: 46px;
+        min-height: 46px;
+        min-width: 46px;
     }
 
     .rules-actions {
         align-items: stretch;
         flex-direction: column;
+        gap: 8px;
     }
 
-    .rules-actions .btn {
-        width: 100%;
+    .rules-actions-status {
+        padding: 0 2px;
+        text-align: center;
+    }
+
+    .rules-actions-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .rules-actions-buttons .btn {
+        min-height: 46px;
+    }
+
+}
+
+@media (max-width: 420px) {
+    .rules-section-heading {
+        gap: 10px;
+    }
+
+    .rules-section-heading > span {
+        font-size: 0.7rem;
+    }
+
+    .rules-actions-buttons {
+        grid-template-columns: 1fr;
     }
 }

@@ -3,7 +3,7 @@ import { Button, Form } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import Rules from "../models/Rules";
 import NumericStepper from "../components/NumericStepper";
-import { buildDefaultRules, loadRuleDefaults, normalizeRules, resetRuleDefaults, saveRuleDefaults } from "./rulesDefaults";
+import { loadRuleDefaults, normalizeRules, resetRuleDefaults, saveRuleDefaults } from "./rulesDefaults";
 import { getActiveGameRoute, isActiveGameRoute } from "../utils/activeGame";
 import "./rulesPage.css";
 
@@ -62,6 +62,7 @@ function RulesPage() {
         ? returnToGame
         : getActiveGameRoute(currentPlayerId);
     const [rules, setRules] = useState<Rules>(() => loadRuleDefaults());
+    const [isDirty, setIsDirty] = useState(false);
     const [savedMessage, setSavedMessage] = useState("");
 
     useEffect(() => {
@@ -73,12 +74,14 @@ function RulesPage() {
             ...currentRules,
             [key]: Number(value),
         }));
+        setIsDirty(true);
         setSavedMessage("");
     };
 
     const handleSave = (event: React.FormEvent) => {
         event.preventDefault();
         saveRuleDefaults(rules);
+        setIsDirty(false);
         navigate(getPlayerDetailsRoute(), {
             state: { rulesMessage: "Rule defaults saved for new games." },
         });
@@ -86,11 +89,8 @@ function RulesPage() {
 
     const handleReset = () => {
         setRules(resetRuleDefaults());
+        setIsDirty(false);
         setSavedMessage("Rule defaults reset.");
-    };
-
-    const handleBack = () => {
-        navigate(activeGameRoute || getPlayerDetailsRoute());
     };
 
     const handleBackToActiveGame = () => {
@@ -114,78 +114,88 @@ function RulesPage() {
         </Form.Group>
     );
 
-    const defaults = buildDefaultRules();
-
     return (
         <main className="rules-page">
-            <div className="rules-header">
+            <header className="rules-header">
                 <div>
+                    <p className="rules-eyebrow">New game setup</p>
                     <h1>Rules Defaults</h1>
-                    <p>These values apply to newly created games. Existing games keep their saved rules.</p>
+                    <p>Set the starting values for future scorecards. Games already underway keep their current rules.</p>
                 </div>
                 {activeGameRoute && (
                     <Button type="button" variant="success" onClick={handleBackToActiveGame}>
                         Back to Active Game
                     </Button>
                 )}
-            </div>
+            </header>
 
             {savedMessage && <div className="rules-save-message">{savedMessage}</div>}
 
             <Form className="rules-form" onSubmit={handleSave}>
                 <section className="rules-section">
-                    <h2>Scoring</h2>
+                    <div className="rules-section-heading">
+                        <div>
+                            <p>Points</p>
+                            <h2>Scoring</h2>
+                        </div>
+                        <span>5 settings</span>
+                    </div>
+                    <p className="rules-section-description">Choose the book, penalty, and round-ending point values.</p>
                     <div className="rules-grid">
                         {scoringFields.map(renderField)}
                     </div>
                 </section>
 
                 <section className="rules-section">
-                    <h2>Deal Preferences</h2>
+                    <div className="rules-section-heading">
+                        <div>
+                            <p>Table setup</p>
+                            <h2>Deal Preferences</h2>
+                        </div>
+                        <span>2 settings</span>
+                    </div>
+                    <p className="rules-section-description">Keep the usual starting hand and draw count ready for each new game.</p>
                     <div className="rules-grid">
                         {dealFields.map(renderField)}
                     </div>
                 </section>
 
                 <section className="rules-section">
-                    <h2>Book Thresholds</h2>
+                    <div className="rules-section-heading">
+                        <div>
+                            <p>Four rounds</p>
+                            <h2>Book Thresholds</h2>
+                        </div>
+                        <span>4 settings</span>
+                    </div>
+                    <p className="rules-section-description">Set the minimum card points needed before books count in each round.</p>
                     <div className="rules-grid">
                         {bookThresholdFields.map(renderField)}
                     </div>
                 </section>
 
                 <section className="rules-section">
-                    <h2>Going Out</h2>
+                    <div className="rules-section-heading">
+                        <div>
+                            <p>Round requirements</p>
+                            <h2>Going Out</h2>
+                        </div>
+                        <span>2 settings</span>
+                    </div>
+                    <p className="rules-section-description">Choose how many clean and dirty books a team needs before going out.</p>
                     <div className="rules-grid">
                         {goingOutFields.map(renderField)}
                     </div>
                 </section>
 
-                <section className="rules-section rules-defaults-summary" aria-label="Built-in defaults">
-                    <h2>Built-in Defaults</h2>
-                    <dl>
-                        <div><dt>Clean book</dt><dd>{defaults.cleanBookScore}</dd></div>
-                        <div><dt>Dirty book</dt><dd>{defaults.dirtyBookScore}</dd></div>
-                        <div><dt>Red 3</dt><dd>{defaults.redThreeScore}</dd></div>
-                        <div><dt>Pulled correct</dt><dd>{defaults.pulledScore}</dd></div>
-                        <div><dt>Went out</dt><dd>{defaults.winnerScore}</dd></div>
-                        <div><dt>Cards to start</dt><dd>{defaults.cardsToStart}</dd></div>
-                        <div><dt>Cards to draw</dt><dd>{defaults.cardsToDraw}</dd></div>
-                        <div><dt>Round 1 threshold</dt><dd>{defaults.roundOneBookThreshold}</dd></div>
-                        <div><dt>Round 2 threshold</dt><dd>{defaults.roundTwoBookThreshold}</dd></div>
-                        <div><dt>Round 3 threshold</dt><dd>{defaults.roundThreeBookThreshold}</dd></div>
-                        <div><dt>Round 4 threshold</dt><dd>{defaults.roundFourBookThreshold}</dd></div>
-                        <div><dt>Clean to go out</dt><dd>{defaults.cleanBooksRequiredToGoOut}</dd></div>
-                        <div><dt>Dirty to go out</dt><dd>{defaults.dirtyBooksRequiredToGoOut}</dd></div>
-                    </dl>
-                </section>
-
                 <div className="rules-actions">
-                    <Button type="submit" variant="primary">Save</Button>
-                    <Button type="button" variant="secondary" onClick={handleReset}>Reset to Defaults</Button>
-                    <Button type="button" variant="outline-secondary" onClick={handleBack}>
-                        {activeGameRoute ? "Back to Active Game" : "Back"}
-                    </Button>
+                    <div className="rules-actions-status" aria-live="polite">
+                        {isDirty ? "Unsaved changes" : "Defaults are up to date"}
+                    </div>
+                    <div className="rules-actions-buttons">
+                        <Button type="submit" variant="primary">Save</Button>
+                        <Button type="button" variant="outline-secondary" onClick={handleReset}>Reset to Defaults</Button>
+                    </div>
                 </div>
             </Form>
         </main>
